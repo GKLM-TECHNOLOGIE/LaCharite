@@ -1,0 +1,280 @@
+/* style.css */
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+h1,
+h2,
+h3 {
+    color: #333;
+    text-align: center; /* Center-align headings */
+}
+
+section {
+    margin: 20px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: none; /* Initially hide all sections */
+}
+/* Style the main buttons container */
+.main-buttons {
+    text-align: center; /* Center-align the buttons */
+    margin-bottom: 20px; /* Add some space below the buttons */
+}
+
+.main-buttons button {
+    margin: 5px; /* Add some space around the buttons */
+    padding: 10px 20px; /* Make buttons larger */
+    font-size: 16px; /* Increase font size */
+}
+label {
+    display: block;
+    margin-top: 10px;
+}
+
+input[type="date"],
+input[type="number"],
+input[type="text"],
+input[type="month"],
+input[type="week"],
+input[type="tel"], /* Style telephone input */
+select {
+    width: 100%; /* Make inputs and selects take full width */
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Styles pour les champs sur la même ligne */
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.form-row label {
+    margin-top: 0;
+    flex-basis: 100%; /* Labels take full width on a new line */
+    text-align: left; /* Align labels to the left */
+}
+
+.form-row input,
+.form-row select {
+    flex: 1 1 calc(50% - 5px); /*  two items per row */
+    margin-right: 0; /* Remove right margin */
+    margin-bottom: 10px; /* Add bottom margin */
+    min-width: 150px; /* Minimum width for smaller screens */
+}
+
+.form-row input:last-child,
+.form-row select:last-child {
+    margin-right: 0;
+}
+
+button {
+    background-color: #5cb85c;
+    color: white;
+    padding: 10px 15px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px; /* Consistent font size */
+}
+
+button:hover {
+    background-color: #4cae4c;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f0f0f0;
+}
+
+#sales-details,
+#others-details,
+#expenses-details,
+#supply-details,
+#employees-details,
+#learners-details,
+#mobile-money-details{
+    margin-top: 20px;
+}
+
+/* Styles pour les blocs de formulaires */
+.form-container {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-bottom: 30px;
+    /* Ajoute un espace entre les blocs */
+}
+
+/* Media queries pour les smartphones */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        /* Empile les éléments verticalement */
+    }
+     .form-row label {
+        flex-basis: auto; /* Reset flex-basis for labels */
+        text-align: left; /* Ensure labels are left-aligned */
+    }
+
+    .form-row input,
+    .form-row select {
+        margin-right: 0;
+        margin-bottom: 10px;
+        flex: 1 1 100%; /* Full width on small screens */
+        min-width: 0; /* Reset minimum width*/
+    }
+
+     /* General table styling for small screens */
+     .table-container table {
+        font-size: 14px;
+         border-collapse: collapse; /* Important for consistent borders */
+         width: 100%;
+    }
+
+     .table-container th,
+     .table-container td {
+        padding: 6px;
+        border: 1px solid #ddd; /* Add borders to all cells */
+        text-align: left;      /* Ensure text is left-aligned */
+        display: block;  /* Stack table cells */
+        width: 100%;    /* Full width */
+        box-sizing: border-box; /* Include padding and border in width */
+
+    }
+      /* Hide table headers on small screens */
+    .table-container thead {
+        display: none;
+    }
+
+    /*  Classes pour masquer certaines colonnes */
+    /* .date-col,
+    .designation-col,
+    .quantity-col {
+        display: none; 
+    }  */
+
+    /*  colonnes importantes */
+    /* .unit-price-col,
+    .total-cost-col,
+    .supply-col,
+    .sold-col,
+    .remaining-col {
+        display: table-cell;
+    } */
+}
+
+/* Styles pour l'impression */
+@media print {
+
+    /* Cacher les éléments non nécessaires */
+    body * {
+        visibility: hidden;
+    }
+
+    /* Afficher seulement les éléments de la zone imprimable */
+    #printable-area,
+    #printable-area * {
+        visibility: visible;
+    }
+
+    #printable-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .form-container,
+    .form-row,
+    button,
+    .main-buttons, /* Hide main buttons on print */
+    #sales-details,
+    #expenses-details,
+    #show-sales-details,
+    #show-expenses-details,
+    #show-others-details,
+    #report-section,
+    #supply-section,
+    #stock-section,
+    #employees-section,
+    #learners-section,
+    #mobile-money-section,
+    .button-group,
+    .table-container { /* Hide the new container as well */
+        display: none !important;
+    }
+
+    #sales-table th,
+    #sales-table td,
+    #expenses-table th,
+    #expenses-table td,
+    #others-table th,
+    #others-table td,
+    #stock-table th,
+    #stock-table td,
+    #report-table th,
+    #report-table td,
+    #supply-table th,
+    #supply-table td,
+    #employees-table th,
+    #employees-table td,
+    #learners-table th,
+    #learners-table td,
+    #mobile-money-table th,
+    #mobile-money-table td
+     {
+        border: 1px solid #ddd;
+    }
+     h1, h2, h3 {
+        text-align: left;  /* Left-align on print for better readability */
+    }
+}
+
+.button-group {
+    margin-bottom: 10px;
+}
+
+/* New style for table container */
+.table-container {
+  border: 1px solid #ddd; /* Add border */
+  padding: 10px;          /* Add some padding */
+  margin-top: 10px;       /* Space from the button */
+  border-radius: 4px;      /* Optional: rounded corners */
+}
+
+/* Style pour les lignes "Compte Crédit Soldé" */
+.solde {
+    background-color: #d4edda; /* Vert clair */
+    color: #155724; /* Vert foncé */
+    /* font-weight: bold;  Déjà appliqué dans le JS, mais vous pouvez le mettre ici aussi */
+}
+
+/*  styler spécifiquement la cellule "Soldé" */
+.solde td:last-child { /* Cibler la dernière cellule de la ligne */
+  /* font-weight: bold;  Déjà appliqué dans le JS */
+  /* color: green;       Déjà appliqué dans le JS */
+}
