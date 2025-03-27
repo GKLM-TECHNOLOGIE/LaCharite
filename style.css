@@ -1,280 +1,452 @@
-/* style.css */
 body {
     font-family: Arial, sans-serif;
     line-height: 1.6;
     margin: 0;
     padding: 0;
     background-color: #f4f4f4;
-}
-
-h1,
-h2,
-h3 {
     color: #333;
-    text-align: center; /* Center-align headings */
 }
 
-section {
-    margin: 20px;
-    padding: 15px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: none; /* Initially hide all sections */
+/* --- Header --- */
+.header-container {
+    display: flex; /* Utilise flexbox */
+    align-items: center; /* Centre verticalement */
+    justify-content: flex-start; /* Aligner à gauche par défaut */
+    flex-wrap: wrap; /* Permet de passer à la ligne sur petit écran */
+    padding: 15px 20px; /* Espace intérieur */
+    background-color: #e9ecef; /* Fond léger pour le header */
+    border-bottom: 1px solid #ced4da;
+    margin-bottom: 25px; /* Espace sous le header */
 }
-/* Style the main buttons container */
+
+.logo {
+    display: block;
+    max-height: 80px; /* Hauteur max du logo */
+    margin-right: 15px; /* Espace entre logo et titre */
+}
+
+h1 {
+    margin: 0; /* Annule marges par défaut */
+    font-size: 1.8em; /* Taille du titre principal */
+    color: #333;
+    text-align: left; /* Texte aligné à gauche */
+}
+
+/* --- Main Buttons --- */
 .main-buttons {
-    text-align: center; /* Center-align the buttons */
-    margin-bottom: 20px; /* Add some space below the buttons */
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 25px;
+    padding: 10px;
+    background-color: #e0e0e0; /* Fond légèrement différent */
+    border-radius: 8px;
+    margin-left: 20px; /* Aligner avec les sections */
+    margin-right: 20px;
 }
 
 .main-buttons button {
-    margin: 5px; /* Add some space around the buttons */
-    padding: 10px 20px; /* Make buttons larger */
-    font-size: 16px; /* Increase font size */
+    flex: 1 1 160px; /* Base plus large pour les boutons */
+    min-width: 150px;
+    padding: 12px 10px;
+    font-size: 14px;
+    background-color: #007bff; /* Bleu */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    margin: 0;
+    transition: background-color 0.2s ease;
 }
-label {
-    display: block;
-    margin-top: 10px;
+.main-buttons button:hover {
+     background-color: #0056b3; /* Bleu plus foncé */
 }
 
+/* --- Sections & Forms --- */
+section {
+    margin: 20px;
+    padding: 20px; /* Un peu plus de padding */
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.form-container h2 {
+    text-align: center;
+    color: #007bff; /* Titre de section en bleu */
+    margin-top: 0;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Titres dans les formulaires (ex: Personne à contacter) */
+h4 {
+    width: 100%;
+    margin-top: 25px; /* Plus d'espace avant H4 */
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+    font-size: 1.1em;
+    color: #555;
+}
+
+/* Lignes de formulaire (Flexbox) */
+.form-row {
+    display: flex;
+    align-items: baseline; /* Aligner par la baseline du texte */
+    flex-wrap: wrap;
+    gap: 20px; /* Espacement augmenté entre les éléments */
+    margin-bottom: 18px; /* Espacement entre les lignes */
+}
+
+/* Wrapper pour (label + input) */
+.form-row > div {
+     flex: 1 1 220px; /* Base un peu plus grande */
+     min-width: 180px; /* Largeur minimale */
+}
+
+/* Label direct (rare) */
+.form-row > label {
+     flex: 1 1 220px;
+     min-width: 180px;
+     margin-top: 8px;
+}
+
+/* Style des labels */
+.form-row label {
+    display: block;
+    margin-bottom: 5px; /* Espace label-input */
+    font-weight: bold;
+    font-size: 0.9em;
+    color: #495057;
+    text-align: left;
+    margin-top: 0;
+}
+
+/* Style des inputs, selects */
 input[type="date"],
 input[type="number"],
 input[type="text"],
 input[type="month"],
 input[type="week"],
-input[type="tel"], /* Style telephone input */
+input[type="tel"],
 select {
-    width: 100%; /* Make inputs and selects take full width */
-    padding: 8px;
-    margin-top: 5px;
-    border: 1px solid #ddd;
+    width: 100%;
+    padding: 9px 12px; /* Padding ajusté */
+    margin-top: 0; /* Annule marge si label au-dessus */
+    border: 1px solid #ced4da;
     border-radius: 4px;
     box-sizing: border-box;
+    font-size: 1em;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+input:focus, select:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
-/* Styles pour les champs sur la même ligne */
-.form-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
-}
-
-.form-row label {
-    margin-top: 0;
-    flex-basis: 100%; /* Labels take full width on a new line */
-    text-align: left; /* Align labels to the left */
-}
-
-.form-row input,
-.form-row select {
-    flex: 1 1 calc(50% - 5px); /*  two items per row */
-    margin-right: 0; /* Remove right margin */
-    margin-bottom: 10px; /* Add bottom margin */
-    min-width: 150px; /* Minimum width for smaller screens */
-}
-
-.form-row input:last-child,
-.form-row select:last-child {
-    margin-right: 0;
-}
-
-button {
-    background-color: #5cb85c;
+/* --- Boutons Généraux --- */
+button { /* Style par défaut bouton Ajouter/Soumettre formulaire */
+    background-color: #28a745; /* Vert */
     color: white;
-    padding: 10px 15px;
-    margin-top: 15px;
+    padding: 10px 20px; /* Padding ajusté */
+    margin-top: 20px; /* Espace avant bouton */
+    margin-right: 8px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px; /* Consistent font size */
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+button:hover {
+    background-color: #218838; /* Vert plus foncé */
 }
 
-button:hover {
-    background-color: #4cae4c;
+/* Boutons secondaires (Afficher/Masquer Détails) */
+#show-supply-list-button, #show-stock-details-button,
+#show-sales-details-button, #show-expenses-details-button, #show-others-details-button,
+#show-employees-details-button, #show-learners-details-button,
+#show-mobile-money-details-button, #show-creditors-details-button,
+#show-debt-details-button, /* Ajouté */
+#show-report-details-button {
+    background-color: #6c757d; /* Gris */
+    margin-top: 25px; /* Plus d'espace après le formulaire */
+}
+#show-supply-list-button:hover, #show-stock-details-button:hover,
+#show-sales-details-button:hover, #show-expenses-details-button:hover, #show-others-details-button:hover,
+#show-employees-details-button:hover, #show-learners-details-button:hover,
+#show-mobile-money-details-button:hover, #show-creditors-details-button:hover,
+#show-debt-details-button:hover, /* Ajouté */
+#show-report-details-button:hover {
+     background-color: #5a6268; /* Gris plus foncé */
+}
+
+/* --- Conteneurs de Détails (Tableaux) --- */
+#supply-list-container, #stock-details-container,
+#sales-details-container, #expenses-details-container, #others-details-container,
+#employees-details-container, #learners-details-container,
+#mobile-money-details-container, #creditors-details-container,
+#debt-details-container, /* Ajouté */
+#report-details-container {
+    border: 1px solid #dee2e6; /* Bordure plus légère */
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 6px;
+    background-color: #ffffff;
+}
+
+/* Titre dans les conteneurs de détails */
+#supply-list-container h3, #stock-details-container h3,
+#sales-details-container h3, #expenses-details-container h3, #others-details-container h3,
+#employees-details-container h3, #learners-details-container h3,
+#mobile-money-details-container h3, #creditors-details-container h3,
+#debt-details-container h3, /* Ajouté */
+#report-details-container h3 {
+    text-align: left;
+    margin-top: 0; /* Pas de marge en haut du titre de tableau */
+    margin-bottom: 15px;
+    color: #495057;
+    font-size: 1.3em;
+}
+
+/* Groupe de boutons Print/Export */
+.button-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+.button-group button {
+    margin-top: 0;
+    margin-right: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    background-color: #17a2b8; /* Bleu canard */
+}
+.button-group button:hover {
+    background-color: #138496; /* Plus foncé */
+}
+
+/* --- Tableaux --- */
+.table-container {
+  overflow-x: auto; /* Scroll horizontal si nécessaire */
+  width: 100%;
+  margin-top: 10px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
+    font-size: 0.9em;
 }
 
-th,
-td {
+th, td {
     text-align: left;
-    padding: 8px;
-    border-bottom: 1px solid #ddd;
+    padding: 10px 12px; /* Padding augmenté */
+    border: 1px solid #dee2e6; /* Bordure légère */
+    vertical-align: middle; /* Centrer verticalement */
 }
 
 th {
-    background-color: #f0f0f0;
+    background-color: #f8f9fa; /* Fond très léger pour header */
+    font-weight: 600; /* Moins gras */
+    white-space: nowrap;
+    color: #495057;
 }
 
-#sales-details,
-#others-details,
-#expenses-details,
-#supply-details,
-#employees-details,
-#learners-details,
-#mobile-money-details{
-    margin-top: 20px;
+tbody tr:nth-child(even) {
+    background-color: #f8f9fa; /* Ligne paire légère */
+}
+tbody tr:hover {
+    background-color: #e9ecef; /* Hover plus visible */
 }
 
-/* Styles pour les blocs de formulaires */
-.form-container {
-    border: 1px solid #ddd;
-    padding: 20px;
-    margin-bottom: 30px;
-    /* Ajoute un espace entre les blocs */
-}
-
-/* Media queries pour les smartphones */
-@media (max-width: 768px) {
-    .form-row {
-        flex-direction: column;
-        /* Empile les éléments verticalement */
-    }
-     .form-row label {
-        flex-basis: auto; /* Reset flex-basis for labels */
-        text-align: left; /* Ensure labels are left-aligned */
-    }
-
-    .form-row input,
-    .form-row select {
-        margin-right: 0;
-        margin-bottom: 10px;
-        flex: 1 1 100%; /* Full width on small screens */
-        min-width: 0; /* Reset minimum width*/
-    }
-
-     /* General table styling for small screens */
-     .table-container table {
-        font-size: 14px;
-         border-collapse: collapse; /* Important for consistent borders */
-         width: 100%;
-    }
-
-     .table-container th,
-     .table-container td {
-        padding: 6px;
-        border: 1px solid #ddd; /* Add borders to all cells */
-        text-align: left;      /* Ensure text is left-aligned */
-        display: block;  /* Stack table cells */
-        width: 100%;    /* Full width */
-        box-sizing: border-box; /* Include padding and border in width */
-
-    }
-      /* Hide table headers on small screens */
-    .table-container thead {
-        display: none;
-    }
-
-    /*  Classes pour masquer certaines colonnes */
-    /* .date-col,
-    .designation-col,
-    .quantity-col {
-        display: none; 
-    }  */
-
-    /*  colonnes importantes */
-    /* .unit-price-col,
-    .total-cost-col,
-    .supply-col,
-    .sold-col,
-    .remaining-col {
-        display: table-cell;
-    } */
-}
-
-/* Styles pour l'impression */
-@media print {
-
-    /* Cacher les éléments non nécessaires */
-    body * {
-        visibility: hidden;
-    }
-
-    /* Afficher seulement les éléments de la zone imprimable */
-    #printable-area,
-    #printable-area * {
-        visibility: visible;
-    }
-
-    #printable-area {
-        position: absolute;
-        left: 0;
-        top: 0;
-    }
-
-    .form-container,
-    .form-row,
-    button,
-    .main-buttons, /* Hide main buttons on print */
-    #sales-details,
-    #expenses-details,
-    #show-sales-details,
-    #show-expenses-details,
-    #show-others-details,
-    #report-section,
-    #supply-section,
-    #stock-section,
-    #employees-section,
-    #learners-section,
-    #mobile-money-section,
-    .button-group,
-    .table-container { /* Hide the new container as well */
-        display: none !important;
-    }
-
-    #sales-table th,
-    #sales-table td,
-    #expenses-table th,
-    #expenses-table td,
-    #others-table th,
-    #others-table td,
-    #stock-table th,
-    #stock-table td,
-    #report-table th,
-    #report-table td,
-    #supply-table th,
-    #supply-table td,
-    #employees-table th,
-    #employees-table td,
-    #learners-table th,
-    #learners-table td,
-    #mobile-money-table th,
-    #mobile-money-table td
-     {
-        border: 1px solid #ddd;
-    }
-     h1, h2, h3 {
-        text-align: left;  /* Left-align on print for better readability */
-    }
-}
-
-.button-group {
-    margin-bottom: 10px;
-}
-
-/* New style for table container */
-.table-container {
-  border: 1px solid #ddd; /* Add border */
-  padding: 10px;          /* Add some padding */
-  margin-top: 10px;       /* Space from the button */
-  border-radius: 4px;      /* Optional: rounded corners */
-}
-
-/* Style pour les lignes "Compte Crédit Soldé" */
+/* Style spécifique pour lignes soldées (crédits, dettes) */
 .solde {
-    background-color: #d4edda; /* Vert clair */
-    color: #155724; /* Vert foncé */
-    /* font-weight: bold;  Déjà appliqué dans le JS, mais vous pouvez le mettre ici aussi */
+    background-color: #d4edda !important; /* Vert clair */
+    color: #155724;
+    font-style: italic;
 }
 
-/*  styler spécifiquement la cellule "Soldé" */
-.solde td:last-child { /* Cibler la dernière cellule de la ligne */
-  /* font-weight: bold;  Déjà appliqué dans le JS */
-  /* color: green;       Déjà appliqué dans le JS */
+/* --- Colonnes spécifiques (juste pour référence) --- */
+.unit-price-col, .salary-col, .amount-col, .total-cost-col { text-align: right; }
+.quantity-col, .supply-col, .sold-col, .remaining-col { text-align: center; }
+/* .age-col, .date-col, etc. */
+
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+     h1 { font-size: 1.5em; }
+     section h2 { font-size: 1.3em; } /* Titres de section */
+     .header-container { justify-content: center; } /* Centrer logo+titre sur mobile */
+
+    .main-buttons { gap: 8px; margin-left: 10px; margin-right: 10px; }
+    .main-buttons button {
+        flex-basis: calc(50% - 4px);
+        min-width: 130px;
+        font-size: 13px;
+        padding: 10px 8px;
+    }
+
+    .form-row { gap: 10px; margin-bottom: 12px; }
+    .form-row > div, .form-row > label {
+        flex-basis: 100%; /* Chaque élément sur sa ligne */
+        min-width: 0;
+    }
+    .form-row label { margin-bottom: 3px; }
+
+     table { font-size: 0.85em; }
+     th, td { padding: 8px 10px; white-space: normal; }
+     th { white-space: normal; }
+
+    /* Gérer les tables larges spécifiquement sur mobile */
+    #learners-table th, #learners-table td,
+    #employees-table th, #employees-table td {
+        font-size: 0.8em;
+        padding: 5px 6px;
+        white-space: nowrap; /* Forcer scroll */
+    }
+    #learners-details-container .table-container,
+    #employees-details-container .table-container {
+         /* Option: Ajouter une indication visuelle de scroll */
+         /* border-left: 3px solid #007bff; */
+         /* padding-left: 5px; */
+    }
+}
+
+/* --- Styles pour l'impression --- */
+@media print {
+    body {
+        font-size: 10pt;
+        background-color: #fff;
+        color: #000;
+    }
+
+    /* Cacher éléments non voulus */
+    .header-container, /* Cacher logo et titre principal */
+    .main-buttons,
+    section > form,
+    section > h2,
+    section > button:not(.main-buttons button),
+    .button-group,
+    #report-filters {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    section > form h4 { /* Cacher sous-titres dans les formulaires */
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* Rendre visible la zone principale et ses enfants directs */
+    body * { visibility: hidden; }
+    #printable-area, #printable-area > * { visibility: visible; }
+
+    /* Re-cacher explicitement les éléments indésirables DANS printable-area */
+     #printable-area .header-container,
+     #printable-area .main-buttons,
+     #printable-area section > form,
+     #printable-area section > h2,
+     #printable-area section > form h4,
+     #printable-area section > button:not(.main-buttons button),
+     #printable-area .button-group,
+     #printable-area #report-filters {
+         visibility: hidden !important;
+         display: none !important;
+     }
+
+    /* Styles généraux pour l'impression */
+    section {
+        display: block !important;
+        visibility: visible !important;
+        box-shadow: none;
+        border: none;
+        margin: 0;
+        padding: 0;
+        page-break-inside: avoid; /* Tenter de garder la section ensemble */
+    }
+
+    /* Conteneurs de détails (pour les tableaux) */
+    #supply-list-container, #stock-details-container,
+    #sales-details-container, #expenses-details-container, #others-details-container,
+    #employees-details-container, #learners-details-container,
+    #mobile-money-details-container, #creditors-details-container,
+    #debt-details-container, #report-details-container {
+        display: block !important;
+        visibility: visible !important;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        margin: 15px 0; /* Espace entre les tables */
+        page-break-inside: avoid;
+    }
+
+    /* Titres des tableaux (H3) */
+    h3 {
+        text-align: left;
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+        page-break-after: avoid;
+        page-break-before: auto;
+        visibility: visible !important;
+        font-size: 11pt;
+        color: #000;
+    }
+
+    /* Conteneur de tableau */
+    .table-container {
+        overflow-x: visible; /* Pas de scroll */
+        border: none;
+        padding: 0;
+        margin: 0;
+        page-break-inside: avoid;
+    }
+
+    /* Tableaux */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        page-break-inside: auto; /* Permet coupure SI nécessaire */
+    }
+    th, td {
+        border: 1px solid #666; /* Bordures visibles */
+        padding: 4px 6px;
+        word-wrap: break-word; /* Retour à la ligne */
+        visibility: visible !important;
+        font-size: 9pt;
+        color: #000;
+    }
+    th {
+         background-color: #eee !important; /* Fond gris léger */
+         -webkit-print-color-adjust: exact;
+         color-adjust: exact;
+         font-weight: bold;
+         white-space: normal; /* Permettre retour ligne en-tête */
+    }
+    tbody tr {
+         page-break-inside: avoid; /* Tenter garder lignes ensemble */
+    }
+    tbody tr:nth-child(even) {
+        background-color: #fff !important; /* Pas de fond alterné */
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+    }
+    .solde { /* Garder style pour soldé */
+         background-color: #d4edda !important;
+         color: #155724 !important;
+         -webkit-print-color-adjust: exact;
+         color-adjust: exact;
+         font-style: italic;
+    }
+
+    /* Tables larges en impression */
+     #learners-table th, #learners-table td,
+     #employees-table th, #employees-table td {
+          font-size: 7pt; /* Encore plus petit si besoin */
+          padding: 2px 3px;
+          white-space: normal;
+          word-break: break-word;
+     }
 }
