@@ -6,8 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestionnaire - La Charité Modeste</title>
-    <!-- Remplacer 'logo.jpg' par le chemin réel de votre logo -->
-    <link rel="icon" href="logo.jpg" type="image/jpeg"> <!-- Type image/jpeg si c'est un JPG -->
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -15,7 +14,6 @@
     <div id="printable-area">
         <!-- Conteneur pour logo et titre -->
         <div class="header-container">
-            <!-- Remplacer 'logo.jpg' par le chemin réel de votre logo -->
             <img src="logo.jpg" alt="Logo La Charité Modeste" class="logo">
             <h1>Gestionnaire de La Charité Modeste</h1>
         </div>
@@ -26,8 +24,8 @@
             <button id="show-employees-section">Employés</button>
             <button id="show-learners-section">Apprenants</button>
             <button id="show-mobile-money-section">Cabinet Mobile Money</button>
-            <button id="show-creditors-section">Compte Crédit Client</button> <!-- Clarification Client -->
-            <button id="show-debt-section">Dette / Prêt Entreprise</button> <!-- NOUVEAU -->
+            <button id="show-creditors-section">Compte Crédit Client</button>
+            <button id="show-debt-section">Dette / Prêt Entreprise</button>
             <button id="show-report-section">Bilans</button>
         </div>
 
@@ -35,10 +33,20 @@
         <section id="supply-section" class="form-container" style="display: none;">
             <h2>Approvisionnements</h2>
             <form id="supply-form">
+                 <input type="hidden" id="supply-edit-index" value=""> <!-- For Edit -->
                 <div class="form-row">
                     <div>
                         <label for="supply-date">Date:</label>
                         <input type="date" id="supply-date" required>
+                    </div>
+                    <div>
+                        <label for="supply-type">Type d'Approvisionnement:</label>
+                        <select id="supply-type" required>
+                            <option value="">-- Choisir --</option>
+                            <option value="Papeterie">Papeterie</option>
+                            <option value="Matériels électrique">Matériels électrique</option>
+                            <option value="Divers">Divers</option>
+                        </select>
                     </div>
                     <div>
                         <label for="supply-designation">Désignation:</label>
@@ -52,22 +60,33 @@
                         <label for="supply-unit-price">Prix unitaire:</label>
                         <input type="number" id="supply-unit-price" min="0" step="any" required>
                     </div>
+                    <div>
+                        <label for="supply-total-amount">Montant Total:</label>
+                        <input type="number" id="supply-total-amount" min="0" step="any" readonly style="background-color: #e9ecef;">
+                    </div>
                 </div>
                 <button type="submit">Ajouter Approvisionnement</button>
             </form>
 
-            <!-- Bouton pour afficher/masquer la liste simple des approvisionnements -->
             <button id="show-supply-list-button">Afficher/Masquer Liste Approvisionnements</button>
-            <div id="supply-list-container" style="display: none;">
+            <div id="supply-list-container" class="printable-content" style="display: none;">
                  <h3>Liste des Approvisionnements</h3>
-                 <div class="table-container">
+                 <div class="button-group">
+                    <button id="print-supply">Imprimer Approvisionnements</button>
+                    <button id="export-supply-excel">Exporter Approvisionnements (Excel)</button>
+                    <button id="export-supply-pdf">Exporter Approvisionnements (PDF)</button>
+                </div>
+                <div class="table-container">
                     <table id="supply-table">
                         <thead>
                             <tr>
                                 <th class="date-col">Date</th>
+                                <th class="type-col">Type</th>
                                 <th class="designation-col">Désignation</th>
-                                <th class="supply-col">Quantité</th>
+                                <th class="quantity-col">Quantité</th>
                                 <th class="unit-price-col">Prix Unitaire</th>
+                                <th class="amount-col">Montant Total</th>
+                                <th>Actions</th> <!-- NEW -->
                             </tr>
                         </thead>
                         <tbody>
@@ -76,10 +95,9 @@
                 </div>
             </div>
 
-            <!-- Bouton pour afficher/masquer l'état des stocks -->
             <button id="show-stock-details-button">Afficher/Masquer État des Stocks</button>
-            <div id="stock-details-container" style="display: none;">
-                <h3>État des Stocks</h3>
+            <div id="stock-details-container" class="printable-content" style="display: none;">
+                <h3>État des Stocks (Papeterie & Mat. Électrique)</h3>
                  <div class="button-group">
                     <button id="print-stock">Imprimer Stocks</button>
                     <button id="export-stock-excel">Exporter Stocks (Excel)</button>
@@ -89,11 +107,13 @@
                     <table id="stock-table">
                         <thead>
                             <tr>
+                                <th class="type-col">Type</th>
                                 <th class="date-col">Date Dernière Modif.</th>
                                 <th class="designation-col">Désignation</th>
                                 <th class="supply-col">Qté Approvisionnée</th>
                                 <th class="sold-col">Qté Vendue</th>
                                 <th class="remaining-col">Qté Restante</th>
+                                <!-- Omit actions for calculated stock table -->
                             </tr>
                         </thead>
                         <tbody>
@@ -105,8 +125,9 @@
 
          <!-- Section Ventes / Divers -->
          <section id="sales-section" class="form-container" style="display: none;">
-            <h2>Ventes / Divers</h2>
+            <h2>Ventes / Opérations Diverses</h2>
             <form id="sales-form">
+                <!-- Edit state for sales is complex due to subforms, handled via table delete -->
                 <div class="form-row">
                      <div>
                         <label for="sale-date">Date:</label>
@@ -114,16 +135,16 @@
                     </div>
                     <div>
                         <label for="operation-type">Type d'Opération:</label>
-                        <!-- MODIFIÉ: Options supprimées -->
                         <select id="operation-type">
                             <option value="Papeterie">Papeterie</option>
+                            <option value="Matériels électrique">Matériels électrique</option>
                             <option value="Dépenses">Dépenses</option>
                             <option value="Divers">Divers</option>
                         </select>
                     </div>
                 </div>
                 <!-- Champs Papeterie -->
-                <div class="form-row" id="papeterie-details-form">
+                <div class="form-row details-form" id="papeterie-details-form">
                      <div>
                         <label for="sale-designation">Désignation:</label>
                         <select id="sale-designation"></select>
@@ -135,11 +156,33 @@
                     <div>
                         <label for="sale-unit-price">Prix unitaire:</label>
                         <input type="number" id="sale-unit-price" min="0" step="any">
-                        <input type="hidden" id="sale-total-cost" value="0">
                     </div>
+                     <div>
+                        <label for="sale-total-amount">Montant Total:</label>
+                        <input type="number" id="sale-total-amount" readonly style="background-color: #e9ecef;">
+                     </div>
+                </div>
+                <!-- Champs Matériels Électrique -->
+                <div class="form-row details-form" id="materiel-electrique-details-form" style="display: none;">
+                     <div>
+                        <label for="me-designation">Désignation:</label>
+                        <select id="me-designation"></select>
+                     </div>
+                    <div>
+                        <label for="me-quantity">Quantité:</label>
+                        <input type="number" id="me-quantity" min="1">
+                    </div>
+                    <div>
+                        <label for="me-unit-price">Prix unitaire:</label>
+                        <input type="number" id="me-unit-price" min="0" step="any">
+                    </div>
+                    <div>
+                        <label for="me-total-amount">Montant Total:</label>
+                        <input type="number" id="me-total-amount" readonly style="background-color: #e9ecef;">
+                     </div>
                 </div>
                 <!-- Champs Dépenses -->
-                <div class="form-row" id="depenses-details-form" style="display: none;">
+                <div class="form-row details-form" id="depenses-details-form" style="display: none;">
                     <div>
                         <label for="expense-reason">Motif:</label>
                         <input type="text" id="expense-reason">
@@ -150,32 +193,35 @@
                     </div>
                 </div>
                  <!-- Champs Divers -->
-                <div class="form-row" id="divers-details-form" style="display: none;">
+                <div class="form-row details-form" id="divers-details-form" style="display: none;">
                     <div>
                         <label for="other-designation">Désignation / Motif:</label>
                         <input type="text" id="other-designation">
                     </div>
                     <div>
                         <label for="other-quantity">Quantité:</label>
-                        <input type="number" id="other-quantity" min="0"> <!-- Permettre 0 ou 1 pour juste montant -->
+                        <input type="number" id="other-quantity" min="0">
                     </div>
                     <div>
                         <label for="other-unit-price">Prix unitaire / Montant:</label>
                         <input type="number" id="other-unit-price" min="0" step="any">
-                        <input type="hidden" id="other-total-cost" value="0">
                     </div>
+                    <div>
+                        <label for="other-total-amount">Montant Total:</label>
+                        <input type="number" id="other-total-amount" readonly style="background-color: #e9ecef;">
+                     </div>
                 </div>
                 <button type="submit">Ajouter</button>
             </form>
 
-            <!-- Boutons pour afficher/masquer les détails -->
             <button id="show-sales-details-button">Afficher/Masquer Détails Papeterie</button>
+            <button id="show-materiel-electrique-details-button">Afficher/Masquer Détails Mat. Électrique</button>
             <button id="show-expenses-details-button">Afficher/Masquer Détails Dépenses</button>
-            <button id="show-others-details-button">Afficher/Masquer Détails Divers</button> <!-- Titre bouton ajusté -->
+            <button id="show-others-details-button">Afficher/Masquer Détails Divers</button>
 
             <!-- Conteneur pour Détails Papeterie -->
-            <div id="sales-details-container" style="display: none;">
-                 <h3>Détails de la Papeterie</h3>
+            <div id="sales-details-container" class="printable-content" style="display: none;">
+                 <h3>Détails Ventes Papeterie</h3>
                  <div class="button-group">
                     <button id="print-sales">Imprimer Papeterie</button>
                     <button id="export-sales-excel">Exporter Papeterie (Excel)</button>
@@ -189,7 +235,34 @@
                                 <th class="designation-col">Désignation</th>
                                 <th class="quantity-col">Quantité</th>
                                 <th class="unit-price-col">Prix unitaire</th>
-                                <th class="total-cost-col">Coût total</th>
+                                <th class="amount-col">Montant total</th>
+                                <th>Actions</th> <!-- NEW -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Conteneur pour Détails Matériels Électrique -->
+            <div id="materiel-electrique-details-container" class="printable-content" style="display: none;">
+                 <h3>Détails Ventes Matériels Électrique</h3>
+                 <div class="button-group">
+                    <button id="print-materiel-electrique">Imprimer Mat. Élec.</button>
+                    <button id="export-materiel-electrique-excel">Exporter Mat. Élec. (Excel)</button>
+                    <button id="export-materiel-electrique-pdf">Exporter Mat. Élec. (PDF)</button>
+                </div>
+                <div class="table-container">
+                    <table id="materiel-electrique-table">
+                        <thead>
+                            <tr>
+                                <th class="date-col">Date</th>
+                                <th class="designation-col">Désignation</th>
+                                <th class="quantity-col">Quantité</th>
+                                <th class="unit-price-col">Prix unitaire</th>
+                                <th class="amount-col">Montant total</th>
+                                <th>Actions</th> <!-- NEW -->
                             </tr>
                         </thead>
                         <tbody>
@@ -199,7 +272,7 @@
             </div>
 
             <!-- Conteneur pour Détails Dépenses -->
-            <div id="expenses-details-container" style="display: none;">
+            <div id="expenses-details-container" class="printable-content" style="display: none;">
                  <h3>Détails des Dépenses</h3>
                  <div class="button-group">
                     <button id="print-expenses">Imprimer Dépenses</button>
@@ -213,6 +286,7 @@
                                 <th class="date-col">Date</th>
                                 <th class="reason-col">Motif</th>
                                 <th class="amount-col">Montant</th>
+                                <th>Actions</th> <!-- NEW -->
                             </tr>
                         </thead>
                         <tbody>
@@ -222,8 +296,8 @@
             </div>
 
             <!-- Conteneur pour Détails Divers -->
-            <div id="others-details-container" style="display: none;">
-                <h3>Détails des Opérations Diverses</h3> <!-- Titre ajusté -->
+            <div id="others-details-container" class="printable-content" style="display: none;">
+                <h3>Détails des Opérations Diverses</h3>
                  <div class="button-group">
                     <button id="print-others">Imprimer Divers</button>
                     <button id="export-others-excel">Exporter Divers (Excel)</button>
@@ -237,7 +311,8 @@
                                 <th class="designation-col">Désignation/Motif</th>
                                 <th class="quantity-col">Quantité</th>
                                 <th class="unit-price-col">PU/Montant</th>
-                                <th class="amount-col">Total</th>
+                                <th class="amount-col">Montant Total</th>
+                                <th>Actions</th> <!-- NEW -->
                             </tr>
                         </thead>
                         <tbody>
@@ -251,78 +326,43 @@
         <section id="employees-section" class="form-container" style="display: none;">
             <h2>Gestion des Employés</h2>
             <form id="employee-form">
+                 <input type="hidden" id="employee-edit-index" value=""> <!-- For Edit -->
                  <h4>Informations Employé</h4>
                 <div class="form-row">
-                    <div>
-                        <label for="employee-nom">Nom:</label>
-                        <input type="text" id="employee-nom" required>
-                    </div>
-                    <div>
-                        <label for="employee-prenom">Prénom:</label>
-                        <input type="text" id="employee-prenom">
-                    </div>
-                     <div>
-                        <label for="employee-role">Rôle:</label>
-                        <input type="text" id="employee-role">
-                    </div>
+                    <div> <label for="employee-nom">Nom:</label> <input type="text" id="employee-nom" required> </div>
+                    <div> <label for="employee-prenom">Prénom:</label> <input type="text" id="employee-prenom"> </div>
+                    <div> <label for="employee-role">Statut:</label> <input type="text" id="employee-role"> </div>
                 </div>
                  <div class="form-row">
-                    <div>
-                        <label for="employee-adresse">Adresse:</label>
-                        <input type="text" id="employee-adresse">
-                    </div>
-                    <div>
-                        <label for="employee-telephone">Téléphone:</label>
-                        <input type="tel" id="employee-telephone">
-                    </div>
-                     <div>
-                        <label for="employee-lieu-residence">Lieu de résidence:</label>
-                        <input type="text" id="employee-lieu-residence">
-                    </div>
+                    <div> <label for="employee-adresse">Adresse:</label> <input type="text" id="employee-adresse"> </div>
+                    <div> <label for="employee-telephone">Téléphone:</label> <input type="tel" id="employee-telephone"> </div>
+                    <div> <label for="employee-lieu-residence">Lieu de résidence:</label> <input type="text" id="employee-lieu-residence"> </div>
                  </div>
                  <div class="form-row">
-                    <div>
-                        <label for="employee-salary">Salaire:</label>
-                        <input type="number" id="employee-salary" min="0" step="any">
-                    </div>
-                    <div>
-                        <label for="employee-hire-date">Date d'embauche:</label>
-                        <input type="date" id="employee-hire-date">
-                    </div>
+                    <div> <label for="employee-jours-travail">Jours de travail:</label> <input type="text" id="employee-jours-travail" placeholder="Ex: Lundi-Vendredi"> </div>
+                    <div> <label for="employee-heure-arrivee">Heure d'arrivée:</label> <input type="time" id="employee-heure-arrivee"> </div>
+                    <div> <label for="employee-heure-depart">Heure de départ:</label> <input type="time" id="employee-heure-depart"> </div>
+                 </div>
+                 <div class="form-row">
+                    <div> <label for="employee-salary">Salaire:</label> <input type="number" id="employee-salary" min="0" step="any"> </div>
+                    <div> <label for="employee-paid-amount">Montant Total Payé (Cumulé):</label> <input type="number" id="employee-paid-amount" min="0" step="any"> </div>
+                    <div> <label for="employee-hire-date">Date d'embauche:</label> <input type="date" id="employee-hire-date"> </div>
                  </div>
                  <h4>Personne à contacter en cas d'urgence</h4>
                  <div class="form-row">
-                    <div>
-                        <label for="employee-contact-person-nom">Nom:</label>
-                        <input type="text" id="employee-contact-person-nom">
-                    </div>
-                     <div>
-                        <label for="employee-contact-person-prenom">Prénom:</label>
-                        <input type="text" id="employee-contact-person-prenom">
-                    </div>
+                    <div> <label for="employee-contact-person-nom">Nom:</label> <input type="text" id="employee-contact-person-nom"> </div>
+                    <div> <label for="employee-contact-person-prenom">Prénom:</label> <input type="text" id="employee-contact-person-prenom"> </div>
                  </div>
                 <div class="form-row">
-                     <div>
-                        <label for="employee-contact-person-adresse">Adresse:</label>
-                        <input type="text" id="employee-contact-person-adresse">
-                     </div>
-                     <div>
-                        <label for="employee-contact-person-telephone">Téléphone:</label>
-                        <input type="tel" id="employee-contact-person-telephone">
-                    </div>
-                    <div>
-                        <label for="employee-contact-person-lieu-residence">Lieu de résidence:</label>
-                        <input type="text" id="employee-contact-person-lieu-residence">
-                    </div>
+                     <div> <label for="employee-contact-person-adresse">Adresse:</label> <input type="text" id="employee-contact-person-adresse"> </div>
+                     <div> <label for="employee-contact-person-telephone">Téléphone:</label> <input type="tel" id="employee-contact-person-telephone"> </div>
+                    <div> <label for="employee-contact-person-lieu-residence">Lieu de résidence:</label> <input type="text" id="employee-contact-person-lieu-residence"> </div>
                 </div>
                 <button type="submit">Ajouter Employé</button>
             </form>
 
-            <!-- Bouton pour afficher/masquer les détails des employés -->
             <button id="show-employees-details-button">Afficher/Masquer Liste Employés</button>
-
-            <!-- Conteneur pour les détails des employés -->
-            <div id="employees-details-container" style="display: none;">
+            <div id="employees-details-container" class="printable-content" style="display: none;">
                  <h3>Liste des Employés</h3>
                  <div class="button-group">
                     <button id="print-employees">Imprimer Employés</button>
@@ -335,14 +375,20 @@
                             <tr>
                                 <th>Nom</th>
                                 <th>Prénom</th>
-                                <th>Rôle</th>
-                                <th>Salaire</th>
+                                <th>Statut</th>
                                 <th>Date Embauche</th>
                                 <th>Adresse</th>
                                 <th>Téléphone</th>
                                 <th>Lieu Résidence</th>
+                                <th>Jours Travail</th>
+                                <th>Heure Arrivée</th>
+                                <th>Heure Départ</th>
+                                <th class="salary-col">Salaire</th>
+                                <th class="amount-col">Montant Payé</th>
+                                <th class="amount-col">Salaire Restant Dû</th>
                                 <th>Contact Urg. (Nom Prénom)</th>
                                 <th>Contact Urg. (Tél)</th>
+                                <th>Actions</th> <!-- NEW -->
                             </tr>
                         </thead>
                         <tbody>
@@ -356,6 +402,7 @@
         <section id="learners-section" class="form-container" style="display: none;">
             <h2>Gestion des Apprenants</h2>
              <form id="learner-form">
+                 <input type="hidden" id="learner-edit-index" value=""> <!-- For Edit -->
                  <h4>Informations Apprenant</h4>
                 <div class="form-row">
                     <div> <label for="learner-nom">Nom:</label> <input type="text" id="learner-nom" required> </div>
@@ -383,24 +430,28 @@
                     <div> <label for="learner-duree-formation">Durée de la Formation:</label> <input type="text" id="learner-duree-formation"> </div>
                  </div>
                  <div class="form-row">
-                    <div> <label for="learner-frais-documents">Frais des Documents:</label> <input type="number" id="learner-frais-documents" min="0" step="any"> </div>
+                    <div> <label for="learner-frais-documents">Frais des Documents (Payé):</label> <input type="number" id="learner-frais-documents" min="0" step="any"> </div>
                  </div>
-                 <h4>Frais de la Formation (Tranches)</h4>
+                 <h4>Frais de la Formation (Montants Payés par Tranche)</h4>
                  <div class="form-row">
-                     <div> <label for="learner-tranche1">1ère Tranche:</label> <input type="number" id="learner-tranche1" min="0" step="any"> </div>
-                     <div> <label for="learner-tranche2">2ème Tranche:</label> <input type="number" id="learner-tranche2" min="0" step="any"> </div>
-                     <div> <label for="learner-tranche3">3ème Tranche:</label> <input type="number" id="learner-tranche3" min="0" step="any"> </div>
-                     <div> <label for="learner-tranche4">4ème Tranche:</label> <input type="number" id="learner-tranche4" min="0" step="any"> </div>
+                     <div> <label for="learner-tranche1">1ère Tranche (Payé):</label> <input type="number" id="learner-tranche1" min="0" step="any"> </div>
+                     <div> <label for="learner-tranche2">2ème Tranche (Payé):</label> <input type="number" id="learner-tranche2" min="0" step="any"> </div>
+                     <div> <label for="learner-tranche3">3ème Tranche (Payé):</label> <input type="number" id="learner-tranche3" min="0" step="any"> </div>
+                     <div> <label for="learner-tranche4">4ème Tranche (Payé):</label> <input type="number" id="learner-tranche4" min="0" step="any"> </div>
                  </div>
                  <h4>Engagement</h4>
                 <div class="form-row">
                     <div> <label for="learner-garant-nom">Nom du Garant:</label> <input type="text" id="learner-garant-nom"> </div>
                     <div> <label for="learner-garant-prenom">Prénom du Garant:</label> <input type="text" id="learner-garant-prenom"> </div>
                 </div>
+                <div class="form-row">
+                    <div> <label for="learner-garant-telephone">Téléphone du Garant:</label> <input type="tel" id="learner-garant-telephone"> </div>
+                    <div> <label for="learner-garant-adresse">Adresse du Garant:</label> <input type="text" id="learner-garant-adresse"> </div>
+                </div>
                 <button type="submit">Ajouter Apprenant</button>
             </form>
             <button id="show-learners-details-button">Afficher/Masquer Liste Apprenants</button>
-            <div id="learners-details-container" style="display: none;">
+            <div id="learners-details-container" class="printable-content" style="display: none;">
                  <h3>Liste des Apprenants</h3>
                  <div class="button-group">
                         <button id="print-learners">Imprimer Apprenants</button>
@@ -409,7 +460,7 @@
                 </div>
                 <div class="table-container">
                     <table id="learners-table">
-                        <thead> <tr> <th>Nom</th> <th>Prénom</th> <th>Âge</th> <th>Adresse</th> <th>Lieu Résid.</th> <th>Niveau Études</th> <th>Sit. Matrim.</th> <th>Père (Nom Prénom)</th> <th>Mère (Nom Prénom)</th> <th>Filière</th> <th>Durée Form.</th> <th>Frais Docs</th> <th>Tranche 1</th> <th>Tranche 2</th> <th>Tranche 3</th> <th>Tranche 4</th> <th>Garant (Nom Prénom)</th> </tr> </thead>
+                        <thead> <tr> <th>Nom</th> <th>Prénom</th> <th>Âge</th> <th>Adresse</th> <th>Lieu Résid.</th> <th>Niveau Études</th> <th>Sit. Matrim.</th> <th>Père</th> <th>Mère</th> <th>Filière</th> <th>Durée Form.</th> <th>Frais Docs</th> <th>Tr. 1</th> <th>Tr. 2</th> <th>Tr. 3</th> <th>Tr. 4</th> <th>Garant</th> <th>Garant Tél</th> <th>Garant Adr.</th> <th>Actions</th> <!-- NEW --></tr> </thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -419,37 +470,81 @@
         <!-- Section Mobile Money -->
         <section id="mobile-money-section" class="form-container" style="display: none;">
             <h2>Gestion du Cabinet Mobile Money</h2>
+
             <form id="mobile-money-form">
+                 <input type="hidden" id="mobile-money-edit-index" value=""> <!-- For Edit -->
+                <h4>Point Journalier</h4>
                 <div class="form-row">
                      <div> <label for="mm-date">Date:</label> <input type="date" id="mm-date" required> </div>
                     <div> <label for="mm-agent">Agent au poste:</label> <input type="text" id="mm-agent" required> </div>
                 </div>
-                 <h4>Soldes</h4>
+                 <h5>Soldes</h5>
                 <div class="form-row">
                      <div> <label for="mm-balance-moov">Solde Moov:</label> <input type="number" id="mm-balance-moov" min="0" step="any" required> </div>
                     <div> <label for="mm-balance-mtn">Solde MTN:</label> <input type="number" id="mm-balance-mtn" min="0" step="any" required> </div>
                     <div> <label for="mm-balance-celttis">Solde Celttis:</label> <input type="number" id="mm-balance-celttis" min="0" step="any" required> </div>
                      <div> <label for="mm-balance-cash">Solde Espèce:</label> <input type="number" id="mm-balance-cash" min="0" step="any" required> </div>
                 </div>
-                 <h4>Crédits</h4>
+                 <h5>Crédits</h5>
                  <div class="form-row">
                     <div> <label for="mm-credit-moov">Crédit Moov:</label> <input type="number" id="mm-credit-moov" min="0" step="any"> </div>
                     <div> <label for="mm-credit-mtn">Crédit MTN:</label> <input type="number" id="mm-credit-mtn" min="0" step="any"> </div>
                      <div> <label for="mm-credit-celttis">Crédit Celttis:</label> <input type="number" id="mm-credit-celttis" min="0" step="any"> </div>
                 </div>
-                <button type="submit">Ajouter Point</button>
+                 <h5>Pertes Journalières</h5>
+                 <div class="form-row">
+                    <div> <label for="mm-perte-transfert">Perte Transfert/Retrait:</label> <input type="number" id="mm-perte-transfert" min="0" step="any"> </div>
+                    <div> <label for="mm-perte-credit">Perte Crédit:</label> <input type="number" id="mm-perte-credit" min="0" step="any"> </div>
+                </div>
+                <button type="submit">Ajouter Point Journalier</button>
             </form>
-            <button id="show-mobile-money-details-button">Afficher/Masquer Détails Mobile Money</button>
-            <div id="mobile-money-details-container" style="display: none;">
-                 <h3>Détails Mobile Money</h3>
+
+            <hr style="margin: 30px 0;">
+
+             <form id="mm-fournisseur-form">
+                 <input type="hidden" id="mm-fournisseur-edit-key" value=""> <!-- For Edit -->
+                <h4>Fournisseurs Mobile Money</h4>
+                <div class="form-row">
+                    <div><label for="mm-fournisseur-nom">Nom Fournisseur:</label><input type="text" id="mm-fournisseur-nom" required></div>
+                    <div><label for="mm-fournisseur-prenom">Prénom Fournisseur:</label><input type="text" id="mm-fournisseur-prenom"></div>
+                    <div><label for="mm-fournisseur-contact">Contact Fournisseur:</label><input type="tel" id="mm-fournisseur-contact"></div>
+                </div>
+                <div class="form-row">
+                    <div><label for="mm-fournisseur-montant">Montant Fourni:</label><input type="number" id="mm-fournisseur-montant" min="0" step="any" required></div>
+                    <div><label for="mm-fournisseur-interet">Intérêt (%):</label><input type="number" id="mm-fournisseur-interet" min="0" step="any"></div>
+                    <div><label for="mm-fournisseur-vendu">Crédit Vendu (Cumulé):</label><input type="number" id="mm-fournisseur-vendu" min="0" step="any"></div>
+                </div>
+                 <button type="submit">Ajouter / Mettre à Jour Fournisseur</button>
+             </form>
+
+            <button id="show-mobile-money-details-button">Afficher/Masquer Détails Points Journaliers</button>
+            <button id="show-mm-fournisseurs-details-button">Afficher/Masquer Liste Fournisseurs MM</button>
+
+            <div id="mobile-money-details-container" class="printable-content" style="display: none;">
+                 <h3>Détails Points Journaliers Mobile Money</h3>
                  <div class="button-group">
-                        <button id="print-mobile-money">Imprimer Mobile Money</button>
-                        <button id="export-mobile-money-excel">Exporter Mobile Money (Excel)</button>
-                        <button id="export-mobile-money-pdf">Exporter Mobile Money (PDF)</button>
+                        <button id="print-mobile-money">Imprimer Points Journaliers</button>
+                        <button id="export-mobile-money-excel">Exporter Points Journaliers (Excel)</button>
+                        <button id="export-mobile-money-pdf">Exporter Points Journaliers (PDF)</button>
                 </div>
                 <div class="table-container">
                     <table id="mobile-money-table">
-                        <thead> <tr> <th>Date</th> <th>Agent</th> <th>Solde Moov</th> <th>Solde MTN</th> <th>Solde Celttis</th> <th>Solde Espèce</th> <th>Total Solde</th> <th>Crédit Moov</th> <th>Crédit MTN</th> <th>Crédit Celttis</th> <th>Total Crédit</th> </tr> </thead>
+                        <thead> <tr> <th>Date</th> <th>Agent</th> <th>Solde Moov</th> <th>Solde MTN</th> <th>Solde Celttis</th> <th>Solde Espèce</th> <th>Total Solde</th> <th>Crédit Moov</th> <th>Crédit MTN</th> <th>Crédit Celttis</th> <th>Total Crédit</th> <th>Perte Trans/Retrait</th> <th>Perte Crédit</th> <th>Actions</th> <!-- NEW --></tr> </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="mm-fournisseurs-details-container" class="printable-content" style="display: none;">
+                 <h3>Liste des Fournisseurs Mobile Money</h3>
+                 <div class="button-group">
+                        <button id="print-mm-fournisseurs">Imprimer Fournisseurs</button>
+                        <button id="export-mm-fournisseurs-excel">Exporter Fournisseurs (Excel)</button>
+                        <button id="export-mm-fournisseurs-pdf">Exporter Fournisseurs (PDF)</button>
+                </div>
+                <div class="table-container">
+                    <table id="mm-fournisseurs-table">
+                        <thead> <tr> <th>Nom</th> <th>Prénom</th> <th>Contact</th> <th>Montant Fourni</th> <th>Intérêt (%)</th> <th>Crédit Vendu</th> <th>Crédit Restant</th> <th>Actions</th> </tr> </thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -459,25 +554,71 @@
         <!-- Section Compte Crédit Client -->
         <section id="creditors-section" class="form-container" style="display: none;">
             <h2>Gestion des Comptes Crédit Client</h2>
-            <form id="creditor-form">
+
+             <form id="client-profile-form">
+                 <input type="hidden" id="client-profile-edit-key" value=""> <!-- For Edit -->
+                <h4>Créer / Gérer Profil Client</h4>
+                 <div class="form-row">
+                    <div><label for="client-profile-nom">Nom Client:</label><input type="text" id="client-profile-nom" required></div>
+                    <div><label for="client-profile-prenom">Prénom Client:</label><input type="text" id="client-profile-prenom"></div>
+                    <div><label for="client-profile-statut">Statut Client:</label><input type="text" id="client-profile-statut" placeholder="Ex: Régulier, Occasionnel"></div>
+                 </div>
                 <div class="form-row">
-                     <div> <label for="creditor-date">Date:</label> <input type="date" id="creditor-date" required> </div>
-                     <div> <label for="creditor-name">Nom du Client:</label> <input type="text" id="creditor-name" required> </div>
+                    <div><label for="client-profile-adresse">Adresse Client:</label><input type="text" id="client-profile-adresse"></div>
+                    <div><label for="client-profile-contact">Contact Client:</label><input type="tel" id="client-profile-contact"></div>
+                 </div>
+                 <button type="submit">Ajouter / Mettre à Jour Profil</button>
+             </form>
+
+             <button id="show-client-profiles-button">Afficher/Masquer Liste Profils Clients</button>
+             <div id="client-profiles-container" class="printable-content" style="display: none;">
+                 <h3>Liste des Profils Clients</h3>
+                 <div class="button-group">
+                    <button id="print-client-profiles">Imprimer Profils</button>
+                    <button id="export-client-profiles-excel">Exporter Profils (Excel)</button>
+                    <button id="export-client-profiles-pdf">Exporter Profils (PDF)</button>
+                 </div>
+                 <div class="table-container">
+                    <table id="client-profiles-table">
+                        <thead><tr><th>Nom</th><th>Prénom</th><th>Adresse</th><th>Contact</th><th>Statut</th><th>Actions</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                 </div>
+             </div>
+
+            <hr style="margin: 30px 0;">
+
+            <form id="creditor-form">
+                 <!-- Edit state for creditors is complex, handled via table delete/receipt -->
+                <h4>Ajouter Paiement / Nouvelle Transaction à Crédit</h4>
+                <div class="form-row">
+                     <div> <label for="creditor-date">Date Transaction/Paiement:</label> <input type="date" id="creditor-date" required> </div>
+                     <div>
+                         <label for="creditor-name">Client:</label>
+                         <select id="creditor-name" required>
+                             <option value="">-- Choisir Client --</option>
+                         </select>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div> <label for="creditor-designation">Désignation (Produit/Service):</label> <input type="text" id="creditor-designation" required> </div>
-                    <div> <label for="amount-to-pay">Montant Payé ce jour:</label> <input type="number" id="amount-to-pay" min="0" step="any" required> </div>
-                    <div> <label for="remaining-amount-to-pay">Montant Total Dû (Initial):</label> <input type="number" id="remaining-amount-to-pay" min="0" step="any" required> </div>
-                </div>
+                    <div> <label for="creditor-quantity">Quantité:</label> <input type="number" id="creditor-quantity" min="0" step="any"> </div>
+                    <div> <label for="creditor-unit-price">Prix Unitaire:</label> <input type="number" id="creditor-unit-price" min="0" step="any"> </div>
+                 </div>
+                 <div class="form-row">
+                    <div> <label for="creditor-total-amount-due">Montant Total Dû (Nouvelle Transaction):</label> <input type="number" id="creditor-total-amount-due" min="0" step="any" placeholder="Pour nouvelle transaction"> </div>
+                    <div> <label for="creditor-amount-paid">Montant Payé ce jour:</label> <input type="number" id="creditor-amount-paid" min="0" step="any" required> </div>
+                 </div>
                 <div class="form-row">
                    <div> <label for="creditor-due-date">Date d'Échéance:</label> <input type="date" id="creditor-due-date"> </div>
-                    <div> <label for="creditor-contact">Contact Client:</label> <input type="tel" id="creditor-contact"> </div>
+                    <div> <label for="creditor-contact">(Contact via Profil)</label> <input type="tel" id="creditor-contact" readonly style="background-color: #e9ecef;"> </div>
                 </div>
-                <button type="submit">Ajouter/Mettre à jour Crédit Client</button>
+                <button type="submit">Ajouter Paiement / Créer Crédit</button>
             </form>
-            <button id="show-creditors-details-button">Afficher/Masquer Détails Crédits Clients</button>
-            <div id="creditors-details-container" style="display: none;">
-                <h3>Détails des Comptes Crédit Client</h3>
+
+            <button id="show-creditors-details-button">Afficher/Masquer Détails Transactions Crédit</button>
+            <div id="creditors-details-container" class="printable-content" style="display: none;">
+                <h3>Détails des Transactions Crédit Client</h3>
                 <div class="button-group">
                     <button id="print-creditors">Imprimer Crédits Clients</button>
                     <button id="export-creditors-excel">Exporter Crédits Clients (Excel)</button>
@@ -485,7 +626,22 @@
                 </div>
                 <div class="table-container">
                     <table id="creditors-table">
-                        <thead> <tr> <th>Date Dernier Paiement</th> <th>Nom Client</th> <th>Désignation</th> <th>Montant Total Dû</th> <th>Montant Payé (Cumulé)</th> <th>Montant Restant</th> <th>Date d'Échéance</th> <th>Contact</th> <th>Statut</th> </tr> </thead>
+                        <thead>
+                            <tr>
+                                <th class="date-col">Date Dern. Op.</th>
+                                <th class="name-col">Nom Prénom Client</th>
+                                <th class="designation-col">Désignation</th>
+                                <th class="quantity-col">Qté</th>
+                                <th class="unit-price-col">PU</th>
+                                <th class="amount-col">Montant Total Dû</th>
+                                <th class="amount-col">Montant Payé (Cumulé)</th>
+                                <th class="amount-col">Montant Restant</th>
+                                <th class="date-col">Date Échéance</th>
+                                <th class="contact-col">Contact</th>
+                                <th class="status-col">Statut</th>
+                                <th>Actions</th> <!-- NEW -->
+                            </tr>
+                        </thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -496,6 +652,7 @@
         <section id="debt-section" class="form-container" style="display: none;">
             <h2>Gestion des Dettes / Prêts de l'Entreprise</h2>
             <form id="debt-form">
+                <input type="hidden" id="debt-edit-index" value=""> <!-- For Edit -->
                 <div class="form-row">
                     <div> <label for="debt-date">Date:</label> <input type="date" id="debt-date" required> </div>
                     <div> <label for="debt-type">Type:</label> <select id="debt-type" required> <option value="">-- Choisir --</option> <option value="Dette">Dette (Argent dû par l'entreprise)</option> <option value="Prêt">Prêt (Argent prêté par l'entreprise)</option> </select> </div>
@@ -512,7 +669,7 @@
                 <button type="submit">Ajouter Dette/Prêt</button>
             </form>
             <button id="show-debt-details-button">Afficher/Masquer Détails Dettes/Prêts</button>
-            <div id="debt-details-container" style="display: none;">
+            <div id="debt-details-container" class="printable-content" style="display: none;">
                 <h3>Détails des Dettes / Prêts de l'Entreprise</h3>
                 <div class="button-group">
                     <button id="print-debt">Imprimer Dettes/Prêts</button>
@@ -521,7 +678,7 @@
                 </div>
                 <div class="table-container">
                     <table id="debt-table">
-                        <thead> <tr> <th>Date Enreg.</th> <th>Type</th> <th>Créancier/Débiteur</th> <th>Description</th> <th>Montant Total</th> <th>Date d'Échéance</th> <th>Statut</th> </tr> </thead>
+                        <thead> <tr> <th>Date Enreg.</th> <th>Type</th> <th>Créancier/Débiteur</th> <th>Description</th> <th>Montant Total</th> <th>Date d'Échéance</th> <th>Statut</th> <th>Actions</th> <!-- NEW --></tr> </thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -545,7 +702,7 @@
                 <button id="generate-report">Générer Bilan</button>
             </div>
              <button id="show-report-details-button" style="display: none;">Afficher/Masquer Bilan</button>
-             <div id="report-details-container" style="display: none;">
+             <div id="report-details-container" class="printable-content" style="display: none;">
                 <h3>Bilan Généré</h3>
                  <div class="button-group">
                     <button id="print-report">Imprimer Bilan</button>
@@ -562,6 +719,11 @@
         </section>
 
     </div> <!-- Fin de printable-area -->
+
+    <!-- Hidden Div for Printing Invoices -->
+    <div id="invoice-print-area" style="display: none;">
+        <!-- Invoice content will be generated here by JS -->
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
