@@ -1,132 +1,300 @@
 /* style.css */
 :root {
-    /* Define Color Palette (Simulated from Logo) */
-    --color-primary: #1A3A6D; /* Dark Blue */
-    --color-primary-light: #4A70A8; /* Lighter Blue */
-    --color-accent: #EAA43A; /* Gold/Orange */
-    --color-success: #28a745; /* Green */
+    /* Define Color Palette (Simulated from Logo & Requested Colors) */
+    --color-primary: #0014db;       /* Dark Blue (Existing) */
+    --color-primary-light: #0401a7; /* Lighter Blue (Existing) */
+    --color-accent: #EAA43A;        /* Gold/Orange (Existing - Keeping) */
+    --color-accent-yellow: #f3f300; /* Yellow (Alternative/Warning) */
+    --color-success: #0ea701;       /* Green (Requested) */
     --color-success-dark: #218838;
-    --color-danger: #dc3545; /* Red */
+    --color-danger: #f30000;        /* Red (Requested) */
     --color-danger-dark: #a71d2a;
-    --color-info: #17a2b8; /* Teal */
+    --color-info: #070050;          /* Teal (For Info/Print/Export) */
     --color-info-dark: #138496;
-    --color-secondary: #6c757d; /* Gray */
-    --color-secondary-dark: #5a6268;
+    --color-secondary: #0014db;     /* Gray (For Secondary Buttons - Using Blue as requested) */
+    --color-secondary-dark: #0401a7; /* Darker Blue for secondary hover */
     --color-text: #333;
     --color-text-muted: #555;
-    --color-background: #f8f9fa; /* Light Gray */
-    --color-background-alt: #ffffff; /* White */
+    --color-background: #f4f7fc;    /* Lighter background */
+    --color-background-alt: #ffffff;/* White */
     --color-border: #dee2e6;
     --color-input-border: #ced4da;
-    --color-input-focus-border: #80bdff; /* Keep blue for focus standard */
-    --color-input-focus-shadow: rgba(0, 123, 255, 0.25);
+    --color-input-focus-border: var(--color-primary-light); /* Use Lighter Blue for focus */
+    --color-input-focus-shadow: rgba(74, 112, 168, 0.25); /* Matching Lighter Blue Shadow */
     --color-table-header-bg: #e9ecef;
-    --color-table-stripe-bg: var(--color-background);
+    --color-table-stripe-bg: #f8f9fa; /* Keep light stripe */
     --color-table-hover-bg: #e2e6ea;
     --color-link: var(--color-primary);
     --color-link-hover: var(--color-primary-light);
+    --color-warning-bg: #fff3cd;    /* Light Yellow for Warning/Partiel BG */
+    --color-warning-text: #856404;
+    --color-success-bg: #d4edda;    /* Light Green for Success/Solde BG */
+    --color-success-text: #155724;
+    --color-danger-bg: #f8d7da;     /* Light Red for Danger BG (e.g., stock out) */
+    --color-danger-text: #721c24;
 }
 
 /* --- Base & Layout --- */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern font stack */
     line-height: 1.6;
     margin: 0;
     padding: 0;
     background-color: var(--color-background);
     color: var(--color-text);
-    font-size: 16px; /* Base font size */
+    font-size: 15px; /* Slightly smaller base font size */
+    display: flex; /* Use flexbox for body */
+    flex-direction: column; /* Stack elements vertically */
+    min-height: 100vh; /* Ensure body takes full viewport height */
 }
 
 #printable-area {
-    max-width: 1400px; /* Limit content width */
-    margin: 0 auto; /* Center the content */
-    padding: 0 15px; /* Add padding on sides */
+    flex-grow: 1; /* Allow main content to grow and push footer down */
+    max-width: 1600px; /* Slightly wider max width */
+    width: 100%; /* Take full width */
+    margin: 15px auto 0 auto; /* Center with less top margin, no bottom margin */
+    padding: 0 20px 30px 20px; /* More padding */
     background-color: var(--color-background-alt); /* White background for main area */
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-    min-height: 100vh;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07); /* Softer shadow */
+    border-radius: 8px; /* Rounded corners for the main container */
+    box-sizing: border-box; /* Include padding in width */
 }
 
 /* Utility class for hiding elements */
 .hidden {
-    display: none;
+    display: none !important; /* Use important to override potential inline styles if needed */
 }
+
+/* --- Login Screen Styles --- */
+#login-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75); /* Darker overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top */
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#login-form {
+    background-color: #fff;
+    padding: 40px 45px; /* More padding */
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px; /* Max width for the form */
+    text-align: center;
+}
+
+.login-logo {
+    display: block;
+    max-height: 70px; /* Adjust size */
+    margin: 0 auto 25px auto; /* Center logo */
+    border-radius: 50%;
+}
+
+#login-form h2 {
+    margin-top: 0;
+    margin-bottom: 30px;
+    color: var(--color-primary);
+    font-size: 1.7em;
+}
+
+.form-row-login {
+    margin-bottom: 20px; /* Space between rows */
+    text-align: left;
+}
+
+.form-row-login label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.form-row-login input[type="text"],
+.form-row-login input[type="password"] {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--color-input-border);
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1em;
+}
+.form-row-login input:focus {
+    border-color: var(--color-input-focus-border);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem var(--color-input-focus-shadow);
+}
+
+#login-button {
+    padding: 12px 25px;
+    width: 100%; /* Full width button */
+    background-color: #0127a7;
+    color: white;
+    font-size: 1.1em;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 10px; /* Space above button */
+}
+
+#login-button:hover {
+    background-color: #0ea701;
+}
+#login-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: var(--color-danger);
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 15px; /* Space below error */
+    font-size: 0.95em;
+    text-align: center;
+}
+/* ------------------------ */
+
 
 /* --- Header --- */
 .header-container {
     display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    padding: 20px 25px;
-    background-color: var(--color-primary); /* Use primary color */
-    color: var(--color-background-alt); /* White text on dark background */
-    border-bottom: 3px solid var(--color-accent); /* Accent border */
-    margin-bottom: 30px;
+    align-items: center; /* Vertically align items */
+    justify-content: flex-start; /* Keep items aligned to the start */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    padding: 20px 30px; /* More padding */
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%); /* Gradient background */
+    color: var(--color-background-alt);
+    border-bottom: 4px solid var(--color-accent); /* Accent border */
+    margin: -1px -21px 30px -21px; /* Extend to edges of rounded container */
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .logo {
     display: block;
-    max-height: 70px; /* Slightly smaller logo */
-    margin-right: 20px;
-    border-radius: 4px; /* Optional rounded corners */
+    max-height: 65px; /* Adjusted logo size */
+    margin-right: 25px;
+    border-radius: 50%; /* Circular logo */
+    border: 2px solid var(--color-background-alt);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
 h1 {
     margin: 0;
-    font-size: 1.9em;
+    font-size: 2em; /* Larger title */
     font-weight: 600;
-    color: var(--color-background-alt); /* White text */
+    color: var(--color-background-alt);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
     text-align: left;
-    flex-grow: 1;
+    margin-right: 20px; /* Add space after title */
+    flex-shrink: 0; /* Prevent title from shrinking too much */
 }
+
+/* User Info Styles */
+.user-info {
+    margin-left: auto; /* Push user info (and logout button after it) to the right */
+    margin-right: 15px; /* Space before logout button */
+    font-size: 0.9em;
+    color: #e0e0e0; /* Lighter color on the dark header */
+    white-space: nowrap; /* Prevent wrapping */
+    text-align: right;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+#user-info-username {
+    font-weight: bold;
+    color: #ffffff; /* White username */
+}
+#user-info-status {
+    font-style: italic;
+}
+
+/* Logout Button Style */
+#logout-button {
+    padding: 8px 15px;
+    font-size: 13px;
+    font-weight: 600;
+    background-color: var(--color-secondary); /* Use secondary blue */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+#logout-button:hover {
+    background-color: var(--color-secondary-dark); /* Darker blue on hover */
+}
+
 
 /* --- Main Buttons --- */
 .main-buttons {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 12px; /* Slightly more gap */
-    margin-bottom: 30px;
-    padding: 15px;
-    background-color: var(--color-table-header-bg); /* Light background */
+    display: grid; /* Use Grid for better control */
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Responsive grid */
+    gap: 15px; /* More gap */
+    margin-bottom: 35px; /* More space below */
+    padding: 20px;
+    background-color: #fff; /* White background */
     border-radius: 8px;
-    margin-left: 20px;
-    margin-right: 20px;
+    margin-left: 0px; /* Align with section padding */
+    margin-right: 0px;
     border: 1px solid var(--color-border);
+    box-shadow: 0 2px 8px rgba(0,0,0, 0.05);
 }
 
 .main-buttons button {
-    flex: 1 1 170px; /* Allow more space */
-    min-width: 160px;
-    padding: 14px 12px; /* Increase padding */
-    font-size: 15px; /* Slightly larger font */
-    font-weight: 500;
+    padding: 15px 10px; /* Taller buttons */
+    font-size: 14px; /* Smaller font for more text */
+    font-weight: 600; /* Bolder font */
     background-color: var(--color-primary-light); /* Use lighter primary */
     color: white;
     border: none;
-    border-radius: 5px; /* Consistent radius */
+    border-radius: 6px;
     cursor: pointer;
     text-align: center;
-    margin: 0;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .main-buttons button:hover {
      background-color: var(--color-primary); /* Darker on hover */
-     transform: translateY(-1px);
+     transform: translateY(-2px); /* Lift effect */
+     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 .main-buttons button:active {
     transform: translateY(0px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+/* Specific Colors for Key Actions */
+#show-supply-section { background-color: var(--color-success); }
+#show-supply-section:hover { background-color: var(--color-success-dark); }
+#show-sales-section { background-color: var(--color-accent-yellow); color: var(--color-text); }
+#show-sales-section:hover { background-color: #e6ac00; }
+#show-report-section { background-color: var(--color-info); }
+#show-report-section:hover { background-color: var(--color-info-dark); }
+#show-admin-section { background-color: var(--color-danger); } /* Admin button red */
+#show-admin-section:hover { background-color: var(--color-danger-dark); }
 
 
 /* --- Sections & Forms --- */
+main { /* Ensure main takes up available space if needed */
+    /* flex-grow: 1; */ /* This is handled by #printable-area now */
+}
 section {
-    margin: 25px 20px; /* Consistent margins */
-    padding: 25px; /* More padding */
+    margin: 30px 0px; /* Consistent margins */
+    padding: 30px; /* More padding */
     background-color: white;
     border-radius: 8px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
     border: 1px solid var(--color-border);
 }
 
@@ -134,43 +302,53 @@ section {
     text-align: center;
     color: var(--color-primary); /* Primary color for section titles */
     margin-top: 0;
-    margin-bottom: 30px; /* More space below title */
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--color-border);
-    font-size: 1.6em;
+    margin-bottom: 35px; /* More space below title */
+    padding-bottom: 18px;
+    border-bottom: 2px solid var(--color-primary-light);
+    font-size: 1.8em;
     font-weight: 600;
 }
 
-h4 { /* Sub-section headers in forms */
+/* Sub-section headers in forms */
+h4 {
     width: 100%;
-    margin-top: 30px; /* More space above */
-    margin-bottom: 20px; /* More space below */
-    padding-bottom: 8px;
+    margin-top: 35px; /* More space above */
+    margin-bottom: 25px; /* More space below */
+    padding-bottom: 10px;
     border-bottom: 1px solid #eee;
-    font-size: 1.2em;
+    font-size: 1.3em;
     font-weight: 600;
     color: var(--color-primary-light); /* Use lighter primary */
+}
+/* Sub-sub-section headers */
+h5 {
+    width: 100%;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--color-secondary-dark);
 }
 
 .form-row {
     display: flex;
     align-items: flex-start; /* Align items top for multi-line labels */
     flex-wrap: wrap;
-    gap: 25px 20px; /* Row gap, Column gap */
-    margin-bottom: 20px; /* Increase space between rows */
+    gap: 25px 25px; /* Increased Column gap */
+    margin-bottom: 25px; /* Increase space between rows */
 }
 
 .form-row > div { /* Input container */
-     flex: 1 1 240px; /* Allow slightly more width */
-     min-width: 200px;
+     flex: 1 1 250px; /* Allow slightly more width */
+     min-width: 210px;
 }
 
-.form-row > label { /* Direct label in form-row (less common) */
-     flex: 1 1 240px;
-     min-width: 200px;
-     padding-top: 10px; /* Align with input text */
-     font-weight: bold;
-     font-size: 0.9em;
+.form-row > label { /* Direct label in form-row */
+     flex: 1 1 250px;
+     min-width: 210px;
+     padding-top: 11px; /* Align with input text */
+     font-weight: 600; /* Bolder */
+     font-size: 1em; /* Larger */
      color: var(--color-text-muted);
 }
 
@@ -178,145 +356,197 @@ h4 { /* Sub-section headers in forms */
 .form-row label {
     display: block;
     margin-bottom: 8px; /* More space below label */
-    font-weight: bold;
-    font-size: 0.9em;
+    font-weight: 600; /* Bolder label */
+    font-size: 0.95em; /* Slightly larger */
     color: var(--color-text-muted);
     text-align: left;
 }
 
+/* Input Styles */
 input[type="date"],
 input[type="number"],
 input[type="text"],
+input[type="password"], /* Added password type */
 input[type="month"],
 input[type="week"],
 input[type="tel"],
 input[type="time"],
+input[type="search"], /* Added search type */
 select,
-textarea { /* Added textarea */
+textarea {
     width: 100%;
-    padding: 10px 14px; /* More padding */
+    padding: 11px 15px; /* More padding */
     margin-top: 0;
     border: 1px solid var(--color-input-border);
-    border-radius: 5px; /* Consistent radius */
+    border-radius: 6px; /* Slightly more rounded */
     box-sizing: border-box;
     font-size: 1em;
     background-color: #fff;
     color: var(--color-text);
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    font-family: inherit; /* Ensure textarea uses same font */
-    line-height: 1.5; /* Ensure textarea has reasonable line height */
+    font-family: inherit;
+    line-height: 1.5;
 }
-input:focus, select:focus, textarea:focus { /* Added textarea */
+input:focus, select:focus, textarea:focus {
     border-color: var(--color-input-focus-border);
     outline: 0;
     box-shadow: 0 0 0 0.2rem var(--color-input-focus-shadow);
 }
 
-input[readonly] {
+input[readonly],
+input.user-connected-field[readonly] { /* Style for user connected field specifically */
     background-color: #e9ecef;
     cursor: not-allowed;
-    opacity: 0.8;
+    opacity: 0.9;
+    font-style: italic;
+    color: var(--color-text-muted);
+}
+small { /* Style for help text */
+    display: block;
+    margin-top: 5px;
+    font-size: 0.85em;
+    color: var(--color-text-muted);
 }
 
 
 /* --- Buttons --- */
 
 /* Base button style */
-button, button[type="submit"] {
-    padding: 10px 20px;
+button, button[type="submit"], .report-type-btn {
+    padding: 12px 22px; /* Larger padding */
     border: none;
-    border-radius: 5px; /* Consistent radius */
+    border-radius: 6px; /* Consistent radius */
     cursor: pointer;
     font-size: 14px;
-    font-weight: 500;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    margin-right: 8px;
+    font-weight: 600; /* Bolder */
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    margin-right: 10px;
     margin-top: 10px;
-    color: white; /* Default text color */
+    color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0, 0.1);
 }
-button:hover, button[type="submit"]:hover {
+button:hover:not(:disabled),
+button[type="submit"]:hover:not(:disabled),
+.report-type-btn:hover:not(:disabled) {
     transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0, 0.15);
 }
-button:active, button[type="submit"]:active {
+button:active:not(:disabled),
+button[type="submit"]:active:not(:disabled),
+.report-type-btn:active:not(:disabled) {
     transform: translateY(0px);
+    box-shadow: 0 1px 3px rgba(0,0,0, 0.1);
+}
+button:disabled, button[type="submit"]:disabled, .report-type-btn:disabled {
+    background-color: #cccccc !important; /* Use important to override specific colors */
+    color: #666666 !important;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
 
 /* Primary Submit/Add Buttons */
 button[type="submit"] {
     background-color: var(--color-success); /* Green */
 }
-button[type="submit"]:hover {
+button[type="submit"]:hover:not(:disabled) {
     background-color: var(--color-success-dark);
 }
+/* General action button in forms (like Generate Report) */
+#generate-report {
+     background-color: var(--color-primary);
+}
+#generate-report:hover:not(:disabled) {
+     background-color: var(--color-primary-light);
+}
 
-/* Default/General Buttons (Not Submit, Not Secondary) */
-button:not([type="submit"]):not(.secondary-btn):not(.action-btn):not(.print-export-btn):not(#preview-print-invoice-button):not(#add-invoice-item-button) {
-    background-color: var(--color-primary-light); /* Lighter primary */
+/* Report Type Selection Buttons */
+.report-type-btn {
+    background-color: var(--color-primary-light);
 }
-button:not([type="submit"]):not(.secondary-btn):not(.action-btn):not(.print-export-btn):not(#preview-print-invoice-button):not(#add-invoice-item-button):hover {
-    background-color: var(--color-primary); /* Darker primary */
+.report-type-btn:hover:not(:disabled) {
+    background-color: var(--color-primary);
 }
+
 /* Specific styling for Invoice Preview/Print button */
 #preview-print-invoice-button {
     background-color: var(--color-accent);
-    color: var(--color-primary);
+    color: var(--color-primary); /* Dark text on gold */
     font-weight: bold;
 }
-#preview-print-invoice-button:hover {
+#preview-print-invoice-button:hover:not(:disabled) {
      background-color: #d6912a; /* Slightly darker gold */
 }
 
 /* Secondary Buttons (Show/Hide, etc.) */
-#show-supply-list-button, #show-stock-details-button,
-#show-sales-details-button, #show-materiel-electrique-details-button,
-#show-expenses-details-button, #show-others-details-button,
-#show-employees-details-button, #show-learners-details-button,
-#show-mobile-money-details-button, #show-mm-fournisseurs-details-button,
-#show-client-profiles-button,
-#show-creditors-details-button,
-#show-debt-details-button,
-#show-report-details-button,
-#show-employee-permissions-button, /* ADDED */
-#show-learner-permissions-button, /* ADDED */
-/* Add a class for easier targeting if needed */
 .secondary-btn {
-    background-color: var(--color-secondary); /* Gray */
+    background-color: var(--color-secondary); /* Use secondary blue */
     color: white;
     margin-top: 25px; /* Space above toggle buttons */
 }
-#show-supply-list-button:hover, #show-stock-details-button:hover,
-#show-sales-details-button:hover, #show-materiel-electrique-details-button:hover,
-#show-expenses-details-button:hover, #show-others-details-button:hover,
-#show-employees-details-button:hover, #show-learners-details-button:hover,
-#show-mobile-money-details-button:hover, #show-mm-fournisseurs-details-button:hover,
-#show-client-profiles-button:hover,
-#show-creditors-details-button:hover,
-#show-debt-details-button:hover,
-#show-report-details-button:hover,
-#show-employee-permissions-button:hover, /* ADDED */
-#show-learner-permissions-button:hover, /* ADDED */
-.secondary-btn:hover {
-     background-color: var(--color-secondary-dark);
+.secondary-btn:hover:not(:disabled) {
+     background-color: var(--color-secondary-dark); /* Darker blue */
 }
+
+/* Add invoice item button */
+#add-invoice-item-button {
+    background-color: var(--color-info);
+    color: white;
+    font-weight: bold;
+    margin-top: 5px; /* Align better after items */
+    margin-bottom: 25px; /* Add space below add button */
+    padding: 8px 15px; /* Smaller padding */
+    font-size: 13px;
+}
+#add-invoice-item-button:hover:not(:disabled) {
+     background-color: var(--color-info-dark);
+}
+
 
 /* --- Details Containers (Tables) --- */
 .printable-content {
     border: 1px solid var(--color-border);
-    padding: 25px; /* More padding */
-    margin-top: 25px; /* Space above details */
+    padding: 25px 30px; /* More padding */
+    margin-top: 30px; /* Space above details */
     border-radius: 8px;
-    background-color: var(--color-background-alt);
+    background-color: #fdfdfd; /* Slightly off-white */
 }
 
 .printable-content h3 {
     text-align: left;
     margin-top: 0;
-    margin-bottom: 20px; /* Space below title */
+    margin-bottom: 25px; /* Space below title */
     color: var(--color-primary-light); /* Lighter primary */
-    font-size: 1.4em;
+    font-size: 1.5em; /* Larger */
     font-weight: 600;
-    padding-bottom: 10px;
+    padding-bottom: 12px;
     border-bottom: 1px solid #eee;
+}
+
+/* NEW: Table Search Container */
+.table-search-container {
+    margin-bottom: 20px; /* Space between search and buttons */
+    text-align: left; /* Align label/input left */
+}
+.table-search-container label {
+    margin-right: 8px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    font-size: 0.95em;
+}
+.table-search-container input[type="search"] {
+    padding: 8px 12px; /* Slightly smaller */
+    border: 1px solid var(--color-input-border);
+    border-radius: 6px;
+    font-size: 0.95em;
+    width: clamp(200px, 35%, 350px); /* Adjust width as needed */
+    box-sizing: border-box; /* Ensure padding is included */
+    /* Inherit general input focus styles */
+}
+.table-search-container input[type="search"]:focus {
+   border-color: var(--color-input-focus-border);
+   outline: 0;
+   box-shadow: 0 0 0 0.2rem var(--color-input-focus-shadow);
 }
 
 /* Print/Export Button Group */
@@ -325,17 +555,17 @@ button:not([type="submit"]):not(.secondary-btn):not(.action-btn):not(.print-expo
     text-align: left;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
 }
 .button-group button {
     margin-top: 0;
     margin-right: 0; /* Use gap for spacing */
-    padding: 8px 15px; /* Adjust padding */
-    font-size: 13px; /* Slightly smaller */
+    padding: 9px 16px; /* Adjust padding */
+    font-size: 13px;
     background-color: var(--color-info); /* Teal */
     color: white;
 }
-.button-group button:hover {
+.button-group button:hover:not(:disabled) {
     background-color: var(--color-info-dark);
 }
 
@@ -343,23 +573,30 @@ button:not([type="submit"]):not(.secondary-btn):not(.action-btn):not(.print-expo
 .table-container {
   overflow-x: auto;
   width: 100%;
-  margin-top: 15px; /* Space above table */
+  margin-top: 20px; /* More space above table */
   border: 1px solid var(--color-border); /* Border around container */
-  border-radius: 5px;
+  border-radius: 6px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9em;
+    font-size: 0.95em; /* Slightly larger table font */
 }
 
 th, td {
     text-align: left;
-    padding: 12px 15px; /* More padding */
+    padding: 14px 16px; /* More padding */
     border: 1px solid var(--color-border);
-    vertical-align: middle;
+    vertical-align: middle; /* Align middle */
+    border-bottom: 1px solid var(--color-border); /* Add bottom border to all cells */
+    border-right: none; /* Remove right border */
+    border-left: none; /* Remove left border */
 }
+/* Add left/right border only to first/last cell */
+th:first-child, td:first-child { border-left: 1px solid var(--color-border); }
+th:last-child, td:last-child { border-right: 1px solid var(--color-border); }
+
 
 th {
     background-color: var(--color-table-header-bg);
@@ -367,11 +604,16 @@ th {
     white-space: nowrap;
     color: var(--color-primary); /* Dark blue text for headers */
     text-align: center; /* Center align header text by default */
-    font-size: 0.95em;
-    border-bottom: 2px solid var(--color-border); /* Stronger bottom border */
+    font-size: 1em; /* Larger header font */
+    border-bottom: 2px solid var(--color-primary-light); /* Stronger bottom border */
+    border-top: 1px solid var(--color-border); /* Top border for header */
 }
 /* Left align specific headers */
-th.designation-col, th.name-col, th.reason-col, th.contact-col, th.type-col, th.status-col, th.description-col /* Added */ {
+th.designation-col, th.name-col, th.reason-col, th.contact-col,
+th.type-col, th.status-col, th.description-col, th.address-col,
+th.residence-col, th.workdays-col, th.agent-col, th.post-col, th.filiere-col, /* Added more */
+th.user-col /* Added user column alignment */
+{
     text-align: left;
 }
 
@@ -385,261 +627,369 @@ tbody tr:hover {
     background-color: var(--color-table-hover-bg);
 }
 
-/* Table Row Highlighting */
-.solde td { /* Fully paid / Settled */
-    background-color: #d4edda !important; /* Light green */
-    color: #155724;
+/* Table Row Highlighting using requested colors */
+.solde td { /* Fully paid / Settled / Accordé */
+    background-color: var(--color-success-bg) !important;
+    color: var(--color-success-text);
 }
-.partiel td { /* Partially paid / In Progress */
-    background-color: #fff3cd !important; /* Light yellow */
-    color: #856404;
+.partiel td { /* Partially paid / In Progress / En Attente */
+    background-color: var(--color-warning-bg) !important;
+    color: var(--color-warning-text);
+}
+.danger td { /* Overdue / Rejected / Low Stock */
+     background-color: var(--color-danger-bg) !important;
+     color: var(--color-danger-text);
 }
 
 /* Specific Column Content Alignment (TD) */
 td.unit-price-col, td.salary-col, td.amount-col, td.total-cost-col,
-td.balance-col, td.credit-col, td.remaining-salary-col /* Added specific class */
-{ text-align: right; font-family: monospace; /* Monospace for numbers */ }
+td.balance-col, td.credit-col, td.remaining-salary-col
+{ text-align: right; font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; font-size: 0.98em; /* Monospace for numbers */ }
 
 td.quantity-col, td.supply-col, td.sold-col, td.remaining-col, td.age-col,
-td.interest-col /* Added */
+td.interest-col, td.time-col /* Added */
 { text-align: center; }
 
-td.designation-col, td.name-col, td.reason-col, td.contact-col, td.type-col,
-td.status-col, td.description-col /* Added */
-{ text-align: left; }
+/* Added user column alignment for TD */
+td.user-col {
+    text-align: left;
+    font-style: italic;
+    font-size: 0.9em;
+    color: var(--color-text-muted);
+}
+/* Added text-align left for TD cells corresponding to left-aligned TH */
+td.designation-col, td.name-col, td.reason-col, td.contact-col,
+td.type-col, td.status-col, td.description-col, td.address-col,
+td.residence-col, td.workdays-col, td.agent-col, td.post-col, td.filiere-col
+{
+    text-align: left;
+}
 
 
 /* --- Action Buttons in Tables --- */
 .actions-cell {
     text-align: center;
     white-space: nowrap;
-    width: auto; /* Let it size based on content */
-    min-width: 100px; /* Ensure minimum space */
-    padding: 5px 8px !important; /* Less padding for compact actions */
+    width: auto;
+    min-width: 110px; /* More space for icons */
+    padding: 8px 8px !important; /* Adjusted padding */
 }
 
 .action-btn {
     background: none;
     border: none;
-    padding: 4px 6px; /* Smaller padding */
+    padding: 5px 7px; /* Adjusted padding */
     cursor: pointer;
-    font-size: 1.2em; /* Larger icons */
-    margin: 0 4px; /* Space between icons */
+    font-size: 1.4em; /* Larger icons */
+    margin: 0 5px; /* Space between icons */
     transition: transform 0.1s ease, color 0.15s ease;
     vertical-align: middle;
     color: var(--color-text-muted); /* Default muted color */
 }
-.action-btn:hover {
-    transform: scale(1.25); /* Slightly bigger hover effect */
+.action-btn:hover:not(:disabled) {
+    transform: scale(1.2); /* Slightly smaller hover effect */
 }
-.action-btn:active {
+.action-btn:active:not(:disabled) {
     transform: scale(1.1);
 }
+/* Use requested colors */
+.edit-btn { color: var(--color-primary-light); } /* Blue */
+.edit-btn:hover:not(:disabled) { color: var(--color-primary); }
 
-.edit-btn { color: var(--color-primary-light); }
-.edit-btn:hover { color: var(--color-primary); }
+.delete-btn { color: var(--color-danger); } /* Red */
+.delete-btn:hover:not(:disabled) { color: var(--color-danger-dark); }
 
-.delete-btn { color: var(--color-danger); }
-.delete-btn:hover { color: var(--color-danger-dark); }
+.pay-btn { color: var(--color-success); } /* Green (Also used for Grant Permission ✔️) */
+.pay-btn:hover:not(:disabled) { color: var(--color-success-dark); }
 
-.pay-btn { color: var(--color-success); } /* Also used for Grant Permission */
-.pay-btn:hover { color: var(--color-success-dark); }
+.invoice-btn { color: var(--color-info); } /* Teal (Print Receipt) */
+.invoice-btn:hover:not(:disabled) { color: var(--color-info-dark); }
 
-.invoice-btn { color: var(--color-info); }
-.invoice-btn:hover { color: var(--color-info-dark); }
-
+/* Correct disabled state for action buttons */
 .action-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+    opacity: 0.3;
+    cursor: not-allowed !important; /* Ensure not-allowed cursor */
     transform: none !important;
-    color: #ccc !important;
+    color: #bbb !important; /* Grey out disabled icon */
+    background: none !important; /* Ensure no background persists */
 }
+
+/* --- Table Header Sorting Styles --- */
+th.sortable-header {
+    cursor: pointer;
+    position: relative;
+    padding-right: 20px; /* Make space for arrow */
+    user-select: none; /* Prevent text selection on click */
+}
+th.sortable-header::after {
+    content: '';
+    position: absolute;
+    right: 8px; /* Adjust position */
+    top: 50%;
+    border: 4px solid transparent; /* Triangle size */
+    opacity: 0.4; /* Default arrow visibility */
+    transition: opacity 0.2s ease;
+}
+th.sortable-header:hover::after {
+    opacity: 0.7; /* Show dimmed arrow on hover if not sorted */
+}
+th.sortable-header.sort-asc::after {
+    border-bottom-color: var(--color-primary); /* Arrow color */
+    margin-top: -9px; /* Position arrow */
+    opacity: 1; /* Make sorted arrow fully visible */
+}
+th.sortable-header.sort-desc::after {
+    border-top-color: var(--color-primary); /* Arrow color */
+    margin-top: 1px; /* Position arrow */
+    opacity: 1; /* Make sorted arrow fully visible */
+}
+/* Don't show arrows on non-sortable headers */
+th.no-sort::after {
+    display: none !important;
+}
+/* --------------------------------------------- */
 
 /* --- Style adjustments for Multi-Item Invoice --- */
 #invoice-items-container .invoice-item-row {
-    /* Add some bottom margin to separate rows */
-    margin-bottom: 15px;
-    /* Optional: Add a light border or background for visual separation */
-    /* border-bottom: 1px dashed #eee; */
-    /* padding-bottom: 10px; */
-    align-items: flex-start; /* Align labels top */
+    margin-bottom: 20px; /* More space */
+    align-items: flex-start;
+    border-bottom: 1px dashed #eee; /* Separator line */
+    padding-bottom: 15px;
 }
-
-#invoice-items-container .invoice-item-row > div {
-     padding-top: 0; /* Reset padding potentially inherited */
-}
-
 #invoice-items-container .remove-invoice-item-btn {
-    padding: 4px 6px; /* Make it small */
-    font-size: 1em; /* Adjust icon size */
-    margin-left: 10px; /* Space from last input */
-    margin-top: 29px; /* Adjust vertical alignment with inputs (depends on label height) */
-    /* Alternatively, use flex alignment on the parent div */
-    align-self: flex-end; /* Align button to bottom if its container uses flex */
-    line-height: 1; /* Prevent extra height */
-    height: auto; /* Fit content */
-    color: var(--color-danger); /* Ensure delete button color */
+    padding: 4px 6px;
+    font-size: 1.1em; /* Adjust icon size */
+    margin-left: 10px;
+    margin-top: 30px; /* Align with inputs */
+    color: var(--color-danger);
 }
-#invoice-items-container .remove-invoice-item-btn:hover {
+#invoice-items-container .remove-invoice-item-btn:hover:not(:disabled) {
      color: var(--color-danger-dark);
      transform: scale(1.25);
 }
-/* Ensure button container aligns correctly */
 #invoice-items-container .invoice-item-row > div:last-child {
     display: flex;
-    align-items: flex-end; /* Aligns button to bottom relative to its container */
-    flex-grow: 0; /* Don't let it grow */
-    flex-basis: auto; /* Size based on content */
+    align-items: flex-end;
+    flex-grow: 0;
+    flex-basis: auto;
     min-width: auto;
 }
 
-/* Style for add button */
-#add-invoice-item-button {
-    /* Optional: specific styling if needed */
-    background-color: var(--color-info);
-    color: white;
-    font-weight: bold;
-    margin-top: 0; /* Remove default button margin-top */
-    margin-bottom: 20px; /* Add space below add button */
-    padding: 8px 15px; /* Smaller padding */
-    font-size: 13px;
-}
-#add-invoice-item-button:hover {
-     background-color: var(--color-info-dark);
-}
-
-/* Highlight invalid fields during validation */
-#invoice-generator-form input.invalid-field {
+/* Highlight invalid fields */
+input.invalid-field {
     border-color: var(--color-danger) !important;
+    background-color: var(--color-danger-bg) !important;
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
 }
 
+/* Divider Style */
+hr.section-divider {
+    margin: 40px 0;
+    border: none;
+    border-top: 1px solid var(--color-border);
+}
+
+/* --- Footer --- */
+footer {
+    text-align: center;
+    padding: 20px 15px;
+    margin-top: 40px; /* Space above footer */
+    background-color: #0014db; /* Use primary blue */
+    color: #ffffff; /* White text */
+    font-size: 1.1em;
+    border-top: 1px solid var(--color-border);
+    line-height: 1.4;
+    width: 100%; /* Ensure footer takes full width */
+    box-sizing: border-box;
+}
+footer p {
+    margin: 5px 0;
+}
+
 /* --- Responsive Design --- */
-@media (max-width: 992px) { /* Adjust breakpoint for wider forms */
-    .form-row > div, .form-row > label {
-        flex-basis: calc(50% - 10px); /* Two columns on medium screens */
-        min-width: 0; /* Reset min-width */
+@media (max-width: 1200px) {
+    .main-buttons {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
-    /* Specific adjustments for invoice item rows */
-    #invoice-items-container .invoice-item-row > div:last-child { /* Button container */
-        flex-basis: auto; /* Let it shrink */
+    /* Adjust header elements */
+     h1 { font-size: 1.8em; }
+     .user-info { font-size: 0.85em; margin-right: 10px; }
+}
+
+@media (max-width: 992px) {
+    .form-row > div {
+        flex-basis: calc(50% - 13px); /* Adjust for gap */
+        min-width: 0;
     }
+    /* Invoice item specific */
+    #invoice-items-container .invoice-item-row > div:last-child {
+        flex-basis: auto;
+    }
+    .main-buttons {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+    }
+     /* Adjust header */
+     h1 { font-size: 1.7em; margin-right: 15px; }
+     .user-info { margin-left: 10px; font-size: 0.8em; }
+     .header-container { padding: 18px 20px; }
+     #printable-area { padding: 0 15px 25px 15px; }
+     section { padding: 25px; }
+     .table-search-container input[type="search"] { width: clamp(180px, 40%, 300px); }
 }
 
 @media (max-width: 768px) {
-     h1 { font-size: 1.6em; } /* Smaller title */
-     section h2 { font-size: 1.4em; } /* Smaller section titles */
-     .header-container { justify-content: center; padding: 15px 20px; }
-     #printable-area { padding: 0 10px; }
-     section { margin: 20px 10px; padding: 20px; }
+     #login-form {
+         padding: 30px 25px;
+         max-width: 90%;
+     }
+     #login-form h2 { font-size: 1.5em; margin-bottom: 25px; }
 
-    .main-buttons {
-        gap: 8px; margin-left: 10px; margin-right: 10px; padding: 10px;
-    }
-    .main-buttons button {
-        flex-basis: calc(50% - 4px); /* Two buttons per row */
-        min-width: 130px;
-        font-size: 14px; /* Adjust font size */
-        padding: 12px 8px; /* Adjust padding */
-    }
+     /* Header adjustments */
+     .header-container { padding: 15px 10px; flex-direction: row; align-items: center; }
+     .header-container .logo { max-height: 45px; margin-right: 10px;}
+     h1 { font-size: 1.4em; margin-right: 10px; }
+     .user-info { font-size: 0.75em; margin-left: auto; margin-right: 8px; order: 2; text-align: right;} /* Move user info before logout on small screens */
+     #logout-button { padding: 6px 10px; font-size: 12px; order: 3; margin-left: 0;} /* Adjust logout */
 
-    /* Stack form elements vertically on small screens */
-    .form-row { gap: 15px; margin-bottom: 15px; }
-    .form-row > div, .form-row > label {
+     #printable-area { padding: 0 10px 20px 10px; margin: 10px auto 0 auto; }
+     section { margin: 25px 0px; padding: 20px; }
+     section h2 { font-size: 1.5em; }
+     .main-buttons {
+         grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+         gap: 10px; padding: 15px;
+     }
+     .main-buttons button {
+         font-size: 13px;
+         padding: 12px 8px;
+     }
+    /* Stack form elements */
+    .form-row { gap: 18px; margin-bottom: 18px; }
+    .form-row > div {
         flex-basis: 100%;
     }
-    .form-row label { margin-bottom: 5px; } /* Ensure space */
-
-     /* Invoice item row adjustments on small screens */
+     /* Invoice item adjustments */
      #invoice-items-container .invoice-item-row {
-         gap: 10px 15px; /* Reduce gaps */
+         gap: 10px 15px;
      }
      #invoice-items-container .invoice-item-row > div {
-         flex-basis: calc(50% - 8px); /* Try two columns for inputs */
+         flex-basis: calc(50% - 8px);
          min-width: 120px;
      }
-     #invoice-items-container .invoice-item-row > div[style*="flex-basis: 40%"] {
-         flex-basis: 100%; /* Make designation full width */
+     #invoice-items-container .invoice-item-row > div[style*="flex-basis: 40%"] { /* Designation */
+         flex-basis: 100%;
      }
       #invoice-items-container .invoice-item-row > div:last-child { /* Button container */
-         flex-basis: 100%; /* Button below on small screens */
-         margin-top: -10px; /* Reduce space above button */
-         justify-content: flex-end; /* Align button right */
+         flex-basis: 100%;
+         margin-top: -5px;
+         justify-content: flex-end;
      }
      #invoice-items-container .remove-invoice-item-btn {
-         margin-top: 0; /* Reset margin when it's on its own row */
+         margin-top: 0;
      }
-
     /* Table adjustments */
-     table { font-size: 0.88em; }
+     table { font-size: 0.9em; }
      th, td {
-         padding: 10px 10px; /* Adjust padding */
-         white-space: normal; /* Allow wrapping */
-         vertical-align: top; /* Align top for wrapped content */
+         padding: 10px 8px; /* Adjust padding */
+         white-space: normal; /* Allow text wrapping */
+         vertical-align: top; /* Align content top */
      }
      th { white-space: normal; } /* Allow header wrapping */
-     .actions-cell { width: auto; min-width: 80px; white-space: nowrap; } /* Allow shrink but keep icons together */
-     .action-btn { font-size: 1.4em; margin: 0 5px; } /* Make icons larger */
+     /* Ensure sort arrow has space on mobile */
+     th.sortable-header { padding-right: 18px; }
+     th.sortable-header::after { right: 5px; }
+
+     .actions-cell { min-width: 90px; white-space: nowrap; }
+     .action-btn { font-size: 1.5em; margin: 0 6px; } /* Bigger icons on mobile */
+
+     /* Footer */
+     footer { font-size: 0.75em; padding: 15px 10px; margin-top: 25px;}
+
+     /* Table Search on Mobile */
+     .table-search-container { text-align: center; }
+     .table-search-container label { display: block; margin-bottom: 5px; }
+     .table-search-container input[type="search"] { width: 80%; }
+
+}
+
+@media (max-width: 480px) {
+     h1 { font-size: 1.2em; }
+     .main-buttons { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+     .main-buttons button { padding: 10px 5px; font-size: 12px; }
+     section h2 { font-size: 1.3em; }
+     th, td { padding: 8px 5px; font-size: 0.85em;}
+     .action-btn { font-size: 1.3em; margin: 0 4px; }
+     #login-form { padding: 25px 15px; }
+     #login-form h2 { font-size: 1.3em;}
+     .header-container .logo { max-height: 40px; }
+     .user-info { font-size: 0.7em; }
+     #logout-button { padding: 5px 8px; font-size: 11px; }
+     footer { font-size: 0.7em;}
+     .table-search-container input[type="search"] { width: 90%; }
 }
 
 /* --- Styles pour l'impression --- */
 @media print {
     /* General Print Styles */
-    html, body { /* Reset html margins/padding for print */
-        margin: 0 !important;
-        padding: 0 !important;
-        background-color: #fff !important;
-         color: #000 !important;
+    html, body {
+        margin: 0 !important; padding: 0 !important;
+        background-color: #fff !important; color: #000 !important;
     }
     body {
         font-size: 9pt !important;
-        /* Apply print margins ONLY to body, after reset */
-        margin: 1cm !important;
+        margin: 0.8cm !important; /* Slightly smaller margins */
         -webkit-print-color-adjust: exact !important;
         color-adjust: exact !important;
+         display: block !important; /* Override flex for print */
+         min-height: auto !important;
     }
-    #printable-area { /* Reset container styles for print */
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
-        background-color: transparent !important; /* Ensure it doesn't interfere */
+    #printable-area {
+        max-width: 100% !important; margin: 0 !important; padding: 0 !important;
+        box-shadow: none !important; border: none !important;
+        background-color: transparent !important;
+         flex-grow: 0 !important; /* Override flex for print */
     }
-
-    /* Hide Non-Essential Elements ALWAYS in print */
-    .header-container, .main-buttons, section > form, section > h2,
-    section > button:not(#show-report-details-button), /* Hide buttons within sections */
-    .button-group, #report-filters, h4,
+    /* Hide Non-Essential Elements */
+    #login-container, /* Hide Login Screen */
+    .header-container:not(.printing-invoice-header), /* Hide header unless printing invoice */
+    #logout-button, /* Hide logout */
+    .user-info, /* Hide user info in header */
+    .main-buttons, section > form, section > h2,
+    section > button.secondary-btn, /* Hide only secondary buttons */
+    section > button.report-type-btn, /* Hide report type buttons */
+    #generate-report, /* Hide generate report button */
+    .button-group, #report-filters, h4, h5, hr.section-divider,
+    .table-search-container, /* Hide table search inputs */
+    .search-container, /* Hide global search container */
     #invoice-generator-section, /* Hide invoice generator FORM */
-    #add-invoice-item-button, /* Hide the add button in print */
-    .remove-invoice-item-btn, /* Hide remove buttons in print */
-    th.actions-header, td.actions-cell
+    #add-invoice-item-button, .remove-invoice-item-btn,
+    th.actions-header, td.actions-cell, th.no-print, td.no-print, /* Also hide explicitly marked no-print */
+    footer, /* Hide the footer when printing tables/invoices */
+    /* Keep Admin section hidden by default unless explicitly printed */
+    #admin-section:not(.show-in-print),
+    /* Hide Sort Arrows */
+    th.sortable-header::after
     {
         display: none !important;
     }
 
     /* --- TABLE PRINTING --- */
-    /* Hide containers by default unless marked for TABLE print */
-    .printable-content, #invoice-print-area {
-        display: none !important;
-        border: none !important; box-shadow: none !important;
+    .printable-content, #invoice-print-area, #admin-users-container {
+        display: none !important; border: none !important; box-shadow: none !important;
         padding: 0 !important; margin: 0 !important;
     }
-    /* Show ONLY the container marked for TABLE print */
-    body.printing-active #printable-area, /* Show the main area when printing tables */
+    body.printing-active #printable-area,
     body.printing-active .printable-content.show-in-print {
-        display: block !important; /* Make table container visible */
-        visibility: visible !important; /* Ensure visibility just in case */
+        display: block !important; visibility: visible !important;
     }
-    /* Re-hide the invoice area if printing tables */
-    body.printing-active #invoice-print-area {
-         display: none !important;
-    }
-    /* Ensure unwanted elements within the visible TABLE container remain hidden */
+    body.printing-active #invoice-print-area { display: none !important; }
+    /* Re-hide unwanted elements inside visible table container */
      body.printing-active .printable-content.show-in-print .button-group,
+     body.printing-active .printable-content.show-in-print .table-search-container, /* Ensure hidden */
      body.printing-active .printable-content.show-in-print th.actions-header,
-     body.printing-active .printable-content.show-in-print td.actions-cell
+     body.printing-active .printable-content.show-in-print td.actions-cell,
+     body.printing-active .printable-content.show-in-print th.no-print,
+     body.printing-active .printable-content.show-in-print td.no-print
      {
          display: none !important;
      }
@@ -654,167 +1004,83 @@ td.status-col, td.description-col /* Added */
     .show-in-print table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto; font-size: 8pt !important; }
     .show-in-print th, .show-in-print td {
         border: 1px solid #666 !important; padding: 4px 6px !important; word-wrap: break-word;
-        color: #000 !important; background-color: #fff !important; vertical-align: top;
+        color: #000 !important; background-color: #fff !important; vertical-align: top !important;
     }
     .show-in-print th {
          background-color: #eee !important;
          font-weight: bold !important; white-space: normal !important; text-align: center !important;
+         padding-right: 6px !important; /* Reset padding for print */
     }
-    .show-in-print th.designation-col, .show-in-print th.name-col, .show-in-print th.reason-col, .show-in-print th.contact-col, .show-in-print th.type-col, .show-in-print th.description-col { text-align: left !important; }
+    /* Specific header alignments */
+    .show-in-print th.designation-col, .show-in-print th.name-col, .show-in-print th.reason-col, .show-in-print th.contact-col, .show-in-print th.type-col, .show-in-print th.description-col, .show-in-print th.address-col, .show-in-print th.residence-col, .show-in-print th.workdays-col,
+    .show-in-print th.user-col, .show-in-print th.agent-col, .show-in-print th.post-col, .show-in-print th.filiere-col
+    { text-align: left !important; }
+
     .show-in-print tbody tr { page-break-inside: avoid !important; }
-    .show-in-print tbody tr:nth-child(even) { background-color: #fff !important; } /* Remove striping for print clarity */
+    .show-in-print tbody tr:nth-child(even) { background-color: #fff !important; } /* Remove striping */
+    /* Apply row highlighting colors (with color-adjust) */
     .show-in-print .solde td { background-color: #d4edda !important; color: #155724 !important; }
     .show-in-print .partiel td { background-color: #fff3cd !important; color: #856404 !important; }
+    .show-in-print .danger td { background-color: #f8d7da !important; color: #721c24 !important; }
+    /* Specific cell alignments */
     .show-in-print td.unit-price-col, .show-in-print td.salary-col, .show-in-print td.amount-col, .show-in-print td.total-cost-col, .show-in-print td.balance-col, .show-in-print td.credit-col, .show-in-print td.remaining-salary-col { text-align: right !important; font-family: sans-serif !important; }
-    .show-in-print td.quantity-col, .show-in-print td.supply-col, .show-in-print td.sold-col, .show-in-print td.remaining-col, .show-in-print td.age-col, .show-in-print td.interest-col { text-align: center !important; }
-    .show-in-print td.designation-col, .show-in-print td.name-col, .show-in-print td.reason-col, .show-in-print td.contact-col, .show-in-print td.type-col, .show-in-print td.status-col, .show-in-print td.description-col { text-align: left !important; }
+    .show-in-print td.quantity-col, .show-in-print td.supply-col, .show-in-print td.sold-col, .show-in-print td.remaining-col, .show-in-print td.age-col, .show-in-print td.interest-col, .show-in-print td.time-col { text-align: center !important; }
+    .show-in-print td.designation-col, .show-in-print td.name-col, .show-in-print td.reason-col, .show-in-print td.contact-col, .show-in-print td.type-col, .show-in-print td.status-col, .show-in-print td.description-col, .show-in-print td.address-col, .show-in-print td.residence-col, .show-in-print td.workdays-col,
+    .show-in-print td.user-col, .show-in-print td.agent-col, .show-in-print td.post-col, .show-in-print td.filiere-col
+    { text-align: left !important; }
+    .show-in-print td.user-col { font-style: italic; font-size: 0.9em; color: #555 !important; } /* Style user col */
 
 
     /* --- Styles for Invoice Printing --- */
-    /* Hide #printable-area completely when printing invoice */
-    body.printing-invoice #printable-area {
-        display: none !important;
-    }
-    /* Show ONLY the invoice area */
+    body.printing-invoice #printable-area { display: none !important; }
     body.printing-invoice #invoice-print-area.show-in-print {
-        display: block !important;
-        visibility: visible !important;
-        page-break-inside: avoid;
-        border: 1px solid #aaa !important; /* Optional border */
-        padding: 20px !important; /* Padding inside the invoice box */
-        margin: 0 !important; /* No outer margin for the invoice box itself */
-        width: 100% !important; /* Takes full printable width based on body margin */
-        box-sizing: border-box !important;
-        background-color: #fff !important;
-        color: #000 !important;
-        font-size: 10pt !important;
-        line-height: 1.4 !important;
+        display: block !important; visibility: visible !important; page-break-inside: avoid;
+        border: 1px solid #aaa !important; padding: 15px !important; margin: 0 !important;
+        width: 100% !important; box-sizing: border-box !important; background-color: #fff !important;
+        color: #000 !important; font-size: 10pt !important; line-height: 1.4 !important;
     }
-    /* Ensure all children are visible and styled correctly */
     body.printing-invoice #invoice-print-area.show-in-print * {
-         visibility: visible !important;
-         color: #000 !important;
-         background-color: transparent !important;
-         box-shadow: none !important;
-         text-shadow: none !important;
+         visibility: visible !important; color: #000 !important;
+         background-color: transparent !important; box-shadow: none !important; text-shadow: none !important;
     }
     /* Styles for elements *inside* the invoice */
     body.printing-invoice .show-in-print .invoice-header {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: flex-start !important;
-        margin-bottom: 20px !important;
-        padding-bottom: 10px !important;
-        border-bottom: 1px solid #999 !important;
+        display: flex !important; justify-content: space-between !important; align-items: flex-start !important;
+        margin-bottom: 15px !important; padding-bottom: 8px !important; border-bottom: 1px solid #999 !important;
         page-break-after: avoid !important;
     }
-    body.printing-invoice .show-in-print .invoice-logo {
-        max-height: 60px !important;
-        max-width: 150px !important;
-        vertical-align: top !important;
-    }
-    body.printing-invoice .show-in-print .invoice-details {
-        font-size: 9pt !important;
-        line-height: 1.3 !important;
-        margin-top: 5px !important;
-    }
-    body.printing-invoice .show-in-print .invoice-details strong {
-        display: block !important;
-        margin-bottom: 3px !important;
-        font-size: 11pt !important;
-    }
-    body.printing-invoice .show-in-print .invoice-title {
-        text-align: right !important;
-    }
-    body.printing-invoice .show-in-print .invoice-title h2 {
-        margin: 0 !important;
-        font-size: 16pt !important;
-        font-weight: bold !important;
-        color: #000 !important;
-    }
-    body.printing-invoice .show-in-print .invoice-title .invoice-details {
-         margin-top: 5px !important;
-         text-align: right !important;
-         font-size: 9pt !important;
-         line-height: 1.3 !important;
-    }
-    body.printing-invoice .show-in-print .invoice-client-details {
-        margin-bottom: 15px !important;
-        font-size: 9pt !important;
-        line-height: 1.3 !important;
-        text-align: left !important;
-        margin-top: 15px !important;
-    }
-    body.printing-invoice .show-in-print .invoice-items table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        margin-bottom: 15px !important;
-        font-size: 9pt !important;
-        page-break-inside: auto !important;
-    }
-    body.printing-invoice .show-in-print .invoice-items th,
-    body.printing-invoice .show-in-print .invoice-items td {
-        border: 1px solid #888 !important;
-        padding: 5px 8px !important;
-        text-align: left !important;
-        vertical-align: top !important;
-    }
-    body.printing-invoice .show-in-print .invoice-items th {
-        background-color: #e0e0e0 !important;
-        font-weight: bold !important;
-    }
-    body.printing-invoice .show-in-print .invoice-items td.amount,
-    body.printing-invoice .show-in-print .invoice-items th.amount {
-        text-align: right !important;
-    }
-    body.printing-invoice .show-in-print .invoice-items th.quantity-col,
-    body.printing-invoice .show-in-print .invoice-items td.quantity-col { text-align: center !important; }
-    body.printing-invoice .show-in-print .invoice-items th.unit-price-col,
-    body.printing-invoice .show-in-print .invoice-items td.unit-price-col { text-align: right !important; }
-    body.printing-invoice .show-in-print .invoice-items th.amount-col,
-    body.printing-invoice .show-in-print .invoice-items td.amount-col { text-align: right !important; }
-    body.printing-invoice .show-in-print .invoice-items th.designation-col,
-    body.printing-invoice .show-in-print .invoice-items td.designation-col { text-align: left !important; }
-    body.printing-invoice .show-in-print .invoice-items tbody tr {
-         page-break-inside: avoid !important;
-    }
-    body.printing-invoice .show-in-print .invoice-summary {
-        text-align: right !important;
-        margin-top: 25px !important;
-        padding-top: 10px !important;
-        border-top: 1px solid #999 !important;
-        font-size: 10pt !important;
-        page-break-before: auto !important;
-    }
-     body.printing-invoice .show-in-print .invoice-summary strong {
-         display: inline-block !important;
-         min-width: 120px !important;
-         text-align: right !important;
-         margin-left: 10px !important;
-         font-weight: bold !important;
-     }
-      body.printing-invoice .show-in-print .invoice-summary hr {
-          border: none !important;
-          border-top: 1px solid #999 !important;
-          margin: 5px 0 !important;
-          height: 1px !important;
-      }
-      body.printing-invoice .show-in-print .invoice-summary br {
-          display: block;
-          content: "";
-          margin-top: 6px;
-      }
-    body.printing-invoice .show-in-print .invoice-footer {
-        margin-top: 35px !important;
-        padding-top: 10px !important;
-        border-top: 1px solid #ccc !important;
-        font-size: 8pt !important;
-        text-align: center !important;
-        color: #444 !important;
-        page-break-before: auto !important;
-    }
+    body.printing-invoice .show-in-print .invoice-logo { max-height: 55px !important; max-width: 140px !important; vertical-align: top !important; border-radius: 0 !important; border: none !important; box-shadow: none !important;}
+    body.printing-invoice .show-in-print .invoice-details { font-size: 8.5pt !important; line-height: 1.3 !important; margin-top: 4px !important; }
+    body.printing-invoice .show-in-print .invoice-details strong { display: block !important; margin-bottom: 2px !important; font-size: 10.5pt !important; }
+    body.printing-invoice .show-in-print .invoice-title { text-align: right !important; }
+    body.printing-invoice .show-in-print .invoice-title h2 { margin: 0 !important; font-size: 15pt !important; font-weight: bold !important; color: #000 !important; }
+    body.printing-invoice .show-in-print .invoice-title .invoice-details { margin-top: 4px !important; text-align: right !important; font-size: 8.5pt !important; line-height: 1.3 !important; }
+    body.printing-invoice .show-in-print .invoice-client-details { margin-bottom: 12px !important; font-size: 9pt !important; line-height: 1.3 !important; text-align: left !important; margin-top: 12px !important; }
+    body.printing-invoice .show-in-print .invoice-items table { width: 100% !important; border-collapse: collapse !important; margin-bottom: 12px !important; font-size: 9pt !important; page-break-inside: auto !important; }
+    body.printing-invoice .show-in-print .invoice-items th, body.printing-invoice .show-in-print .invoice-items td { border: 1px solid #888 !important; padding: 4px 7px !important; text-align: left !important; vertical-align: top !important; }
+    body.printing-invoice .show-in-print .invoice-items th { background-color: #e0e0e0 !important; font-weight: bold !important; }
+    body.printing-invoice .show-in-print .invoice-items td.amount, body.printing-invoice .show-in-print .invoice-items th.amount { text-align: right !important; }
+    body.printing-invoice .show-in-print .invoice-items th.quantity-col, body.printing-invoice .show-in-print .invoice-items td.quantity-col { text-align: center !important; }
+    body.printing-invoice .show-in-print .invoice-items th.unit-price-col, body.printing-invoice .show-in-print .invoice-items td.unit-price-col { text-align: right !important; }
+    body.printing-invoice .show-in-print .invoice-items th.amount-col, body.printing-invoice .show-in-print .invoice-items td.amount-col { text-align: right !important; }
+    body.printing-invoice .show-in-print .invoice-items th.designation-col, body.printing-invoice .show-in-print .invoice-items td.designation-col { text-align: left !important; }
+    body.printing-invoice .show-in-print .invoice-items tbody tr { page-break-inside: avoid !important; }
+    body.printing-invoice .show-in-print .invoice-summary { text-align: right !important; margin-top: 20px !important; padding-top: 8px !important; border-top: 1px solid #999 !important; font-size: 10pt !important; page-break-before: auto !important; }
+     body.printing-invoice .show-in-print .invoice-summary strong { display: inline-block !important; min-width: 110px !important; text-align: right !important; margin-left: 8px !important; font-weight: bold !important; }
+      body.printing-invoice .show-in-print .invoice-summary hr { border: none !important; border-top: 1px solid #999 !important; margin: 4px 0 !important; height: 1px !important; }
+      body.printing-invoice .show-in-print .invoice-summary br { display: block; content: ""; margin-top: 5px; }
+    body.printing-invoice .show-in-print .invoice-footer { margin-top: 30px !important; padding-top: 8px !important; border-top: 1px solid #ccc !important; font-size: 7.5pt !important; text-align: center !important; color: #444 !important; page-break-before: auto !important; }
 
     /* --- General Print Cleanup --- */
      a, a:link, a:visited { text-decoration: none !important; color: #000 !important; }
     * { box-shadow: none !important; text-shadow: none !important; }
+}
+
+/* Ensure print area for invoice has styles needed even if hidden on screen */
+#invoice-print-area {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+/* Ensure the printable header for invoices gets styled */
+.printing-invoice-header {
+    /* Uses general .invoice-header styles defined within @media print */
 }
