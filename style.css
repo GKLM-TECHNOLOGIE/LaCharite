@@ -1,6 +1,6 @@
 /* style.css */
 :root {
-    /* Define Color Palette (Simulated from Logo & Requested Colors) */
+    /* ... (Existing color variables - unchanged) ... */
     --color-primary: #0014db;       /* Dark Blue (Existing) */
     --color-primary-light: #0401a7; /* Lighter Blue (Existing) */
     --color-accent: #EAA43A;        /* Gold/Orange (Existing - Keeping) */
@@ -240,7 +240,7 @@ h1 {
 /* --- Main Buttons --- */
 .main-buttons {
     display: grid; /* Use Grid for better control */
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Responsive grid */
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Adjusted minmax. 1fr makes them take full width of column */
     gap: 15px; /* More gap */
     margin-bottom: 35px; /* More space below */
     padding: 20px;
@@ -254,7 +254,7 @@ h1 {
 
 .main-buttons button {
     padding: 15px 10px; /* Taller buttons */
-    font-size: 14px; /* Smaller font for more text */
+    font-size: 13px; /* Slightly smaller font */
     font-weight: 600; /* Bolder font */
     background-color: var(--color-primary-light); /* Use lighter primary */
     color: white;
@@ -264,6 +264,7 @@ h1 {
     text-align: center;
     transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* width: 100%; */ /* Not strictly needed with grid-template-columns: 1fr */
 }
 .main-buttons button:hover {
      background-color: var(--color-primary); /* Darker on hover */
@@ -609,9 +610,14 @@ th {
     border-top: 1px solid var(--color-border); /* Top border for header */
 }
 /* Left align specific headers */
-th.designation-col, th.name-col, th.reason-col, th.contact-col,
+/* START MODIFICATION: Also left align date column header */
+th.date-col,
+/* END MODIFICATION */
+th.designation-col,
+th.name-col, th.reason-col, th.contact-col,
 th.type-col, th.status-col, th.description-col, th.address-col,
-th.residence-col, th.workdays-col, th.agent-col, th.post-col, th.filiere-col, /* Added more */
+th.residence-col, th.workdays-col, th.agent-col, th.post-col, th.filiere-col,
+th.employee-name-col, th.equipment-name-col, /* Added for new table */
 th.user-col /* Added user column alignment */
 {
     text-align: left;
@@ -649,6 +655,10 @@ td.balance-col, td.credit-col, td.remaining-salary-col
 td.quantity-col, td.supply-col, td.sold-col, td.remaining-col, td.age-col,
 td.interest-col, td.time-col /* Added */
 { text-align: center; }
+/* START MODIFICATION: Left align date TD */
+td.date-col { text-align: left; }
+/* END MODIFICATION */
+
 
 /* Added user column alignment for TD */
 td.user-col {
@@ -658,9 +668,13 @@ td.user-col {
     color: var(--color-text-muted);
 }
 /* Added text-align left for TD cells corresponding to left-aligned TH */
+/* START MODIFICATION: Also left align date column TD content */
+/* td.date-col, - Already handled above */
+/* END MODIFICATION */
 td.designation-col, td.name-col, td.reason-col, td.contact-col,
 td.type-col, td.status-col, td.description-col, td.address-col,
-td.residence-col, td.workdays-col, td.agent-col, td.post-col, td.filiere-col
+td.residence-col, td.workdays-col, td.agent-col, td.post-col, td.filiere-col,
+td.employee-name-col, td.equipment-name-col /* Added for new table */
 {
     text-align: left;
 }
@@ -744,9 +758,11 @@ th.sortable-header.sort-desc::after {
     opacity: 1; /* Make sorted arrow fully visible */
 }
 /* Don't show arrows on non-sortable headers */
-th.no-sort::after {
+/* START MODIFICATION: Ensure actions header doesn't get arrows */
+th.actions-header::after, th.no-sort::after {
     display: none !important;
 }
+/* END MODIFICATION */
 /* --------------------------------------------- */
 
 /* --- Style adjustments for Multi-Item Invoice --- */
@@ -809,7 +825,7 @@ footer p {
 /* --- Responsive Design --- */
 @media (max-width: 1200px) {
     .main-buttons {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Adjusted */
     }
     /* Adjust header elements */
      h1 { font-size: 1.8em; }
@@ -817,6 +833,9 @@ footer p {
 }
 
 @media (max-width: 992px) {
+    .main-buttons {
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); /* Adjusted */
+    }
     .form-row > div {
         flex-basis: calc(50% - 13px); /* Adjust for gap */
         min-width: 0;
@@ -824,10 +843,6 @@ footer p {
     /* Invoice item specific */
     #invoice-items-container .invoice-item-row > div:last-child {
         flex-basis: auto;
-    }
-    .main-buttons {
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 12px;
     }
      /* Adjust header */
      h1 { font-size: 1.7em; margin-right: 15px; }
@@ -856,11 +871,11 @@ footer p {
      section { margin: 25px 0px; padding: 20px; }
      section h2 { font-size: 1.5em; }
      .main-buttons {
-         grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Adjusted */
          gap: 10px; padding: 15px;
      }
      .main-buttons button {
-         font-size: 13px;
+         font-size: 12px; /* Adjusted */
          padding: 12px 8px;
      }
     /* Stack form elements */
@@ -914,8 +929,8 @@ footer p {
 
 @media (max-width: 480px) {
      h1 { font-size: 1.2em; }
-     .main-buttons { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
-     .main-buttons button { padding: 10px 5px; font-size: 12px; }
+     .main-buttons { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; } /* Adjusted */
+     .main-buttons button { padding: 10px 5px; font-size: 11px; } /* Adjusted */
      section h2 { font-size: 1.3em; }
      th, td { padding: 8px 5px; font-size: 0.85em;}
      .action-btn { font-size: 1.3em; margin: 0 4px; }
@@ -1012,8 +1027,13 @@ footer p {
          padding-right: 6px !important; /* Reset padding for print */
     }
     /* Specific header alignments */
-    .show-in-print th.designation-col, .show-in-print th.name-col, .show-in-print th.reason-col, .show-in-print th.contact-col, .show-in-print th.type-col, .show-in-print th.description-col, .show-in-print th.address-col, .show-in-print th.residence-col, .show-in-print th.workdays-col,
-    .show-in-print th.user-col, .show-in-print th.agent-col, .show-in-print th.post-col, .show-in-print th.filiere-col
+    /* START MODIFICATION: Add date-col to left alignment in print */
+    .show-in-print th.date-col,
+    /* END MODIFICATION */
+    .show-in-print th.designation-col,
+    .show-in-print th.name-col, .show-in-print th.reason-col, .show-in-print th.contact-col, .show-in-print th.type-col, .show-in-print th.description-col, .show-in-print th.address-col, .show-in-print th.residence-col, .show-in-print th.workdays-col,
+    .show-in-print th.user-col, .show-in-print th.agent-col, .show-in-print th.post-col, .show-in-print th.filiere-col,
+    .show-in-print th.employee-name-col, .show-in-print th.equipment-name-col /* Added */
     { text-align: left !important; }
 
     .show-in-print tbody tr { page-break-inside: avoid !important; }
@@ -1024,12 +1044,16 @@ footer p {
     .show-in-print .danger td { background-color: #f8d7da !important; color: #721c24 !important; }
     /* Specific cell alignments */
     .show-in-print td.unit-price-col, .show-in-print td.salary-col, .show-in-print td.amount-col, .show-in-print td.total-cost-col, .show-in-print td.balance-col, .show-in-print td.credit-col, .show-in-print td.remaining-salary-col { text-align: right !important; font-family: sans-serif !important; }
+    /* START MODIFICATION: Left align date-col TD in print */
+    .show-in-print td.date-col,
+    /* END MODIFICATION */
     .show-in-print td.quantity-col, .show-in-print td.supply-col, .show-in-print td.sold-col, .show-in-print td.remaining-col, .show-in-print td.age-col, .show-in-print td.interest-col, .show-in-print td.time-col { text-align: center !important; }
+
     .show-in-print td.designation-col, .show-in-print td.name-col, .show-in-print td.reason-col, .show-in-print td.contact-col, .show-in-print td.type-col, .show-in-print td.status-col, .show-in-print td.description-col, .show-in-print td.address-col, .show-in-print td.residence-col, .show-in-print td.workdays-col,
-    .show-in-print td.user-col, .show-in-print td.agent-col, .show-in-print td.post-col, .show-in-print td.filiere-col
+    .show-in-print td.user-col, .show-in-print td.agent-col, .show-in-print td.post-col, .show-in-print td.filiere-col,
+    .show-in-print td.employee-name-col, .show-in-print td.equipment-name-col /* Added */
     { text-align: left !important; }
     .show-in-print td.user-col { font-style: italic; font-size: 0.9em; color: #555 !important; } /* Style user col */
-
 
     /* --- Styles for Invoice Printing --- */
     body.printing-invoice #printable-area { display: none !important; }
@@ -1070,6 +1094,37 @@ footer p {
       body.printing-invoice .show-in-print .invoice-summary hr { border: none !important; border-top: 1px solid #999 !important; margin: 4px 0 !important; height: 1px !important; }
       body.printing-invoice .show-in-print .invoice-summary br { display: block; content: ""; margin-top: 5px; }
     body.printing-invoice .show-in-print .invoice-footer { margin-top: 30px !important; padding-top: 8px !important; border-top: 1px solid #ccc !important; font-size: 7.5pt !important; text-align: center !important; color: #444 !important; page-break-before: auto !important; }
+    /* START: Updated selector for Invoice signature block */
+    body.printing-invoice .show-in-print .invoice-signature {
+        margin-top: 40px !important;
+        padding-top: 10px !important;
+        text-align: right !important;
+        page-break-inside: avoid !important;
+    }
+    /* END: Updated selector */
+
+    /* START: NEW Print Signatures for specific tables (Revised Alignment) */
+    #supply-list-container.show-in-print::after,
+    #sales-details-container.show-in-print::after,
+    #materiel-electrique-details-container.show-in-print::after,
+    #expenses-details-container.show-in-print::after,
+    #others-details-container.show-in-print::after,
+    #equipment-details-container.show-in-print::after {
+        /* Use \A for line breaks, white-space: pre handles spacing. Adjust spaces as needed. */
+        /* Swapped names line */
+        content: "\A\ASignature                                signature\A\A\A\AModeste KODA MICHEL                     Nom et prénom de l'employé";
+        white-space: pre; /* Crucial for preserving spacing and line breaks */
+        display: block;
+        margin-top: 40px; /* Space after table */
+        padding-top: 20px;
+        border-top: 1px dashed #999;
+        text-align: left; /* Keep container left aligned, use spaces in content for columns */
+        font-size: 9pt;
+        font-family: 'Courier New', Courier, monospace; /* Monospace helps align spaces */
+        page-break-inside: avoid;
+    }
+    /* END: NEW Print Signatures */
+
 
     /* --- General Print Cleanup --- */
      a, a:link, a:visited { text-decoration: none !important; color: #000 !important; }

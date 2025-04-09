@@ -49,6 +49,7 @@
              <button id="show-mobile-money-section">Cabinet Mobile Money</button>
              <button id="show-creditors-section">Compte Crédit Client</button>
              <button id="show-debt-section">Dette / Prêt Entreprise</button>
+             <button id="show-equipment-section">Outils Confiés</button> <!-- NEW BUTTON -->
              <button id="generate-invoice-button">Générer Facture</button>
              <button id="show-report-section">Bilans</button>
              <button id="show-admin-section">Administration</button>
@@ -62,7 +63,7 @@
         <!-- END: Added Global Search Input -->
 
         <main>
-            <!-- Section Approvisionner -->
+            <!-- Section Approvisionner (Existing - Unchanged Structure) -->
             <section id="supply-section" class="form-container hidden">
                  <h2>Approvisionnements</h2>
                  <form id="supply-form">
@@ -110,8 +111,8 @@
                       <h3>Liste des Approvisionnements</h3>
                       <!-- START: Added Table Search -->
                       <div class="table-search-container">
-                          <label for="search-input-supply">Filtrer par Désignation:</label>
-                          <input type="search" id="search-input-supply" data-table-id="supply-table" data-column-class="designation-col" placeholder="Désignation...">
+                          <label for="search-input-supply">Filtrer par Désignation/Date:</label>
+                          <input type="search" id="search-input-supply" data-table-id="supply-table" data-column-class="designation-col,date-col" placeholder="Désignation ou Date (AAAA-MM-JJ)...">
                       </div>
                       <!-- END: Added Table Search -->
                       <div class="button-group">
@@ -122,8 +123,8 @@
                      <div class="table-container">
                          <table id="supply-table">
                              <thead>
-                                 <tr>
-                                     <th class="date-col">Date</th>
+                                 <tr >
+                                     <th class="date-col sortable-header">Date</th>
                                      <th class="type-col">Type</th>
                                      <th class="designation-col">Désignation</th>
                                      <th class="quantity-col">Quantité</th>
@@ -174,7 +175,7 @@
                  </div>
             </section>
 
-             <!-- Section Ventes / Divers -->
+             <!-- Section Ventes / Divers (Existing - Unchanged Structure) -->
              <section id="sales-section" class="form-container hidden">
                 <h2>Ventes / Opérations Diverses</h2>
                 <form id="sales-form">
@@ -239,8 +240,8 @@
                      <h3>Détails Ventes Papeterie</h3>
                      <!-- START: Added Table Search -->
                      <div class="table-search-container">
-                         <label for="search-input-sales">Filtrer par Désignation:</label>
-                         <input type="search" id="search-input-sales" data-table-id="sales-table" data-column-class="designation-col" placeholder="Désignation...">
+                         <label for="search-input-sales">Filtrer par Désignation/Date:</label>
+                         <input type="search" id="search-input-sales" data-table-id="sales-table" data-column-class="designation-col,date-col" placeholder="Désignation ou Date (AAAA-MM-JJ)...">
                      </div>
                      <!-- END: Added Table Search -->
                      <div class="button-group">
@@ -251,8 +252,8 @@
                     <div class="table-container">
                         <table id="sales-table">
                             <thead>
-                                <tr>
-                                    <th class="date-col">Date</th>
+                                <tr >
+                                    <th class="date-col sortable-header">Date</th>
                                     <th class="designation-col">Désignation</th>
                                     <th class="quantity-col">Quantité</th>
                                     <th class="unit-price-col">Prix unitaire</th>
@@ -273,8 +274,8 @@
                      <h3>Détails Ventes Matériels Électrique</h3>
                      <!-- START: Added Table Search -->
                      <div class="table-search-container">
-                         <label for="search-input-materiel-electrique">Filtrer par Désignation:</label>
-                         <input type="search" id="search-input-materiel-electrique" data-table-id="materiel-electrique-table" data-column-class="designation-col" placeholder="Désignation...">
+                         <label for="search-input-materiel-electrique">Filtrer par Désignation/Date:</label>
+                         <input type="search" id="search-input-materiel-electrique" data-table-id="materiel-electrique-table" data-column-class="designation-col,date-col" placeholder="Désignation ou Date (AAAA-MM-JJ)...">
                      </div>
                      <!-- END: Added Table Search -->
                      <div class="button-group">
@@ -285,8 +286,8 @@
                     <div class="table-container">
                         <table id="materiel-electrique-table">
                             <thead>
-                                <tr>
-                                    <th class="date-col">Date</th>
+                                <tr >
+                                    <th class="date-col sortable-header">Date</th>
                                     <th class="designation-col">Désignation</th>
                                     <th class="quantity-col">Quantité</th>
                                     <th class="unit-price-col">Prix unitaire</th>
@@ -307,8 +308,8 @@
                      <h3>Détails des Dépenses</h3>
                      <!-- START: Added Table Search -->
                      <div class="table-search-container">
-                         <label for="search-input-expenses">Filtrer par Motif:</label>
-                         <input type="search" id="search-input-expenses" data-table-id="expenses-table" data-column-class="reason-col" placeholder="Motif...">
+                         <label for="search-input-expenses">Filtrer par Motif/Date:</label>
+                         <input type="search" id="search-input-expenses" data-table-id="expenses-table" data-column-class="reason-col,date-col" placeholder="Motif ou Date (AAAA-MM-JJ)...">
                      </div>
                      <!-- END: Added Table Search -->
                      <div class="button-group">
@@ -319,8 +320,8 @@
                     <div class="table-container">
                         <table id="expenses-table">
                             <thead>
-                                <tr>
-                                    <th class="date-col">Date</th>
+                                <tr >
+                                    <th class="date-col sortable-header">Date</th>
                                     <th class="reason-col">Motif</th>
                                     <th class="quantity-col">Qté</th>
                                     <th class="amount-col">Montant</th>
@@ -340,8 +341,8 @@
                     <h3>Détails des Opérations Diverses</h3>
                      <!-- START: Added Table Search -->
                      <div class="table-search-container">
-                         <label for="search-input-others">Filtrer par Désignation/Motif:</label>
-                         <input type="search" id="search-input-others" data-table-id="others-table" data-column-class="designation-col" placeholder="Désignation...">
+                         <label for="search-input-others">Filtrer par Désignation/Date:</label>
+                         <input type="search" id="search-input-others" data-table-id="others-table" data-column-class="designation-col,date-col" placeholder="Désignation ou Date (AAAA-MM-JJ)...">
                      </div>
                      <!-- END: Added Table Search -->
                      <div class="button-group">
@@ -352,8 +353,8 @@
                     <div class="table-container">
                         <table id="others-table">
                             <thead>
-                                <tr>
-                                    <th class="date-col">Date</th>
+                                <tr >
+                                    <th class="date-col sortable-header">Date</th>
                                     <th class="designation-col">Désignation/Motif</th>
                                     <th class="quantity-col">Quantité</th>
                                     <th class="amount-col">Montant Total</th>
@@ -369,7 +370,7 @@
                 </div>
              </section>
 
-            <!-- Section Employees -->
+            <!-- Section Employees (Existing - Unchanged Structure) -->
             <section id="employees-section" class="form-container hidden">
                 <h2>Gestion des Employés</h2>
                 <form id="employee-form">
@@ -449,8 +450,8 @@
                      <h3>Liste des Demandes de Permission (Employés)</h3>
                      <!-- START: Added Table Search -->
                      <div class="table-search-container">
-                         <label for="search-input-employee-permissions">Filtrer par Employé/Motif:</label>
-                         <input type="search" id="search-input-employee-permissions" data-table-id="employee-permissions-table" data-column-class="name-col,reason-col" placeholder="Nom ou motif...">
+                         <label for="search-input-employee-permissions">Filtrer par Employé/Motif/Date:</label>
+                         <input type="search" id="search-input-employee-permissions" data-table-id="employee-permissions-table" data-column-class="name-col,reason-col,date-col" placeholder="Nom, motif ou Date (AAAA-MM-JJ)...">
                      </div>
                      <!-- END: Added Table Search -->
                      <div class="button-group">
@@ -461,13 +462,13 @@
                     <div class="table-container">
                         <table id="employee-permissions-table">
                             <thead>
-                                <tr>
-                                    <th class="date-col">Date Demande</th>
+                                <tr >
+                                    <th class="date-col sortable-header">Date Demande</th>
                                     <th class="name-col">Employé</th>
                                     <th>Date/Période Permission</th>
                                     <th class="reason-col">Motif</th>
                                     <th class="status-col">Statut</th>
-                                    <th class="user-col">Demandé par</th>
+                                    <th class="user-col">Traitement (Utilisateur/Date)</th>
                                     <th class="actions-header no-print no-export">Actions</th>
                                 </tr>
                             </thead>
@@ -483,8 +484,8 @@
                      <h3>Liste des Employés</h3>
                      <!-- START: Added Table Search -->
                      <div class="table-search-container">
-                         <label for="search-input-employees">Filtrer par Nom/Prénom:</label>
-                         <input type="search" id="search-input-employees" data-table-id="employees-table" data-column-class="name-col" placeholder="Nom ou prénom...">
+                         <label for="search-input-employees">Filtrer par Nom/Prénom/Date Embauche:</label>
+                         <input type="search" id="search-input-employees" data-table-id="employees-table" data-column-class="name-col,date-col" placeholder="Nom, prénom ou Date (AAAA-MM-JJ)...">
                      </div>
                      <!-- END: Added Table Search -->
                      <div class="button-group">
@@ -495,11 +496,11 @@
                     <div class="table-container">
                         <table id="employees-table" >
                             <thead>
-                                <tr>
+                                <tr >
                                     <th class="name-col">Nom</th>
                                     <th class="name-col">Prénom</th>
                                     <th class="status-col">Statut</th>
-                                    <th class="date-col">Date Embauche</th>
+                                    <th class="date-col sortable-header">Date Embauche</th>
                                     <th class="address-col">Adresse</th>
                                     <th class="contact-col">Téléphone</th>
                                     <th class="residence-col">Lieu Résidence</th>
@@ -522,7 +523,7 @@
                 </div>
             </section>
 
-            <!-- Section Learners -->
+            <!-- Section Learners (Existing - Unchanged Structure) -->
             <section id="learners-section" class="form-container hidden">
                  <h2>Gestion des Apprenants</h2>
                   <form id="learner-form">
@@ -616,8 +617,8 @@
                       <h3>Liste des Demandes de Permission (Apprenants)</h3>
                       <!-- START: Added Table Search -->
                       <div class="table-search-container">
-                          <label for="search-input-learner-permissions">Filtrer par Apprenant/Motif:</label>
-                          <input type="search" id="search-input-learner-permissions" data-table-id="learner-permissions-table" data-column-class="name-col,reason-col" placeholder="Nom ou motif...">
+                          <label for="search-input-learner-permissions">Filtrer par Apprenant/Motif/Date:</label>
+                          <input type="search" id="search-input-learner-permissions" data-table-id="learner-permissions-table" data-column-class="name-col,reason-col,date-col" placeholder="Nom, motif ou Date (AAAA-MM-JJ)...">
                       </div>
                       <!-- END: Added Table Search -->
                       <div class="button-group">
@@ -628,13 +629,13 @@
                      <div class="table-container">
                          <table id="learner-permissions-table">
                              <thead>
-                                 <tr>
-                                     <th class="date-col">Date Demande</th>
+                                 <tr >
+                                     <th class="date-col sortable-header">Date Demande</th>
                                      <th class="name-col">Apprenant</th>
                                      <th>Date/Période Permission</th>
                                      <th class="reason-col">Motif</th>
                                      <th class="status-col">Statut</th>
-                                     <th class="user-col">Demandé par</th>
+                                     <th class="user-col">Traitement (Utilisateur/Date)</th>
                                      <th class="actions-header no-print no-export">Actions</th>
                                  </tr>
                              </thead>
@@ -670,7 +671,7 @@
                  </div>
              </section>
 
-             <!-- Section Mobile Money -->
+             <!-- Section Mobile Money (Existing - Unchanged Structure) -->
              <section id="mobile-money-section" class="form-container hidden">
                  <h2>Gestion du Cabinet Mobile Money</h2>
 
@@ -735,8 +736,8 @@
                       <h3>Détails Points Journaliers Mobile Money</h3>
                       <!-- START: Added Table Search -->
                       <div class="table-search-container">
-                          <label for="search-input-mobile-money">Filtrer par Agent:</label>
-                          <input type="search" id="search-input-mobile-money" data-table-id="mobile-money-table" data-column-class="agent-col" placeholder="Agent...">
+                          <label for="search-input-mobile-money">Filtrer par Agent/Date:</label>
+                          <input type="search" id="search-input-mobile-money" data-table-id="mobile-money-table" data-column-class="agent-col,date-col" placeholder="Agent ou Date (AAAA-MM-JJ)...">
                       </div>
                       <!-- END: Added Table Search -->
                       <div class="button-group">
@@ -746,7 +747,7 @@
                      </div>
                      <div class="table-container">
                          <table id="mobile-money-table">
-                             <thead> <tr> <th class="date-col">Date</th> <th class="agent-col">Agent</th> <th class="balance-col">Solde Moov</th> <th class="balance-col">Solde MTN</th> <th class="balance-col">Solde Celttis</th> <th class="balance-col">Solde Espèce</th> <th class="balance-col">Total Solde</th> <th class="credit-col">Crédit Moov</th> <th class="credit-col">Crédit MTN</th> <th class="credit-col">Crédit Celttis</th> <th class="credit-col">Total Crédit</th> <th class="amount-col">Perte Trans/Retrait</th> <th class="amount-col">Perte Crédit</th> <th class="user-col">Utilisateur</th> <th class="actions-header no-print no-export">Actions</th> </tr> </thead>
+                             <thead> <tr > <th class="date-col sortable-header">Date</th> <th class="agent-col">Agent</th> <th class="balance-col">Solde Moov</th> <th class="balance-col">Solde MTN</th> <th class="balance-col">Solde Celttis</th> <th class="balance-col">Solde Espèce</th> <th class="balance-col">Total Solde</th> <th class="credit-col">Crédit Moov</th> <th class="credit-col">Crédit MTN</th> <th class="credit-col">Crédit Celttis</th> <th class="credit-col">Total Crédit</th> <th class="amount-col">Perte Trans/Retrait</th> <th class="amount-col">Perte Crédit</th> <th class="user-col">Utilisateur</th> <th class="actions-header no-print no-export">Actions</th> </tr> </thead>
                              <tbody>
                                  <!-- Rows generated by JS -->
                              </tbody>
@@ -778,7 +779,7 @@
                  </div>
              </section>
 
-             <!-- Section Creditors -->
+             <!-- Section Creditors (Existing - Unchanged Structure) -->
              <section id="creditors-section" class="form-container hidden">
                  <h2>Gestion des Comptes Crédit Client</h2>
 
@@ -863,8 +864,8 @@
                      <h3>Détails des Transactions Crédit Client</h3>
                      <!-- START: Added Table Search -->
                      <div class="table-search-container">
-                         <label for="search-input-creditors">Filtrer par Client/Désignation:</label>
-                         <input type="search" id="search-input-creditors" data-table-id="creditors-table" data-column-class="name-col,designation-col" placeholder="Nom ou désignation...">
+                         <label for="search-input-creditors">Filtrer par Client/Désignation/Date Op.:</label>
+                         <input type="search" id="search-input-creditors" data-table-id="creditors-table" data-column-class="name-col,designation-col,date-col" placeholder="Nom, désignation ou Date (AAAA-MM-JJ)...">
                      </div>
                      <!-- END: Added Table Search -->
                      <div class="button-group">
@@ -874,17 +875,17 @@
                      </div>
                      <div class="table-container">
                          <table id="creditors-table">
-                             <thead>
+                             <thead >
                                  <tr>
-                                     <th class="date-col">Date Dern. Op.</th>
+                                     <th class="date-col sortable-header">Date Dern. Op.</th>
                                      <th class="name-col">Nom Prénom Client</th>
                                      <th class="designation-col">Désignation</th>
                                      <th class="quantity-col">Qté</th>
                                      <th class="unit-price-col">PU</th>
                                      <th class="amount-col">Montant Total Dû</th>
                                      <th class="amount-col">Montant Payé (Cumulé)</th>
-                                     <th class="amount-col">Montant Restant</th>
-                                     <th class="date-col">Date Échéance</th>
+                                     <th class="amount-col ">Montant Restant</th>
+                                     <th class="date-col sortable-header">Date Échéance</th>
                                      <th class="contact-col">Contact</th>
                                      <th class="status-col">Statut</th>
                                      <th class="user-col">Utilisateur</th>
@@ -899,7 +900,7 @@
                  </div>
              </section>
 
-             <!-- Section Debt -->
+             <!-- Section Debt (Existing - Unchanged Structure) -->
              <section id="debt-section" class="form-container hidden">
                  <h2>Gestion des Dettes / Prêts de l'Entreprise</h2>
                  <form id="debt-form">
@@ -928,8 +929,8 @@
                      <h3>Détails des Dettes / Prêts de l'Entreprise</h3>
                      <!-- START: Added Table Search -->
                      <div class="table-search-container">
-                         <label for="search-input-debt">Filtrer par Créancier/Débiteur/Description:</label>
-                         <input type="search" id="search-input-debt" data-table-id="debt-table" data-column-class="name-col,description-col" placeholder="Nom ou description...">
+                         <label for="search-input-debt">Filtrer par Créancier/Débiteur/Description/Date:</label>
+                         <input type="search" id="search-input-debt" data-table-id="debt-table" data-column-class="name-col,description-col,date-col" placeholder="Nom, description ou Date (AAAA-MM-JJ)...">
                      </div>
                      <!-- END: Added Table Search -->
                      <div class="button-group">
@@ -939,7 +940,7 @@
                      </div>
                      <div class="table-container">
                          <table id="debt-table">
-                             <thead> <tr> <th class="date-col">Date Enreg.</th> <th class="type-col">Type</th> <th class="name-col">Créancier/Débiteur</th> <th class="description-col">Description</th> <th class="amount-col">Montant Total</th> <th class="date-col">Date d'Échéance</th> <th class="status-col">Statut</th> <th class="user-col">Utilisateur</th> <th class="actions-header no-print no-export">Actions</th> </tr> </thead>
+                             <thead> <tr > <th class="date-col sortable-header">Date Enreg.</th> <th class="type-col">Type</th> <th class="name-col">Créancier/Débiteur</th> <th class="description-col">Description</th> <th class="amount-col">Montant Total</th> <th class="date-col sortable-header">Date d'Échéance</th> <th class="status-col">Statut</th> <th class="user-col">Utilisateur</th> <th class="actions-header no-print no-export">Actions</th> </tr> </thead>
                              <tbody>
                                  <!-- Rows generated by JS -->
                              </tbody>
@@ -948,7 +949,87 @@
                  </div>
              </section>
 
-             <!-- Section Reports -->
+            <!-- START: NEW SECTION Equipment -->
+            <section id="equipment-section" class="form-container hidden">
+                <h2>Appareils / Outils Confiés aux Employés</h2>
+                <form id="equipment-form">
+                    <input type="hidden" id="equipment-edit-index" value="">
+                    <div class="form-row">
+                        <div>
+                            <label for="equipment-name">Nom de l'Appareil/Outil:</label>
+                            <input type="text" id="equipment-name" required>
+                        </div>
+                        <div>
+                            <label for="equipment-quantity">Nombre:</label>
+                            <input type="number" id="equipment-quantity" min="1" required>
+                        </div>
+                         <div>
+                            <label for="equipment-assigned-date">Date Attribution:</label>
+                            <input type="date" id="equipment-assigned-date" required>
+                        </div>
+                        <div>
+                            <label for="equipment-user-connected">Utilisateur connecté:</label>
+                            <input type="text" id="equipment-user-connected" class="user-connected-field" readonly>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="equipment-accessories">Accessoires Fournis:</label>
+                            <input type="text" id="equipment-accessories" placeholder="Ex: Chargeur, Sacoche, etc.">
+                        </div>
+                        <div>
+                            <label for="equipment-employee-name">Employé Attitré:</label>
+                            <select id="equipment-employee-name" required>
+                                <option value="">-- Choisir Employé --</option>
+                                <!-- Options added by JS -->
+                            </select>
+                        </div>
+                    </div>
+                     <div class="form-row">
+                         <div style="flex-basis: 100%;">
+                             <label for="equipment-other-info">Autres Informations / État:</label>
+                             <textarea id="equipment-other-info" rows="3"></textarea>
+                         </div>
+                     </div>
+                    <button type="submit">Ajouter Appareil Confié</button>
+                </form>
+
+                <button id="show-equipment-details-button" class="secondary-btn">Afficher/Masquer Liste Appareils Confiés</button>
+                <div id="equipment-details-container" class="printable-content hidden">
+                     <h3>Liste des Appareils/Outils Confiés</h3>
+                     <div class="table-search-container">
+                         <label for="search-input-equipment">Filtrer par Appareil/Employé/Date:</label>
+                         <input type="search" id="search-input-equipment" data-table-id="equipment-table" data-column-class="equipment-name-col,employee-name-col,date-col" placeholder="Nom appareil, employé ou Date (AAAA-MM-JJ)...">
+                     </div>
+                     <div class="button-group">
+                        <button id="print-equipment" class="print-export-btn">Imprimer</button>
+                        <button id="export-equipment-excel" class="print-export-btn">Exporter Excel</button>
+                        <button id="export-equipment-pdf" class="print-export-btn">Exporter PDF</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="equipment-table">
+                            <thead>
+                                <tr >
+                                    <th class="date-col sortable-header">Date Attrib.</th>
+                                    <th class="equipment-name-col">Nom Appareil/Outil</th>
+                                    <th class="quantity-col">Nombre</th>
+                                    <th>Accessoires</th>
+                                    <th class="employee-name-col">Employé Attitré</th>
+                                    <th>Autres Infos / État</th>
+                                    <th class="user-col">Enregistré par</th>
+                                    <th class="actions-header no-print no-export">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rows generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <!-- END: NEW SECTION Equipment -->
+
+             <!-- Section Reports (Existing - Unchanged Structure) -->
              <section id="report-section" class="form-container hidden">
                  <h2>Bilans</h2>
                  <div class="form-row" style="justify-content: center;">
@@ -989,7 +1070,7 @@
                  </div>
              </section>
 
-              <!-- Section Invoice Generator -->
+              <!-- Section Invoice Generator (Existing - Unchanged Structure) -->
               <section id="invoice-generator-section" class="form-container hidden">
                  <h2>Générateur de Facture</h2>
                  <form id="invoice-generator-form">
@@ -1036,7 +1117,7 @@
                  </form>
              </section>
 
-             <!-- Section Administration -->
+             <!-- Section Administration (Existing - Unchanged Structure) -->
              <section id="admin-section" class="form-container hidden">
                  <h2>Administration Utilisateurs</h2>
                  <form id="admin-form">
@@ -1132,7 +1213,7 @@
 
     <footer>
         <p>© <span id="footer-year"></span> Gestionnaire - La Charité Modeste. Tous droits réservés.</p>
-        <p>Conçu et Développé par GKLM TECHNOLOGY - Téléphone : +229 019 175 5979</p>
+        <p>Conçu et Développé par GKLM - Téléphone : +229 019 175 5979</p>
     </footer>
 </body>
 
