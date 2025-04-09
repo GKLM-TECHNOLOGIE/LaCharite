@@ -1109,10 +1109,11 @@ footer p {
     #materiel-electrique-details-container.show-in-print::after,
     #expenses-details-container.show-in-print::after,
     #others-details-container.show-in-print::after,
-    #equipment-details-container.show-in-print::after {
+    #equipment-details-container.show-in-print::after { /* Added equipment */
         /* Use \A for line breaks, white-space: pre handles spacing. Adjust spaces as needed. */
-        /* Swapped names line */
-        content: "\A\ASignature                                signature\A\A\A\AModeste KODA MICHEL                     Nom et prénom de l'employé";
+        /* START MODIFICATION: Swapped signature names */
+        content: "\A\ASignature                                                         signature\A\A\A\ANom et prénom de l'employé                                     Modeste KODA MICHEL";
+        /* END MODIFICATION */
         white-space: pre; /* Crucial for preserving spacing and line breaks */
         display: block;
         margin-top: 40px; /* Space after table */
