@@ -945,7 +945,7 @@ footer p {
 
 /* --- Styles pour l'impression --- */
 @media print {
-    /* General Print Styles */
+    /* --- General Print Styles (Apply regardless of initiating device) --- */
     html, body {
         margin: 0 !important; padding: 0 !important;
         background-color: #fff !important; color: #000 !important;
@@ -1140,3 +1140,4 @@ footer p {
 .printing-invoice-header {
     /* Uses general .invoice-header styles defined within @media print */
 }
+/* No device-specific print changes needed; @media print handles the output format. */
