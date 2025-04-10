@@ -371,6 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const invoiceGenTotalAmountInput = document.getElementById('invoice-gen-total-amount');
     const invoiceGenTotalWordsInput = document.getElementById('invoice-gen-total-words');
     const previewPrintInvoiceButton = document.getElementById('preview-print-invoice-button');
+    const exportInvoicePdfButton = document.getElementById('export-invoice-pdf-button'); // NEW
     const adminUsernameInput = document.getElementById('admin-username');
     const adminPostInput = document.getElementById('admin-post');
     const adminPasswordInput = document.getElementById('admin-password');
@@ -507,10 +508,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function printElement(elementId) {
+        // --- MODIFICATION START: Revised check ---
         const elementToPrint = document.getElementById(elementId);
-        if (!elementToPrint || !elementToPrint.innerHTML.trim() || elementToPrint.classList.contains('hidden')) {
+        // Check if element exists and has meaningful content (not just whitespace or comments)
+        let hasVisibleContent = false;
+        if (elementToPrint && elementToPrint.innerHTML) {
+            // A simple check: does it have any element nodes? More robust than just innerHTML.trim()
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = elementToPrint.innerHTML;
+            if (tempDiv.querySelector('*')) { // Check if any element exists within
+                hasVisibleContent = true;
+            }
+        }
+        if (!elementToPrint || !hasVisibleContent) {
             console.error("Print area empty or not found:", elementId);
-            alert("Erreur: Contenu à imprimer vide ou introuvable.");
+            alert("Erreur: Contenu à imprimer vide ou introuvable (ID: " + elementId + "). Veuillez générer le contenu d'abord.");
             return;
         }
         document.body.classList.add('printing-invoice');
@@ -540,6 +552,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }, 100);
     }
+    // --- MODIFICATION END: Revised check ---
+
 
     // --- MODIFIED EXCEL EXPORT FUNCTION ---
     function exportToExcel(tableId, fileName) {
@@ -833,13 +847,19 @@ document.addEventListener('DOMContentLoaded', function () {
         initializeInvoiceForm(); // Set up invoice generator defaults
         updateConnectedUserFields(); // Populate user fields based on currentUser
 
-        // Update header user info
-        if (userInfoUsernameSpan) userInfoUsernameSpan.textContent = currentUser?.username || '';
-        if (userInfoStatusSpan) userInfoStatusSpan.textContent = currentUser?.status || '';
-
         // Apply role restrictions last to enable/disable elements correctly
         applyRoleRestrictions();
         addDateSortListeners(); // <-- Add this line
+
+        // Update header user info AFTER restrictions applied (might hide header)
+        if (currentUser) {
+            if (userInfoUsernameSpan) userInfoUsernameSpan.textContent = currentUser.username;
+            if (userInfoStatusSpan) userInfoStatusSpan.textContent = currentUser.status;
+        } else {
+             if (userInfoUsernameSpan) userInfoUsernameSpan.textContent = '';
+             if (userInfoStatusSpan) userInfoStatusSpan.textContent = '';
+        }
+
 
         // Apply the global filter AFTER tables are populated and RBAC applied
         filterTablesByDesignation(); // Apply Global Filter
@@ -862,6 +882,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.actions-cell .action-btn').forEach(btn => btn.disabled = true);
              if (addInvoiceItemButton) addInvoiceItemButton.disabled = true;
              if (previewPrintInvoiceButton) previewPrintInvoiceButton.disabled = true;
+             if (exportInvoicePdfButton) exportInvoicePdfButton.disabled = true; // NEW
              if (generateReportButton) generateReportButton.disabled = true;
             return;
         }
@@ -891,6 +912,7 @@ document.addEventListener('DOMContentLoaded', function () {
         allActionButtons.forEach(btn => btn.disabled = true); // Disable all table actions
         if (addInvoiceItemButton) addInvoiceItemButton.disabled = true; // Disable add invoice item
         if (previewPrintInvoiceButton) previewPrintInvoiceButton.disabled = true; // Disable preview/print invoice
+        if (exportInvoicePdfButton) exportInvoicePdfButton.disabled = true; // NEW: Disable PDF export invoice
         if (generateReportButton) generateReportButton.disabled = true; // Disable generate report
         reportPrintExportBtns.forEach(btn => btn.disabled = true); // Disable report export/print
 
@@ -906,6 +928,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Enable invoice buttons for Admin
             if (addInvoiceItemButton) addInvoiceItemButton.disabled = false;
             if (previewPrintInvoiceButton) previewPrintInvoiceButton.disabled = false;
+            if (exportInvoicePdfButton) exportInvoicePdfButton.disabled = false; // NEW
             document.querySelectorAll('.remove-invoice-item-btn').forEach(btn => btn.disabled = false); // Ensure remove is enabled too
 
             if (generateReportButton) generateReportButton.disabled = false;
@@ -941,6 +964,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (addInvoiceItemButton) addInvoiceItemButton.disabled = false;
             document.querySelectorAll('.remove-invoice-item-btn').forEach(btn => btn.disabled = false); // Allow removing items added in current session
             if (previewPrintInvoiceButton) previewPrintInvoiceButton.disabled = false;
+            if (exportInvoicePdfButton) exportInvoicePdfButton.disabled = false; // NEW
 
             // Disable Report Generation & Export/Print for Editor
             if (generateReportButton) generateReportButton.disabled = true;
@@ -979,6 +1003,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Disable invoice printing (Lecteur cannot access other sections)
             allInvoicePrintButtons.forEach(btn => btn.disabled = true);
+            if (exportInvoicePdfButton) exportInvoicePdfButton.disabled = true; // NEW
 
             // All other nav buttons, sections, submits, actions remain hidden/disabled by the default state.
         // --- MODIFIED LECTEUR BLOCK END ---
@@ -1433,8 +1458,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- Search Filtering Function (Global - Kept as is) ---
     function filterTablesByDesignation() { /* ... Function remains the same ... */ if (!globalSearchInput) return; const searchTerm = globalSearchInput.value.toLowerCase().trim(); const tablesToFilter = [ { tbody: supplyTable, columnClass: 'designation-col' }, { tbody: stockTable, columnClass: 'designation-col' }, { tbody: salesTable, columnClass: 'designation-col' }, { tbody: materielElectriqueTable, columnClass: 'designation-col' }, { tbody: expensesTable, columnClass: 'reason-col' }, { tbody: othersTable, columnClass: 'designation-col' }, { tbody: creditorsTable, columnClass: 'designation-col' }, { tbody: debtTable, columnClass: 'description-col' }, { tbody: equipmentTable, columnClass: 'equipment-name-col' } ]; tablesToFilter.forEach(config => { if (!config.tbody) { return; } const rows = config.tbody.querySelectorAll('tr'); rows.forEach(row => { const cell = row.querySelector(`td.${config.columnClass}`); if (cell) { const cellText = cell.textContent.toLowerCase(); if (searchTerm === '' || cellText.includes(searchTerm)) { row.style.display = ''; } else { row.style.display = 'none'; } } }); }); }
 
-    // --- Form Submit Handlers (WITH PERMISSION CHECKS) ---
-    if(supplyForm) supplyForm.addEventListener('submit', function (event) {
+    // --- Form Submit Handlers (WITH PERMISSION CHECKS and Scroll) ---
+    if (supplyForm) supplyForm.addEventListener('submit', function (event) {
         event.preventDefault();
         const isEditor = currentUser && currentUser.status === 'Editeur';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
@@ -1442,12 +1467,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const isEditing = editIndex > -1;
 
         if (!currentUser || (!isAdmin && !isEditor)) {
-             alert("Accès Refusé: Permissions insuffisantes."); return;
+            alert("Accès Refusé: Permissions insuffisantes."); return;
         }
         if (isEditing && !isAdmin) { // Only Admin can edit
-             alert("Accès Refusé: Seuls les administrateurs peuvent modifier."); return;
+            alert("Accès Refusé: Seuls les administrateurs peuvent modifier."); return;
         }
-        // ... rest of the supply form logic ...
+
         if (!supplyDateInput || !supplyTypeSelect || !supplyDesignationInput || !supplyQuantityInput || !supplyUnitPriceInput || !supplyTotalAmountInput) { alert("Erreur interne: Champs appro. manquants."); return; }
         const date = supplyDateInput.value; const type = supplyTypeSelect.value; const designation = supplyDesignationInput.value.trim();
         const quantity = parseFloat(supplyQuantityInput.value); const unitPrice = parseFloat(supplyUnitPriceInput.value); const totalAmount = parseFloat(supplyTotalAmountInput.value);
@@ -1456,10 +1481,36 @@ document.addEventListener('DOMContentLoaded', function () {
         let originalStockableStatus = false; let requiresStockUpdate = false; let originalDataBackup = null;
         if (isStockableType) { const conflictingItem = supplyData.find((item, index) => item.designation === designation && (item.type === 'Papeterie' || item.type === 'Matériels électrique') && item.type !== type && index !== editIndex); if (conflictingItem) { alert(`Attention : Désignation "${designation}" existe déjà pour le type stockable "${conflictingItem.type}". Veuillez utiliser une désignation unique ou vérifier le type.`); return; } }
         const newData = { date, type, designation, quantity, unitPrice, totalAmount };
-        if (isEditing) { if(editIndex >= supplyData.length) { alert("Erreur : index de modification invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(supplyData[editIndex])); newData.recordedBy = originalDataBackup.recordedBy; newData.lastModifiedBy = currentUser?.username || 'N/A'; newData.lastModifiedDate = new Date().toISOString(); originalStockableStatus = originalDataBackup.type === 'Papeterie' || originalDataBackup.type === 'Matériels électrique'; requiresStockUpdate = (isStockableType || originalStockableStatus) && (originalDataBackup.designation !== designation || originalDataBackup.type !== type || originalDataBackup.quantity !== quantity); let tempLocalData = [...supplyData]; tempLocalData[editIndex] = newData; saveDataToFirebase('supplyData', tempLocalData) .then(() => { alert('Approvisionnement mis à jour.'); supplyForm.reset(); setTodaysDate(); updateConnectedUserFields(); if(supplyEditIndexInput) supplyEditIndexInput.value = ''; supplyForm.querySelector('button[type="submit"]').textContent = 'Ajouter Approvisionnement'; }) .catch(error => { /* Error handled */ }); } else { newData.recordedBy = currentUser?.username || 'N/A'; let tempLocalData = [...supplyData]; tempLocalData.push(newData); requiresStockUpdate = isStockableType; saveDataToFirebase('supplyData', tempLocalData) .then(() => { alert('Approvisionnement ajouté.'); supplyForm.reset(); setTodaysDate(); updateConnectedUserFields(); }) .catch(error => { /* Error handled */ }); }
+        let tempLocalData = [...supplyData]; // Create a copy for potential update
+
+        if (isEditing) {
+            if (editIndex >= supplyData.length) { alert("Erreur : index de modification invalide."); return; }
+            originalDataBackup = JSON.parse(JSON.stringify(supplyData[editIndex]));
+            newData.recordedBy = originalDataBackup.recordedBy;
+            newData.lastModifiedBy = currentUser?.username || 'N/A';
+            newData.lastModifiedDate = new Date().toISOString();
+            tempLocalData[editIndex] = newData; // Update the copy
+        } else {
+            newData.recordedBy = currentUser?.username || 'N/A';
+            tempLocalData.push(newData); // Add to the copy
+        }
+
+        saveDataToFirebase('supplyData', tempLocalData)
+            .then(() => {
+                const action = isEditing ? 'mis à jour' : 'ajouté';
+                alert(`Approvisionnement ${action}.`);
+                supplyForm.reset();
+                setTodaysDate();
+                updateConnectedUserFields();
+                if (supplyEditIndexInput) supplyEditIndexInput.value = '';
+                supplyForm.querySelector('button[type="submit"]').textContent = 'Ajouter Approvisionnement';
+                // Scroll to form after successful action
+                supplyForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(error => { /* Error handled by saveDataToFirebase */ });
     });
 
-    if(salesForm) salesForm.addEventListener('submit', function (event) {
+    if (salesForm) salesForm.addEventListener('submit', function (event) {
         event.preventDefault();
         const editIndex = salesEditIndexInput ? parseInt(salesEditIndexInput.value, 10) : -1;
         const editType = salesEditTypeInput?.value || '';
@@ -1471,102 +1522,294 @@ document.addEventListener('DOMContentLoaded', function () {
             alert("Accès Refusé: Permissions insuffisantes."); return;
         }
         if (isEditing && !isAdmin) { // Only admin can edit
-             alert("Accès Refusé: Seuls les administrateurs peuvent modifier."); return;
+            alert("Accès Refusé: Seuls les administrateurs peuvent modifier."); return;
         }
-        // ... rest of sales form logic ...
+
         if (!saleDateInput?.value) { alert("La date est requise."); return; }
         const date = saleDateInput.value; const operationType = operationTypeSelect.value; const recordedBy = currentUser?.username || 'N/A'; let needsStockUpdate = false; let dataArray, storageKey, originalDataBackup = null; let tempLocalData = null;
-        try { let itemData = { date }; if (operationType === 'Papeterie') { dataArray = salesData; storageKey = 'salesData'; } else if (operationType === 'Matériels électrique') { dataArray = materielElectriqueData; storageKey = 'materielElectriqueData'; } else if (operationType === 'Dépenses') { dataArray = expensesData; storageKey = 'expensesData'; } else if (operationType === 'Divers') { dataArray = othersData; storageKey = 'othersData'; } else { throw new Error("Type d'opération inconnu."); } if (isEditing) { if (editType !== operationType) { throw new Error("Modification impossible: Le type d'opération ne peut pas être changé. Supprimez et recréez l'entrée."); } if (editIndex >= dataArray.length) { throw new Error("Erreur interne: Index de modification invalide."); } originalDataBackup = JSON.parse(JSON.stringify(dataArray[editIndex])); } if (operationType === 'Papeterie' || operationType === 'Matériels électrique') { needsStockUpdate = true; const designationSelect = (operationType === 'Papeterie') ? saleDesignationSelect : meDesignationSelect; const quantityInput = (operationType === 'Papeterie') ? saleQuantityInput : meQuantityInput; const unitPriceInput = (operationType === 'Papeterie') ? saleUnitPriceInput : meUnitPriceInput; const totalAmountInput = (operationType === 'Papeterie') ? saleTotalAmountInput : meTotalAmountInput; itemData.type = operationType; itemData.designation = designationSelect.value; if (!itemData.designation) throw new Error("Sélectionnez une désignation."); itemData.quantity = parseFloat(quantityInput.value) || 0; if (itemData.quantity <= 0) throw new Error("Quantité > 0 requise."); itemData.unitPrice = parseFloat(unitPriceInput.value) || 0; if (itemData.unitPrice < 0) throw new Error("Prix unitaire >= 0 requis."); itemData.totalAmount = parseFloat(totalAmountInput.value) || (itemData.quantity * itemData.unitPrice); const stockChange = isEditing ? itemData.quantity - originalDataBackup.quantity : itemData.quantity; if (stockChange !== 0) { const currentStockItem = stockData.find(stock => stock.designation === itemData.designation && stock.type === operationType); const availableStock = currentStockItem ? currentStockItem.remainingQuantity : 0; const effectiveAvailable = isEditing ? availableStock + originalDataBackup.quantity : availableStock; if (itemData.quantity > effectiveAvailable) { if (!confirm(`Stock ${operationType} insuffisant pour ${itemData.designation}. Stock actuel avant modif: ${effectiveAvailable}. Vendre/Modifier quand même (${itemData.quantity}) ?`)) { throw new Error(`Opération annulée par l'utilisateur.`); } } } } else if (operationType === 'Dépenses') { itemData.reason = expenseReasonInput.value.trim(); if (!itemData.reason) throw new Error("Motif dépense requis."); itemData.quantity = expenseQuantityInput.value ? (parseFloat(expenseQuantityInput.value) || null) : null; itemData.amount = parseFloat(expenseAmountInput.value) || 0; if (itemData.amount <= 0) throw new Error("Montant total dépense > 0 requis."); } else if (operationType === 'Divers') { itemData.type = 'Divers'; itemData.designation = otherDesignationInput.value.trim(); if (!itemData.designation) throw new Error("Désignation/Motif requis pour Divers."); itemData.quantity = otherQuantityInput.value ? (parseFloat(otherQuantityInput.value) || null) : null; itemData.totalAmount = parseFloat(otherTotalAmountInput.value); if (isNaN(itemData.totalAmount) || itemData.totalAmount <= 0) throw new Error("Montant Total Divers > 0 requis."); } tempLocalData = [...dataArray]; if (isEditing) { itemData.recordedBy = originalDataBackup.recordedBy; itemData.lastModifiedBy = recordedBy; itemData.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = { ...originalDataBackup, ...itemData }; } else { itemData.recordedBy = recordedBy; tempLocalData.push(itemData); } if (!storageKey) throw new Error("Erreur interne: Clé de sauvegarde indéterminée."); saveDataToFirebase(storageKey, tempLocalData) .then(() => { const action = isEditing ? 'mise à jour' : 'ajoutée'; alert(`Opération ${action}.`); salesForm.reset(); setTodaysDate(); handleOperationTypeChange(); updateConnectedUserFields(); if (salesEditIndexInput) salesEditIndexInput.value = ''; if (salesEditTypeInput) salesEditTypeInput.value = ''; salesForm.querySelector('button[type="submit"]').textContent = 'Ajouter'; }) .catch(error => { /* Error handled */ }); } catch (error) { alert(`Erreur ajout/modification opération: ${error.message}`); }
+        try {
+            let itemData = { date };
+            if (operationType === 'Papeterie') { dataArray = salesData; storageKey = 'salesData'; }
+            else if (operationType === 'Matériels électrique') { dataArray = materielElectriqueData; storageKey = 'materielElectriqueData'; }
+            else if (operationType === 'Dépenses') { dataArray = expensesData; storageKey = 'expensesData'; }
+            else if (operationType === 'Divers') { dataArray = othersData; storageKey = 'othersData'; }
+            else { throw new Error("Type d'opération inconnu."); }
+
+            if (isEditing) {
+                if (editType !== operationType) { throw new Error("Modification impossible: Le type d'opération ne peut pas être changé. Supprimez et recréez l'entrée."); }
+                if (editIndex >= dataArray.length) { throw new Error("Erreur interne: Index de modification invalide."); }
+                originalDataBackup = JSON.parse(JSON.stringify(dataArray[editIndex]));
+            }
+
+            if (operationType === 'Papeterie' || operationType === 'Matériels électrique') {
+                needsStockUpdate = true;
+                const designationSelect = (operationType === 'Papeterie') ? saleDesignationSelect : meDesignationSelect;
+                const quantityInput = (operationType === 'Papeterie') ? saleQuantityInput : meQuantityInput;
+                const unitPriceInput = (operationType === 'Papeterie') ? saleUnitPriceInput : meUnitPriceInput;
+                const totalAmountInput = (operationType === 'Papeterie') ? saleTotalAmountInput : meTotalAmountInput;
+                itemData.type = operationType;
+                itemData.designation = designationSelect.value; if (!itemData.designation) throw new Error("Sélectionnez une désignation.");
+                itemData.quantity = parseFloat(quantityInput.value) || 0; if (itemData.quantity <= 0) throw new Error("Quantité > 0 requise.");
+                itemData.unitPrice = parseFloat(unitPriceInput.value) || 0; if (itemData.unitPrice < 0) throw new Error("Prix unitaire >= 0 requis.");
+                itemData.totalAmount = parseFloat(totalAmountInput.value) || (itemData.quantity * itemData.unitPrice);
+                const stockChange = isEditing ? itemData.quantity - originalDataBackup.quantity : itemData.quantity;
+                if (stockChange !== 0) {
+                    const currentStockItem = stockData.find(stock => stock.designation === itemData.designation && stock.type === operationType);
+                    const availableStock = currentStockItem ? currentStockItem.remainingQuantity : 0;
+                    const effectiveAvailable = isEditing ? availableStock + originalDataBackup.quantity : availableStock;
+                    if (itemData.quantity > effectiveAvailable) {
+                        if (!confirm(`Stock ${operationType} insuffisant pour ${itemData.designation}. Stock actuel avant modif: ${effectiveAvailable}. Vendre/Modifier quand même (${itemData.quantity}) ?`)) {
+                            throw new Error(`Opération annulée par l'utilisateur.`);
+                        }
+                    }
+                }
+            } else if (operationType === 'Dépenses') {
+                itemData.reason = expenseReasonInput.value.trim(); if (!itemData.reason) throw new Error("Motif dépense requis.");
+                itemData.quantity = expenseQuantityInput.value ? (parseFloat(expenseQuantityInput.value) || null) : null;
+                itemData.amount = parseFloat(expenseAmountInput.value) || 0; if (itemData.amount <= 0) throw new Error("Montant total dépense > 0 requis.");
+            } else if (operationType === 'Divers') {
+                itemData.type = 'Divers';
+                itemData.designation = otherDesignationInput.value.trim(); if (!itemData.designation) throw new Error("Désignation/Motif requis pour Divers.");
+                itemData.quantity = otherQuantityInput.value ? (parseFloat(otherQuantityInput.value) || null) : null;
+                itemData.totalAmount = parseFloat(otherTotalAmountInput.value); if (isNaN(itemData.totalAmount) || itemData.totalAmount <= 0) throw new Error("Montant Total Divers > 0 requis.");
+            }
+
+            tempLocalData = [...dataArray]; // Use the correct base array
+            if (isEditing) {
+                itemData.recordedBy = originalDataBackup.recordedBy;
+                itemData.lastModifiedBy = recordedBy;
+                itemData.lastModifiedDate = new Date().toISOString();
+                tempLocalData[editIndex] = { ...originalDataBackup, ...itemData };
+            } else {
+                itemData.recordedBy = recordedBy;
+                tempLocalData.push(itemData);
+            }
+
+            if (!storageKey) throw new Error("Erreur interne: Clé de sauvegarde indéterminée.");
+
+            saveDataToFirebase(storageKey, tempLocalData)
+                .then(() => {
+                    const action = isEditing ? 'mise à jour' : 'ajoutée';
+                    alert(`Opération ${action}.`);
+                    salesForm.reset();
+                    setTodaysDate();
+                    handleOperationTypeChange();
+                    updateConnectedUserFields();
+                    if (salesEditIndexInput) salesEditIndexInput.value = '';
+                    if (salesEditTypeInput) salesEditTypeInput.value = '';
+                    salesForm.querySelector('button[type="submit"]').textContent = 'Ajouter';
+                    // Scroll to form after successful action
+                    salesForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                })
+                .catch(error => { /* Error handled by saveDataToFirebase */ });
+        } catch (error) {
+            alert(`Erreur ajout/modification opération: ${error.message}`);
+        }
     });
 
-    // Add similar permission checks to ALL other form submit handlers and window.edit/delete/pay/update functions
-    if(employeeForm) employeeForm.addEventListener('submit', function (event) {
+    // Add similar permission checks and SCROLL logic to ALL other form submit handlers and window.edit/delete/pay/update functions
+    if (employeeForm) employeeForm.addEventListener('submit', function (event) {
         event.preventDefault();
         if (!currentUser || currentUser.status !== 'Administrateur') {
             alert("Accès Refusé: Seuls les administrateurs peuvent gérer les employés."); return;
         }
-        // ... rest of employee form logic ...
-        const editIndex = employeeEditIndexInput ? parseInt(employeeEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; if (!employeeNomInput) { alert("Erreur interne: Champ nom employé manquant."); return; } const nom = employeeNomInput.value.trim(); if (!nom) { alert("Nom employé requis."); return; } const salaryValue = employeeSalaryInput ? parseFloat(employeeSalaryInput.value) : null; const paidAmountValue = employeePaidAmountInput ? parseFloat(employeePaidAmountInput.value) : 0; if (salaryValue !== null && (isNaN(salaryValue) || salaryValue < 0)) { alert("Le salaire doit être un nombre positif ou vide."); return; } if (isNaN(paidAmountValue) || paidAmountValue < 0) { alert("Montant payé doit être un nombre positif ou zéro."); return; } const employeeDataObj = { nom, prenom: employeePrenomInput?.value.trim() || '', statut: employeeRoleInput?.value.trim() || '', adresse: employeeAdresseInput?.value.trim() || '', telephone: employeeTelephoneInput?.value.trim() || '', lieuResidence: employeeLieuResidenceInput?.value.trim() || '', joursTravail: employeeJoursTravailInput?.value.trim() || '', heureArrivee: employeeHeureArriveeInput?.value || '', heureDepart: employeeHeureDepartInput?.value || '', salary: salaryValue, paidAmount: paidAmountValue, hireDate: employeeHireDateInput?.value || '', contactPersonNom: employeeContactPersonNomInput?.value.trim() || '', contactPersonPrenom: employeeContactPersonPrenomInput?.value.trim() || '', contactPersonAdresse: employeeContactPersonAdresseInput?.value.trim() || '', contactPersonTelephone: employeeContactPersonTelephoneInput?.value.trim() || '', contactPersonLieuResidence: employeeContactPersonLieuResidenceInput?.value.trim() || '' }; let originalDataBackup = null; let tempLocalData = [...employeesData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index employé invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); employeeDataObj.paymentHistory = originalDataBackup.paymentHistory || []; employeeDataObj.recordedBy = originalDataBackup.recordedBy; employeeDataObj.lastModifiedBy = currentUser?.username || 'N/A'; employeeDataObj.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = employeeDataObj; } else { employeeDataObj.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(employeeDataObj); } saveDataToFirebase('employeesData', tempLocalData) .then(() => { const action = isEditing ? 'mis à jour' : 'ajouté'; alert(`Employé ${action}.`); employeeForm.reset(); setTodaysDate(); updateConnectedUserFields(); if(employeeEditIndexInput) employeeEditIndexInput.value = ''; employeeForm.querySelector('button[type="submit"]').textContent = 'Ajouter Employé'; }) .catch(error => { /* Error handled */ });
+        const editIndex = employeeEditIndexInput ? parseInt(employeeEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; if (!employeeNomInput) { alert("Erreur interne: Champ nom employé manquant."); return; } const nom = employeeNomInput.value.trim(); if (!nom) { alert("Nom employé requis."); return; } const salaryValue = employeeSalaryInput ? parseFloat(employeeSalaryInput.value) : null; const paidAmountValue = employeePaidAmountInput ? parseFloat(employeePaidAmountInput.value) : 0; if (salaryValue !== null && (isNaN(salaryValue) || salaryValue < 0)) { alert("Le salaire doit être un nombre positif ou vide."); return; } if (isNaN(paidAmountValue) || paidAmountValue < 0) { alert("Montant payé doit être un nombre positif ou zéro."); return; } const employeeDataObj = { nom, prenom: employeePrenomInput?.value.trim() || '', statut: employeeRoleInput?.value.trim() || '', adresse: employeeAdresseInput?.value.trim() || '', telephone: employeeTelephoneInput?.value.trim() || '', lieuResidence: employeeLieuResidenceInput?.value.trim() || '', joursTravail: employeeJoursTravailInput?.value.trim() || '', heureArrivee: employeeHeureArriveeInput?.value || '', heureDepart: employeeHeureDepartInput?.value || '', salary: salaryValue, paidAmount: paidAmountValue, hireDate: employeeHireDateInput?.value || '', contactPersonNom: employeeContactPersonNomInput?.value.trim() || '', contactPersonPrenom: employeeContactPersonPrenomInput?.value.trim() || '', contactPersonAdresse: employeeContactPersonAdresseInput?.value.trim() || '', contactPersonTelephone: employeeContactPersonTelephoneInput?.value.trim() || '', contactPersonLieuResidence: employeeContactPersonLieuResidenceInput?.value.trim() || '' }; let originalDataBackup = null; let tempLocalData = [...employeesData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index employé invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); employeeDataObj.paymentHistory = originalDataBackup.paymentHistory || []; employeeDataObj.recordedBy = originalDataBackup.recordedBy; employeeDataObj.lastModifiedBy = currentUser?.username || 'N/A'; employeeDataObj.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = employeeDataObj; } else { employeeDataObj.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(employeeDataObj); }
+        saveDataToFirebase('employeesData', tempLocalData)
+            .then(() => {
+                const action = isEditing ? 'mis à jour' : 'ajouté';
+                alert(`Employé ${action}.`);
+                employeeForm.reset();
+                setTodaysDate();
+                updateConnectedUserFields();
+                if (employeeEditIndexInput) employeeEditIndexInput.value = '';
+                employeeForm.querySelector('button[type="submit"]').textContent = 'Ajouter Employé';
+                employeeForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+            })
+            .catch(error => { /* Error handled */ });
     });
-    if(learnerForm) learnerForm.addEventListener('submit', function (event) {
+    if (learnerForm) learnerForm.addEventListener('submit', function (event) {
         event.preventDefault();
-         if (!currentUser || currentUser.status !== 'Administrateur') {
-             alert("Accès Refusé: Seuls les administrateurs peuvent gérer les apprenants."); return;
-         }
-        // ... rest of learner form logic ...
-        const editIndex = learnerEditIndexInput ? parseInt(learnerEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; if (!learnerNomInput || !learnerFiliereInput) { alert("Erreur interne: Champs apprenant manquants."); return; } const nom = learnerNomInput.value.trim(); const filiere = learnerFiliereInput.value.trim(); if (!nom || !filiere) { alert("Nom et filière requis."); return; } const ageValue = learnerAgeInput ? parseInt(learnerAgeInput.value) : null; const fraisDocsValue = learnerFraisDocumentsInput ? parseFloat(learnerFraisDocumentsInput.value) : 0; const tranche1Value = learnerTranche1Input ? parseFloat(learnerTranche1Input.value) : 0; const tranche2Value = learnerTranche2Input ? parseFloat(learnerTranche2Input.value) : 0; const tranche3Value = learnerTranche3Input ? parseFloat(learnerTranche3Input.value) : 0; const tranche4Value = learnerTranche4Input ? parseFloat(learnerTranche4Input.value) : 0; if (ageValue !== null && (isNaN(ageValue) || ageValue < 0)) { alert("L'âge doit être un nombre positif."); return; } if (isNaN(fraisDocsValue) || fraisDocsValue < 0 || isNaN(tranche1Value) || tranche1Value < 0 || isNaN(tranche2Value) || tranche2Value < 0 || isNaN(tranche3Value) || tranche3Value < 0 || isNaN(tranche4Value) || tranche4Value < 0) { alert("Frais et montants des tranches doivent être des nombres positifs ou zéro."); return; } const learnerDataObj = { nom, prenom: learnerPrenomInput?.value.trim() || '', age: ageValue, adresse: learnerAdresseInput?.value.trim() || '', lieuResidence: learnerLieuResidenceInput?.value.trim() || '', niveauEtudes: learnerNiveauEtudesInput?.value.trim() || '', situationMatrimoniale: learnerSituationMatrimonialeSelect?.value || '', pereNom: learnerPereNomInput?.value.trim() || '', perePrenom: learnerPerePrenomInput?.value.trim() || '', mereNom: learnerMereNomInput?.value.trim() || '', merePrenom: learnerMerePrenomInput?.value.trim() || '', filiere, dureeFormation: learnerDureeFormationInput?.value.trim() || '', fraisDocuments: fraisDocsValue, tranche1: tranche1Value, tranche2: tranche2Value, tranche3: tranche3Value, tranche4: tranche4Value, garantNom: learnerGarantNomInput?.value.trim() || '', garantPrenom: learnerGarantPrenomInput?.value.trim() || '', garantTelephone: learnerGarantTelephoneInput?.value.trim() || '', garantAdresse: learnerGarantAdresseInput?.value.trim() || '' }; let originalDataBackup = null; let tempLocalData = [...learnersData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index apprenant invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); learnerDataObj.paymentHistory = originalDataBackup.paymentHistory || []; learnerDataObj.recordedBy = originalDataBackup.recordedBy; learnerDataObj.lastModifiedBy = currentUser?.username || 'N/A'; learnerDataObj.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = learnerDataObj; } else { learnerDataObj.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(learnerDataObj); } saveDataToFirebase('learnersData', tempLocalData) .then(() => { const action = isEditing ? 'mis à jour' : 'ajouté'; alert(`Apprenant ${action}.`); learnerForm.reset(); updateConnectedUserFields(); setTodaysDate(); if(learnerEditIndexInput) learnerEditIndexInput.value = ''; learnerForm.querySelector('button[type="submit"]').textContent = 'Ajouter Apprenant'; }) .catch(error => { /* Error handled */ });
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les apprenants."); return;
+        }
+        const editIndex = learnerEditIndexInput ? parseInt(learnerEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; if (!learnerNomInput || !learnerFiliereInput) { alert("Erreur interne: Champs apprenant manquants."); return; } const nom = learnerNomInput.value.trim(); const filiere = learnerFiliereInput.value.trim(); if (!nom || !filiere) { alert("Nom et filière requis."); return; } const ageValue = learnerAgeInput ? parseInt(learnerAgeInput.value) : null; const fraisDocsValue = learnerFraisDocumentsInput ? parseFloat(learnerFraisDocumentsInput.value) : 0; const tranche1Value = learnerTranche1Input ? parseFloat(learnerTranche1Input.value) : 0; const tranche2Value = learnerTranche2Input ? parseFloat(learnerTranche2Input.value) : 0; const tranche3Value = learnerTranche3Input ? parseFloat(learnerTranche3Input.value) : 0; const tranche4Value = learnerTranche4Input ? parseFloat(learnerTranche4Input.value) : 0; if (ageValue !== null && (isNaN(ageValue) || ageValue < 0)) { alert("L'âge doit être un nombre positif."); return; } if (isNaN(fraisDocsValue) || fraisDocsValue < 0 || isNaN(tranche1Value) || tranche1Value < 0 || isNaN(tranche2Value) || tranche2Value < 0 || isNaN(tranche3Value) || tranche3Value < 0 || isNaN(tranche4Value) || tranche4Value < 0) { alert("Frais et montants des tranches doivent être des nombres positifs ou zéro."); return; } const learnerDataObj = { nom, prenom: learnerPrenomInput?.value.trim() || '', age: ageValue, adresse: learnerAdresseInput?.value.trim() || '', lieuResidence: learnerLieuResidenceInput?.value.trim() || '', niveauEtudes: learnerNiveauEtudesInput?.value.trim() || '', situationMatrimoniale: learnerSituationMatrimonialeSelect?.value || '', pereNom: learnerPereNomInput?.value.trim() || '', perePrenom: learnerPerePrenomInput?.value.trim() || '', mereNom: learnerMereNomInput?.value.trim() || '', merePrenom: learnerMerePrenomInput?.value.trim() || '', filiere, dureeFormation: learnerDureeFormationInput?.value.trim() || '', fraisDocuments: fraisDocsValue, tranche1: tranche1Value, tranche2: tranche2Value, tranche3: tranche3Value, tranche4: tranche4Value, garantNom: learnerGarantNomInput?.value.trim() || '', garantPrenom: learnerGarantPrenomInput?.value.trim() || '', garantTelephone: learnerGarantTelephoneInput?.value.trim() || '', garantAdresse: learnerGarantAdresseInput?.value.trim() || '' }; let originalDataBackup = null; let tempLocalData = [...learnersData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index apprenant invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); learnerDataObj.paymentHistory = originalDataBackup.paymentHistory || []; learnerDataObj.recordedBy = originalDataBackup.recordedBy; learnerDataObj.lastModifiedBy = currentUser?.username || 'N/A'; learnerDataObj.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = learnerDataObj; } else { learnerDataObj.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(learnerDataObj); }
+        saveDataToFirebase('learnersData', tempLocalData)
+            .then(() => {
+                const action = isEditing ? 'mis à jour' : 'ajouté';
+                alert(`Apprenant ${action}.`);
+                learnerForm.reset();
+                updateConnectedUserFields();
+                setTodaysDate();
+                if (learnerEditIndexInput) learnerEditIndexInput.value = '';
+                learnerForm.querySelector('button[type="submit"]').textContent = 'Ajouter Apprenant';
+                learnerForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+            })
+            .catch(error => { /* Error handled */ });
     });
-    if(mobileMoneyForm) mobileMoneyForm.addEventListener('submit', function (event) {
+    if (mobileMoneyForm) mobileMoneyForm.addEventListener('submit', function (event) {
         event.preventDefault();
-         if (!currentUser || !(currentUser.status === 'Administrateur')) {
-             alert("Accès Refusé: Seuls les administrateurs peuvent gérer le Mobile Money."); return;
-         }
-        // ... rest of mobile money form logic ...
-        const editIndex = mobileMoneyEditIndexInput ? parseInt(mobileMoneyEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; if (!mmDateInput || !mmAgentInput) { alert("Erreur interne: Champs Point MM manquants."); return; } const date = mmDateInput.value; const agent = mmAgentInput.value.trim(); if (!date || !agent) { alert("Date et Agent requis pour Point MM."); return; } const balanceMoov = parseFloat(mmBalanceMoovInput?.value) || 0; const balanceMTN = parseFloat(mmBalanceMtnInput?.value) || 0; const balanceCelttis = parseFloat(mmBalanceCelttisInput?.value) || 0; const balanceCash = parseFloat(mmBalanceCashInput?.value) || 0; const creditMoov = parseFloat(mmCreditMoovInput?.value) || 0; const creditMTN = parseFloat(mmCreditMtnInput?.value) || 0; const creditCelttis = parseFloat(mmCreditCelttisInput?.value) || 0; const perteTransfert = parseFloat(mmPerteTransfertInput?.value) || 0; const perteCredit = parseFloat(mmPerteCreditInput?.value) || 0; if (balanceMoov < 0 || balanceMTN < 0 || balanceCelttis < 0 || balanceCash < 0 || creditMoov < 0 || creditMTN < 0 || creditCelttis < 0 || perteTransfert < 0 || perteCredit < 0) { alert("Soldes, crédits, et pertes MM ne peuvent pas être négatifs."); return; } const transactionData = { date, agent, balanceMoov, balanceMTN, balanceCelttis, balanceCash, creditMoov, creditMTN, creditCelttis, perteTransfert, perteCredit }; let originalDataBackup = null; let tempLocalData = [...mobileMoneyData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index Point MM invalide."); return; } const existingEntryIndex = tempLocalData.findIndex((item, idx) => item.date === date && item.agent === agent && idx !== editIndex); if (existingEntryIndex > -1) { alert(`Modification impossible : un autre point existe déjà pour ${agent} à la date ${date}.`); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); transactionData.recordedBy = originalDataBackup.recordedBy; transactionData.lastModifiedBy = currentUser?.username || 'N/A'; transactionData.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = transactionData; } else { const existingEntryIndex = tempLocalData.findIndex(item => item.date === date && item.agent === agent); if (existingEntryIndex > -1) { alert(`Ajout impossible : point existe déjà pour ${agent} à la date ${date}. Modifiez l'entrée existante.`); return; } transactionData.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(transactionData); } saveDataToFirebase('mobileMoneyData', tempLocalData) .then(() => { const action = isEditing ? 'mis à jour' : 'ajouté'; alert(`Point Mobile Money ${action}.`); mobileMoneyForm.reset(); setTodaysDate(); updateConnectedUserFields(); if(mobileMoneyEditIndexInput) mobileMoneyEditIndexInput.value = ''; mobileMoneyForm.querySelector('button[type="submit"]').textContent = 'Ajouter Point Journalier'; }) .catch(error => { /* Error handled */ });
+        if (!currentUser || !(currentUser.status === 'Administrateur')) {
+            alert("Accès Refusé: Seuls les administrateurs peuvent gérer le Mobile Money."); return;
+        }
+        const editIndex = mobileMoneyEditIndexInput ? parseInt(mobileMoneyEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; if (!mmDateInput || !mmAgentInput) { alert("Erreur interne: Champs Point MM manquants."); return; } const date = mmDateInput.value; const agent = mmAgentInput.value.trim(); if (!date || !agent) { alert("Date et Agent requis pour Point MM."); return; } const balanceMoov = parseFloat(mmBalanceMoovInput?.value) || 0; const balanceMTN = parseFloat(mmBalanceMtnInput?.value) || 0; const balanceCelttis = parseFloat(mmBalanceCelttisInput?.value) || 0; const balanceCash = parseFloat(mmBalanceCashInput?.value) || 0; const creditMoov = parseFloat(mmCreditMoovInput?.value) || 0; const creditMTN = parseFloat(mmCreditMtnInput?.value) || 0; const creditCelttis = parseFloat(mmCreditCelttisInput?.value) || 0; const perteTransfert = parseFloat(mmPerteTransfertInput?.value) || 0; const perteCredit = parseFloat(mmPerteCreditInput?.value) || 0; if (balanceMoov < 0 || balanceMTN < 0 || balanceCelttis < 0 || balanceCash < 0 || creditMoov < 0 || creditMTN < 0 || creditCelttis < 0 || perteTransfert < 0 || perteCredit < 0) { alert("Soldes, crédits, et pertes MM ne peuvent pas être négatifs."); return; } const transactionData = { date, agent, balanceMoov, balanceMTN, balanceCelttis, balanceCash, creditMoov, creditMTN, creditCelttis, perteTransfert, perteCredit }; let originalDataBackup = null; let tempLocalData = [...mobileMoneyData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index Point MM invalide."); return; } const existingEntryIndex = tempLocalData.findIndex((item, idx) => item.date === date && item.agent === agent && idx !== editIndex); if (existingEntryIndex > -1) { alert(`Modification impossible : un autre point existe déjà pour ${agent} à la date ${date}.`); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); transactionData.recordedBy = originalDataBackup.recordedBy; transactionData.lastModifiedBy = currentUser?.username || 'N/A'; transactionData.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = transactionData; } else { const existingEntryIndex = tempLocalData.findIndex(item => item.date === date && item.agent === agent); if (existingEntryIndex > -1) { alert(`Ajout impossible : point existe déjà pour ${agent} à la date ${date}. Modifiez l'entrée existante.`); return; } transactionData.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(transactionData); }
+        saveDataToFirebase('mobileMoneyData', tempLocalData)
+            .then(() => {
+                const action = isEditing ? 'mis à jour' : 'ajouté';
+                alert(`Point Mobile Money ${action}.`);
+                mobileMoneyForm.reset();
+                setTodaysDate();
+                updateConnectedUserFields();
+                if (mobileMoneyEditIndexInput) mobileMoneyEditIndexInput.value = '';
+                mobileMoneyForm.querySelector('button[type="submit"]').textContent = 'Ajouter Point Journalier';
+                mobileMoneyForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+            })
+            .catch(error => { /* Error handled */ });
     });
-    if(mmFournisseurForm) mmFournisseurForm.addEventListener('submit', function (event) {
+    if (mmFournisseurForm) mmFournisseurForm.addEventListener('submit', function (event) {
         event.preventDefault();
-         if (!currentUser || !(currentUser.status === 'Administrateur')) {
-             alert("Accès Refusé: Seuls les administrateurs peuvent gérer les fournisseurs MM."); return;
-         }
-        // ... rest of mm fournisseur form logic ...
-        const editKey = mmFournisseurEditKeyInput?.value || ''; const isEditing = !!editKey; const nom = mmFournisseurNomInput?.value.trim(); const prenom = mmFournisseurPrenomInput?.value.trim(); const contact = mmFournisseurContactInput?.value.trim(); const montantFourni = parseFloat(mmFournisseurMontantInput?.value); const interet = parseFloat(mmFournisseurInteretInput?.value); const creditVendu = parseFloat(mmFournisseurVenduInput?.value) || 0; if (!nom) { alert("Nom fournisseur MM requis."); return; } if (isNaN(montantFourni) || montantFourni < 0) { alert("Montant Fourni doit être un nombre positif."); return; } if (creditVendu < 0) { alert("Crédit Vendu ne peut être négatif."); return; } if (!isNaN(interet) && interet < 0) { alert("Intérêt ne peut être négatif."); return; } const fournisseurDataObj = { nom, prenom, contact, montantFourni, interet: !isNaN(interet) ? interet : null, creditVendu }; let existingIndex = -1; let isNameChangeDuringEdit = false; let originalDataBackup = null; let tempLocalData = [...mmFournisseursData]; if(isEditing) { const [editNom, editPrenom] = editKey.split('_'); existingIndex = tempLocalData.findIndex(f => f.nom === editNom && f.prenom === editPrenom); if (existingIndex > -1) { originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[existingIndex])); if (nom !== editNom || prenom !== editPrenom) { isNameChangeDuringEdit = true; } fournisseurDataObj.recordedBy = originalDataBackup.recordedBy; fournisseurDataObj.lastModifiedBy = currentUser?.username || 'N/A'; fournisseurDataObj.lastModifiedDate = new Date().toISOString(); } else { alert("Erreur: Fournisseur à modifier non trouvé."); return; } } else { existingIndex = tempLocalData.findIndex(f => f.nom === nom && f.prenom === prenom); if (existingIndex > -1) { alert(`Fournisseur ${nom} ${prenom} existe déjà. Modifiez via le tableau.`); return; } fournisseurDataObj.recordedBy = currentUser?.username || 'N/A'; } if (isNameChangeDuringEdit) { const duplicateCheck = tempLocalData.findIndex(f => f.nom === nom && f.prenom === prenom); if (duplicateCheck > -1) { alert(`Impossible de renommer : le fournisseur ${nom} ${prenom} existe déjà.`); const [origN, origP] = editKey.split('_'); mmFournisseurNomInput.value = origN; mmFournisseurPrenomInput.value = origP; return; } tempLocalData.splice(existingIndex, 1); tempLocalData.push(fournisseurDataObj); } else if (isEditing) { tempLocalData[existingIndex] = fournisseurDataObj; } else { tempLocalData.push(fournisseurDataObj); } saveDataToFirebase('mmFournisseursData', tempLocalData) .then(() => { const action = isEditing ? (isNameChangeDuringEdit ? 'renommé/mis à jour' : 'mis à jour') : 'ajouté'; alert(`Fournisseur ${nom} ${prenom} ${action}.`); mmFournisseurForm.reset(); updateConnectedUserFields(); setTodaysDate(); if(mmFournisseurEditKeyInput) mmFournisseurEditKeyInput.value = ''; mmFournisseurForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Fournisseur'; }) .catch(error => { /* Error handled */ });
+        if (!currentUser || !(currentUser.status === 'Administrateur')) {
+            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les fournisseurs MM."); return;
+        }
+        const editKey = mmFournisseurEditKeyInput?.value || ''; const isEditing = !!editKey; const nom = mmFournisseurNomInput?.value.trim(); const prenom = mmFournisseurPrenomInput?.value.trim(); const contact = mmFournisseurContactInput?.value.trim(); const montantFourni = parseFloat(mmFournisseurMontantInput?.value); const interet = parseFloat(mmFournisseurInteretInput?.value); const creditVendu = parseFloat(mmFournisseurVenduInput?.value) || 0; if (!nom) { alert("Nom fournisseur MM requis."); return; } if (isNaN(montantFourni) || montantFourni < 0) { alert("Montant Fourni doit être un nombre positif."); return; } if (creditVendu < 0) { alert("Crédit Vendu ne peut être négatif."); return; } if (!isNaN(interet) && interet < 0) { alert("Intérêt ne peut être négatif."); return; } const fournisseurDataObj = { nom, prenom, contact, montantFourni, interet: !isNaN(interet) ? interet : null, creditVendu }; let existingIndex = -1; let isNameChangeDuringEdit = false; let originalDataBackup = null; let tempLocalData = [...mmFournisseursData]; if (isEditing) { const [editNom, editPrenom] = editKey.split('_'); existingIndex = tempLocalData.findIndex(f => f.nom === editNom && f.prenom === editPrenom); if (existingIndex > -1) { originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[existingIndex])); if (nom !== editNom || prenom !== editPrenom) { isNameChangeDuringEdit = true; } fournisseurDataObj.recordedBy = originalDataBackup.recordedBy; fournisseurDataObj.lastModifiedBy = currentUser?.username || 'N/A'; fournisseurDataObj.lastModifiedDate = new Date().toISOString(); } else { alert("Erreur: Fournisseur à modifier non trouvé."); return; } } else { existingIndex = tempLocalData.findIndex(f => f.nom === nom && f.prenom === prenom); if (existingIndex > -1) { alert(`Fournisseur ${nom} ${prenom} existe déjà. Modifiez via le tableau.`); return; } fournisseurDataObj.recordedBy = currentUser?.username || 'N/A'; } if (isNameChangeDuringEdit) { const duplicateCheck = tempLocalData.findIndex(f => f.nom === nom && f.prenom === prenom); if (duplicateCheck > -1) { alert(`Impossible de renommer : le fournisseur ${nom} ${prenom} existe déjà.`); const [origN, origP] = editKey.split('_'); mmFournisseurNomInput.value = origN; mmFournisseurPrenomInput.value = origP; return; } tempLocalData.splice(existingIndex, 1); tempLocalData.push(fournisseurDataObj); } else if (isEditing) { tempLocalData[existingIndex] = fournisseurDataObj; } else { tempLocalData.push(fournisseurDataObj); }
+        saveDataToFirebase('mmFournisseursData', tempLocalData)
+            .then(() => {
+                const action = isEditing ? (isNameChangeDuringEdit ? 'renommé/mis à jour' : 'mis à jour') : 'ajouté';
+                alert(`Fournisseur ${nom} ${prenom} ${action}.`);
+                mmFournisseurForm.reset();
+                updateConnectedUserFields();
+                setTodaysDate();
+                if (mmFournisseurEditKeyInput) mmFournisseurEditKeyInput.value = '';
+                mmFournisseurForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Fournisseur';
+                mmFournisseurForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+            })
+            .catch(error => { /* Error handled */ });
     });
-    if(clientProfileForm) clientProfileForm.addEventListener('submit', function (event) {
+    if (clientProfileForm) clientProfileForm.addEventListener('submit', function (event) {
         event.preventDefault();
-         if (!currentUser || currentUser.status !== 'Administrateur') {
-             alert("Accès Refusé: Seuls les administrateurs peuvent gérer les profils client."); return;
-         }
-        // ... rest of client profile form logic ...
-        const editKey = clientProfileEditKeyInput?.value || ''; const isEditing = !!editKey; const nom = clientProfileNomInput?.value.trim(); const prenom = clientProfilePrenomInput?.value.trim(); const adresse = clientProfileAdresseInput?.value.trim(); const contact = clientProfileContactInput?.value.trim(); const statut = clientProfileStatutInput?.value.trim(); if (!nom) { alert("Nom client requis pour profil."); return; } const profileDataObj = { nom, prenom, adresse, contact, statut }; const newFullName = `${nom} ${prenom}`.trim(); let existingIndex = -1; let isNameChangeDuringEdit = false; let originalFullName = ''; let originalProfileBackup = null; let tempProfilesData = [...clientProfilesData]; let tempCreditorsData = [...creditorsData]; let creditorsNeedUpdate = false; if(isEditing) { const [editNom, editPrenom] = editKey.split('_'); originalFullName = `${editNom} ${editPrenom}`.trim(); existingIndex = tempProfilesData.findIndex(p => p.nom === editNom && p.prenom === editPrenom); if (existingIndex > -1) { originalProfileBackup = JSON.parse(JSON.stringify(tempProfilesData[existingIndex])); if (newFullName !== originalFullName) { isNameChangeDuringEdit = true; } profileDataObj.recordedBy = originalProfileBackup.recordedBy; profileDataObj.lastModifiedBy = currentUser?.username || 'N/A'; profileDataObj.lastModifiedDate = new Date().toISOString(); } else { alert("Erreur: Profil à modifier non trouvé."); return; } } else { existingIndex = tempProfilesData.findIndex(p => p.nom === nom && p.prenom === prenom); if (existingIndex > -1) { alert(`Profil ${nom} ${prenom} existe déjà. Modifiez via le tableau.`); return; } profileDataObj.recordedBy = currentUser?.username || 'N/A'; } if (isNameChangeDuringEdit) { const duplicateCheck = tempProfilesData.findIndex(p => p.nom === nom && p.prenom === prenom); if (duplicateCheck > -1) { alert(`Impossible de renommer : le profil ${nom} ${prenom} existe déjà.`); const [origN, origP] = editKey.split('_'); clientProfileNomInput.value = origN; clientProfilePrenomInput.value = origP; return; } tempCreditorsData.forEach((cred, index) => { if (cred.name === originalFullName) { tempCreditorsData[index].name = newFullName; creditorsNeedUpdate = true; } }); tempProfilesData.splice(existingIndex, 1); tempProfilesData.push(profileDataObj); } else if (isEditing) { tempProfilesData[existingIndex] = profileDataObj; } else { tempProfilesData.push(profileDataObj); } const savePromises = [saveDataToFirebase('clientProfilesData', tempProfilesData)]; if (creditorsNeedUpdate) { savePromises.push(saveDataToFirebase('creditorsData', tempCreditorsData)); } Promise.all(savePromises) .then(() => { const action = isEditing ? (isNameChangeDuringEdit ? 'renommé' : 'mis à jour') : 'ajouté'; alert(`Profil client ${nom} ${prenom} ${action}.${creditorsNeedUpdate ? ' Transactions crédit associées mises à jour.' : ''}`); clientProfileForm.reset(); updateConnectedUserFields(); setTodaysDate(); if(clientProfileEditKeyInput) clientProfileEditKeyInput.value = ''; clientProfileForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Profil'; }) .catch(error => { /* Error handled */ });
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les profils client."); return;
+        }
+        const editKey = clientProfileEditKeyInput?.value || ''; const isEditing = !!editKey; const nom = clientProfileNomInput?.value.trim(); const prenom = clientProfilePrenomInput?.value.trim(); const adresse = clientProfileAdresseInput?.value.trim(); const contact = clientProfileContactInput?.value.trim(); const statut = clientProfileStatutInput?.value.trim(); if (!nom) { alert("Nom client requis pour profil."); return; } const profileDataObj = { nom, prenom, adresse, contact, statut }; const newFullName = `${nom} ${prenom}`.trim(); let existingIndex = -1; let isNameChangeDuringEdit = false; let originalFullName = ''; let originalProfileBackup = null; let tempProfilesData = [...clientProfilesData]; let tempCreditorsData = [...creditorsData]; let creditorsNeedUpdate = false; if (isEditing) { const [editNom, editPrenom] = editKey.split('_'); originalFullName = `${editNom} ${editPrenom}`.trim(); existingIndex = tempProfilesData.findIndex(p => p.nom === editNom && p.prenom === editPrenom); if (existingIndex > -1) { originalProfileBackup = JSON.parse(JSON.stringify(tempProfilesData[existingIndex])); if (newFullName !== originalFullName) { isNameChangeDuringEdit = true; } profileDataObj.recordedBy = originalProfileBackup.recordedBy; profileDataObj.lastModifiedBy = currentUser?.username || 'N/A'; profileDataObj.lastModifiedDate = new Date().toISOString(); } else { alert("Erreur: Profil à modifier non trouvé."); return; } } else { existingIndex = tempProfilesData.findIndex(p => p.nom === nom && p.prenom === prenom); if (existingIndex > -1) { alert(`Profil ${nom} ${prenom} existe déjà. Modifiez via le tableau.`); return; } profileDataObj.recordedBy = currentUser?.username || 'N/A'; } if (isNameChangeDuringEdit) { const duplicateCheck = tempProfilesData.findIndex(p => p.nom === nom && p.prenom === prenom); if (duplicateCheck > -1) { alert(`Impossible de renommer : le profil ${nom} ${prenom} existe déjà.`); const [origN, origP] = editKey.split('_'); clientProfileNomInput.value = origN; clientProfilePrenomInput.value = origP; return; } tempCreditorsData.forEach((cred, index) => { if (cred.name === originalFullName) { tempCreditorsData[index].name = newFullName; creditorsNeedUpdate = true; } }); tempProfilesData.splice(existingIndex, 1); tempProfilesData.push(profileDataObj); } else if (isEditing) { tempProfilesData[existingIndex] = profileDataObj; } else { tempProfilesData.push(profileDataObj); } const savePromises = [saveDataToFirebase('clientProfilesData', tempProfilesData)]; if (creditorsNeedUpdate) { savePromises.push(saveDataToFirebase('creditorsData', tempCreditorsData)); }
+        Promise.all(savePromises)
+            .then(() => {
+                const action = isEditing ? (isNameChangeDuringEdit ? 'renommé' : 'mis à jour') : 'ajouté';
+                alert(`Profil client ${nom} ${prenom} ${action}.${creditorsNeedUpdate ? ' Transactions crédit associées mises à jour.' : ''}`);
+                clientProfileForm.reset();
+                updateConnectedUserFields();
+                setTodaysDate();
+                if (clientProfileEditKeyInput) clientProfileEditKeyInput.value = '';
+                clientProfileForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Profil';
+                clientProfileForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+            })
+            .catch(error => { /* Error handled */ });
     });
-    if(creditorForm) creditorForm.addEventListener('submit', function (event) {
+    if (creditorForm) creditorForm.addEventListener('submit', function (event) {
         event.preventDefault();
         if (!currentUser || currentUser.status !== 'Administrateur') {
             alert("Accès Refusé: Seuls les administrateurs peuvent gérer les crédits client."); return;
         }
-        // ... rest of creditor form logic ...
-        if (!creditorDateInput || !creditorNameSelect || !creditorDesignationInput || !creditorAmountPaidInput) { alert("Erreur interne: Champs Transaction Crédit manquants."); return; } const date = creditorDateInput.value; const name = creditorNameSelect.value; const designation = creditorDesignationInput.value.trim(); const quantity = creditorQuantityInput?.value ? (parseFloat(creditorQuantityInput.value) || null) : null; const unitPrice = creditorUnitPriceInput?.value ? (parseFloat(creditorUnitPriceInput.value) || null) : null; const totalAmountDueEntered = parseFloat(creditorTotalAmountDueInput.value); const amountPaidNow = parseFloat(creditorAmountPaidInput.value); const dueDate = creditorDueDateInput?.value || ''; const recordedBy = currentUser?.username || 'N/A'; if (!date || !name || !designation) { alert("Date, Client et Désignation requis."); return; } if (isNaN(amountPaidNow) || amountPaidNow < 0) { alert("Montant Payé doit être un nombre positif ou zéro."); return; } let tempLocalData = [...creditorsData]; let dataChanged = false; try { const existingCreditorIndex = creditorsData.findIndex(c => c.name === name && c.designation === designation && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005) ); if (existingCreditorIndex > -1) { const existingCreditorInCopy = tempLocalData[existingCreditorIndex]; if (!existingCreditorInCopy) throw new Error("Incohérence interne: crédit non trouvé dans la copie locale."); const currentRemaining = (existingCreditorInCopy.totalAmountDue || 0) - (existingCreditorInCopy.amountPaidTotal || 0); if (!isNaN(totalAmountDueEntered) && totalAmountDueEntered > 0 && Math.abs(totalAmountDueEntered - existingCreditorInCopy.totalAmountDue) > 0.01) { console.warn(`Montant Total Dû entré (${formatAmount(totalAmountDueEntered)}) ignoré pour paiement.`); } if (amountPaidNow > currentRemaining + 0.005) { throw new Error(`Paiement (${formatAmount(amountPaidNow)}) dépasse le solde restant (${formatAmount(currentRemaining)}).`); } existingCreditorInCopy.amountPaidTotal = (existingCreditorInCopy.amountPaidTotal || 0) + amountPaidNow; existingCreditorInCopy.lastPaymentDate = date; existingCreditorInCopy.lastPaymentBy = recordedBy; if (dueDate && dueDate !== existingCreditorInCopy.dueDate) existingCreditorInCopy.dueDate = dueDate; if (!existingCreditorInCopy.paymentHistory) existingCreditorInCopy.paymentHistory = []; existingCreditorInCopy.paymentHistory.push({ date, amount: amountPaidNow, recordedBy }); alert(`Paiement de ${formatAmount(amountPaidNow)} enregistré (préparation sauvegarde) pour ${name} - ${designation}.\nNouveau solde: ${formatAmount(existingCreditorInCopy.totalAmountDue - existingCreditorInCopy.amountPaidTotal)}`); dataChanged = true; } else { let finalTotalDue; if ((isNaN(totalAmountDueEntered) || totalAmountDueEntered <= 0) && quantity !== null && unitPrice !== null && quantity > 0 && unitPrice >= 0) { finalTotalDue = quantity * unitPrice; if (finalTotalDue <= 0) throw new Error("Montant Total Dû calculé doit être > 0."); creditorTotalAmountDueInput.value = formatAmount(finalTotalDue); } else if (!isNaN(totalAmountDueEntered) && totalAmountDueEntered > 0) { finalTotalDue = totalAmountDueEntered; if (quantity !== null && unitPrice !== null && quantity > 0 && unitPrice >= 0) { const calculatedTotal = quantity * unitPrice; if (Math.abs(calculatedTotal - finalTotalDue) > 0.01) { if (!confirm(`Total Dû entré (${formatAmount(finalTotalDue)}) est différent du calcul Qté*PU (${formatAmount(calculatedTotal)}). Continuer avec ${formatAmount(finalTotalDue)} ?`)) return; } } } else { throw new Error("Montant Total Dû > 0 requis (entré directement ou via Qté*PU) pour nouvelle transaction."); } if (amountPaidNow > finalTotalDue + 0.005) { throw new Error(`Montant Payé (${formatAmount(amountPaidNow)}) dépasse le Total Dû (${formatAmount(finalTotalDue)}).`); } const similarSoldCreditorExists = creditorsData.some(c => c.name === name && c.designation === designation && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) <= 0.005) ); if (similarSoldCreditorExists) { if (!confirm(`Un crédit similaire déjà soldé existe pour ${name} - "${designation}". Voulez-vous créer une NOUVELLE transaction de crédit ?`)) { return; } } const newCreditor = { date, name, designation, quantity, unitPrice, totalAmountDue: finalTotalDue, amountPaidTotal: amountPaidNow, lastPaymentDate: date, dueDate: dueDate || null, recordedBy: recordedBy, paymentHistory: [{ date, amount: amountPaidNow, recordedBy }] }; tempLocalData.push(newCreditor); alert(`Nouveau crédit créé (préparation sauvegarde) pour ${name} - "${designation}".\nDû: ${formatAmount(finalTotalDue)}, Payé: ${formatAmount(amountPaidNow)}, Restant: ${formatAmount(finalTotalDue - amountPaidNow)}`); dataChanged = true; } if (dataChanged) { saveDataToFirebase('creditorsData', tempLocalData) .then(() => { console.log('Creditor data saved to Firebase.'); creditorForm.reset(); populateClientSelect(); setTodaysDate(); updateConnectedUserFields(); }) .catch(error => { /* Error handled */ }); } } catch (error) { alert(`Erreur Gestion Crédit Client : ${error.message}`); }
+        if (!creditorDateInput || !creditorNameSelect || !creditorDesignationInput || !creditorAmountPaidInput) { alert("Erreur interne: Champs Transaction Crédit manquants."); return; } const date = creditorDateInput.value; const name = creditorNameSelect.value; const designation = creditorDesignationInput.value.trim(); const quantity = creditorQuantityInput?.value ? (parseFloat(creditorQuantityInput.value) || null) : null; const unitPrice = creditorUnitPriceInput?.value ? (parseFloat(creditorUnitPriceInput.value) || null) : null; const totalAmountDueEntered = parseFloat(creditorTotalAmountDueInput.value); const amountPaidNow = parseFloat(creditorAmountPaidInput.value); const dueDate = creditorDueDateInput?.value || ''; const recordedBy = currentUser?.username || 'N/A'; if (!date || !name || !designation) { alert("Date, Client et Désignation requis."); return; } if (isNaN(amountPaidNow) || amountPaidNow < 0) { alert("Montant Payé doit être un nombre positif ou zéro."); return; } let tempLocalData = [...creditorsData]; let dataChanged = false; try { const existingCreditorIndex = creditorsData.findIndex(c => c.name === name && c.designation === designation && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005) ); if (existingCreditorIndex > -1) { const existingCreditorInCopy = tempLocalData[existingCreditorIndex]; if (!existingCreditorInCopy) throw new Error("Incohérence interne: crédit non trouvé dans la copie locale."); const currentRemaining = (existingCreditorInCopy.totalAmountDue || 0) - (existingCreditorInCopy.amountPaidTotal || 0); if (!isNaN(totalAmountDueEntered) && totalAmountDueEntered > 0 && Math.abs(totalAmountDueEntered - existingCreditorInCopy.totalAmountDue) > 0.01) { console.warn(`Montant Total Dû entré (${formatAmount(totalAmountDueEntered)}) ignoré pour paiement.`); } if (amountPaidNow > currentRemaining + 0.005) { throw new Error(`Paiement (${formatAmount(amountPaidNow)}) dépasse le solde restant (${formatAmount(currentRemaining)}).`); } existingCreditorInCopy.amountPaidTotal = (existingCreditorInCopy.amountPaidTotal || 0) + amountPaidNow; existingCreditorInCopy.lastPaymentDate = date; existingCreditorInCopy.lastPaymentBy = recordedBy; if (dueDate && dueDate !== existingCreditorInCopy.dueDate) existingCreditorInCopy.dueDate = dueDate; if (!existingCreditorInCopy.paymentHistory) existingCreditorInCopy.paymentHistory = []; existingCreditorInCopy.paymentHistory.push({ date, amount: amountPaidNow, recordedBy }); alert(`Paiement de ${formatAmount(amountPaidNow)} enregistré (préparation sauvegarde) pour ${name} - ${designation}.\nNouveau solde: ${formatAmount(existingCreditorInCopy.totalAmountDue - existingCreditorInCopy.amountPaidTotal)}`); dataChanged = true; } else { let finalTotalDue; if ((isNaN(totalAmountDueEntered) || totalAmountDueEntered <= 0) && quantity !== null && unitPrice !== null && quantity > 0 && unitPrice >= 0) { finalTotalDue = quantity * unitPrice; if (finalTotalDue <= 0) throw new Error("Montant Total Dû calculé doit être > 0."); creditorTotalAmountDueInput.value = formatAmount(finalTotalDue); } else if (!isNaN(totalAmountDueEntered) && totalAmountDueEntered > 0) { finalTotalDue = totalAmountDueEntered; if (quantity !== null && unitPrice !== null && quantity > 0 && unitPrice >= 0) { const calculatedTotal = quantity * unitPrice; if (Math.abs(calculatedTotal - finalTotalDue) > 0.01) { if (!confirm(`Total Dû entré (${formatAmount(finalTotalDue)}) est différent du calcul Qté*PU (${formatAmount(calculatedTotal)}). Continuer avec ${formatAmount(finalTotalDue)} ?`)) return; } } } else { throw new Error("Montant Total Dû > 0 requis (entré directement ou via Qté*PU) pour nouvelle transaction."); } if (amountPaidNow > finalTotalDue + 0.005) { throw new Error(`Montant Payé (${formatAmount(amountPaidNow)}) dépasse le Total Dû (${formatAmount(finalTotalDue)}).`); } const similarSoldCreditorExists = creditorsData.some(c => c.name === name && c.designation === designation && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) <= 0.005) ); if (similarSoldCreditorExists) { if (!confirm(`Un crédit similaire déjà soldé existe pour ${name} - "${designation}". Voulez-vous créer une NOUVELLE transaction de crédit ?`)) { return; } } const newCreditor = { date, name, designation, quantity, unitPrice, totalAmountDue: finalTotalDue, amountPaidTotal: amountPaidNow, lastPaymentDate: date, dueDate: dueDate || null, recordedBy: recordedBy, paymentHistory: [{ date, amount: amountPaidNow, recordedBy }] }; tempLocalData.push(newCreditor); alert(`Nouveau crédit créé (préparation sauvegarde) pour ${name} - "${designation}".\nDû: ${formatAmount(finalTotalDue)}, Payé: ${formatAmount(amountPaidNow)}, Restant: ${formatAmount(finalTotalDue - amountPaidNow)}`); dataChanged = true; } if (dataChanged) {
+            saveDataToFirebase('creditorsData', tempLocalData)
+                .then(() => {
+                    console.log('Creditor data saved to Firebase.');
+                    creditorForm.reset();
+                    populateClientSelect();
+                    setTodaysDate();
+                    updateConnectedUserFields();
+                    creditorForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                })
+                .catch(error => { /* Error handled */ });
+        } } catch (error) { alert(`Erreur Gestion Crédit Client : ${error.message}`); }
     });
-    if(debtForm) debtForm.addEventListener('submit', function (event) {
+    if (debtForm) debtForm.addEventListener('submit', function (event) {
         event.preventDefault();
-         if (!currentUser || currentUser.status !== 'Administrateur') {
-             alert("Accès Refusé: Seuls les administrateurs peuvent gérer les dettes/prêts."); return;
-         }
-        // ... rest of debt form logic ...
-        const editIndex = debtEditIndexInput ? parseInt(debtEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; if (!debtDateInput || !debtTypeSelect || !debtNameInput || !debtDescriptionInput || !debtAmountInput || !debtStatusSelect) { alert("Erreur interne: Champs Dette/Prêt manquants."); return; } const date = debtDateInput.value; const type = debtTypeSelect.value; const name = debtNameInput.value.trim(); const description = debtDescriptionInput.value.trim(); const amount = parseFloat(debtAmountInput.value); const dueDate = debtDueDateInput?.value || ''; const status = debtStatusSelect.value; if (!date || !type || !name || !description || isNaN(amount) || amount <= 0 || !status) { alert("Veuillez remplir correctement tous les champs Dette/Prêt (Montant doit être > 0)."); return; } const debtItemData = { date, type, name, description, amount, dueDate, status }; let originalDataBackup = null; let tempLocalData = [...debtData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index Dette/Prêt invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); debtItemData.recordedBy = originalDataBackup.recordedBy; debtItemData.lastModifiedBy = currentUser?.username || 'N/A'; debtItemData.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = debtItemData; } else { const isDuplicate = tempLocalData.some(d => d.date === date && d.type === type && d.name === name && d.description === description && d.amount === amount); if (isDuplicate) { if (!confirm("Une entrée très similaire existe déjà. Voulez-vous l'ajouter quand même ?")) { return; } } debtItemData.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(debtItemData); } saveDataToFirebase('debtData', tempLocalData) .then(() => { const action = isEditing ? 'mise à jour' : 'ajoutée'; alert(`Dette/Prêt ${action}.`); debtForm.reset(); setTodaysDate(); updateConnectedUserFields(); if(debtEditIndexInput) debtEditIndexInput.value = ''; debtForm.querySelector('button[type="submit"]').textContent = 'Ajouter Dette/Prêt'; }) .catch(error => { /* Error handled */ });
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les dettes/prêts."); return;
+        }
+        const editIndex = debtEditIndexInput ? parseInt(debtEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; if (!debtDateInput || !debtTypeSelect || !debtNameInput || !debtDescriptionInput || !debtAmountInput || !debtStatusSelect) { alert("Erreur interne: Champs Dette/Prêt manquants."); return; } const date = debtDateInput.value; const type = debtTypeSelect.value; const name = debtNameInput.value.trim(); const description = debtDescriptionInput.value.trim(); const amount = parseFloat(debtAmountInput.value); const dueDate = debtDueDateInput?.value || ''; const status = debtStatusSelect.value; if (!date || !type || !name || !description || isNaN(amount) || amount <= 0 || !status) { alert("Veuillez remplir correctement tous les champs Dette/Prêt (Montant doit être > 0)."); return; } const debtItemData = { date, type, name, description, amount, dueDate, status }; let originalDataBackup = null; let tempLocalData = [...debtData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index Dette/Prêt invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); debtItemData.recordedBy = originalDataBackup.recordedBy; debtItemData.lastModifiedBy = currentUser?.username || 'N/A'; debtItemData.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = debtItemData; } else { const isDuplicate = tempLocalData.some(d => d.date === date && d.type === type && d.name === name && d.description === description && d.amount === amount); if (isDuplicate) { if (!confirm("Une entrée très similaire existe déjà. Voulez-vous l'ajouter quand même ?")) { return; } } debtItemData.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(debtItemData); }
+        saveDataToFirebase('debtData', tempLocalData)
+            .then(() => {
+                const action = isEditing ? 'mise à jour' : 'ajoutée';
+                alert(`Dette/Prêt ${action}.`);
+                debtForm.reset();
+                setTodaysDate();
+                updateConnectedUserFields();
+                if (debtEditIndexInput) debtEditIndexInput.value = '';
+                debtForm.querySelector('button[type="submit"]').textContent = 'Ajouter Dette/Prêt';
+                debtForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+            })
+            .catch(error => { /* Error handled */ });
     });
-    if(permissionEmployeeForm) permissionEmployeeForm.addEventListener('submit', function (event) {
+    if (permissionEmployeeForm) permissionEmployeeForm.addEventListener('submit', function (event) {
         event.preventDefault();
-         if (!currentUser || currentUser.status !== 'Administrateur') {
-             alert("Accès Refusé: Seuls les administrateurs peuvent gérer les permissions."); return;
-         }
-        // ... rest of employee permission form logic ...
-        const requestDate = permEmpReqDateInput?.value; const name = permEmpNameSelect?.value; const permissionDateOrPeriod = permEmpDateInput?.value.trim(); const reason = permEmpReasonTextarea?.value.trim(); if (!requestDate || !name || !permissionDateOrPeriod || !reason) { alert("Veuillez remplir tous les champs pour la demande de permission."); return; } const newPermission = { requestDate, name, permissionDateOrPeriod, reason, status: 'En attente', recordedBy: currentUser?.username || 'N/A' }; let tempLocalData = [...employeePermissionsData]; tempLocalData.push(newPermission); saveDataToFirebase('employeePermissionsData', tempLocalData) .then(() => { alert(`Demande de permission ajoutée pour ${name}.`); permissionEmployeeForm.reset(); setTodaysDate(); updateConnectedUserFields(); }) .catch(error => { /* Error handled */ });
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les permissions."); return;
+        }
+        const requestDate = permEmpReqDateInput?.value; const name = permEmpNameSelect?.value; const permissionDateOrPeriod = permEmpDateInput?.value.trim(); const reason = permEmpReasonTextarea?.value.trim(); if (!requestDate || !name || !permissionDateOrPeriod || !reason) { alert("Veuillez remplir tous les champs pour la demande de permission."); return; } const newPermission = { requestDate, name, permissionDateOrPeriod, reason, status: 'En attente', recordedBy: currentUser?.username || 'N/A' }; let tempLocalData = [...employeePermissionsData]; tempLocalData.push(newPermission);
+        saveDataToFirebase('employeePermissionsData', tempLocalData)
+            .then(() => {
+                alert(`Demande de permission ajoutée pour ${name}.`);
+                permissionEmployeeForm.reset();
+                setTodaysDate();
+                updateConnectedUserFields();
+                permissionEmployeeForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+            })
+            .catch(error => { /* Error handled */ });
     });
-    if(permissionLearnerForm) permissionLearnerForm.addEventListener('submit', function (event) {
-         event.preventDefault();
-          if (!currentUser || currentUser.status !== 'Administrateur') {
-              alert("Accès Refusé: Seuls les administrateurs peuvent gérer les permissions."); return;
-          }
-        // ... rest of learner permission form logic ...
-        const requestDate = permLrnReqDateInput?.value; const name = permLrnNameSelect?.value; const permissionDateOrPeriod = permLrnDateInput?.value.trim(); const reason = permLrnReasonTextarea?.value.trim(); if (!requestDate || !name || !permissionDateOrPeriod || !reason) { alert("Veuillez remplir tous les champs pour la demande de permission."); return; } const newPermission = { requestDate, name, permissionDateOrPeriod, reason, status: 'En attente', recordedBy: currentUser?.username || 'N/A' }; let tempLocalData = [...learnerPermissionsData]; tempLocalData.push(newPermission); saveDataToFirebase('learnerPermissionsData', tempLocalData) .then(() => { alert(`Demande de permission ajoutée pour ${name}.`); permissionLearnerForm.reset(); setTodaysDate(); updateConnectedUserFields(); }) .catch(error => { /* Error handled */ });
-    });
-    if(adminForm) adminForm.addEventListener('submit', function (event) {
+    if (permissionLearnerForm) permissionLearnerForm.addEventListener('submit', function (event) {
         event.preventDefault();
-         if (!currentUser || currentUser.status !== 'Administrateur') {
-             alert("Accès Refusé: Seuls les administrateurs peuvent gérer les utilisateurs."); return;
-         }
-        // ... rest of admin form logic ...
-        const editKey = adminEditKeyInput?.value || ''; const isEditing = !!editKey; const username = adminUsernameInput?.value.trim(); const post = adminPostInput?.value.trim(); const password = adminPasswordInput?.value; const status = adminStatusSelect?.value; const operatedBy = currentUser?.username || 'N/A'; if (!username) { alert("Le nom d'utilisateur est requis."); adminUsernameInput?.focus(); return; } if (!status) { alert("Le statut est requis."); adminStatusSelect?.focus(); return; } let passwordToSave = undefined; let existingPassword = null; const editingUserIndex = isEditing ? adminData.findIndex(u => u.username === editKey) : -1; if (isEditing && editingUserIndex > -1) { existingPassword = adminData[editingUserIndex].password; } if (password) { passwordToSave = password; console.warn(`SECURITY RISK: Saving/Updating password directly for user '${username}'. Use Firebase Auth.`); } else if (isEditing) { passwordToSave = existingPassword; } else if (!isEditing && !password) { alert("Le mot de passe est requis pour un nouvel utilisateur."); adminPasswordInput?.focus(); return; } const userData = { username, post: post || '', status, ...(passwordToSave !== undefined && { password: passwordToSave }), lastModifiedBy: operatedBy, lastModifiedDate: new Date().toISOString() }; const potentialDuplicateIndex = adminData.findIndex(u => u.username === username); let originalDataBackup = null; if (isEditing && editingUserIndex > -1) { originalDataBackup = JSON.parse(JSON.stringify(adminData[editingUserIndex])); } let tempLocalData = [...adminData]; let actionAlert = ''; if (isEditing && editKey === username) { if (editingUserIndex > -1) { userData.recordedBy = originalDataBackup.recordedBy; tempLocalData[editingUserIndex] = { ...originalDataBackup, ...userData }; actionAlert = `Utilisateur '${username}' mis à jour.`; } else { alert(`Erreur : Utilisateur à modifier ('${editKey}') non trouvé.`); return; } } else if (isEditing && editKey !== username) { if (potentialDuplicateIndex > -1) { alert(`Erreur : Le nouveau nom d'utilisateur '${username}' existe déjà.`); adminUsernameInput.value = editKey; adminUsernameInput.focus(); return; } if (editingUserIndex > -1) { userData.recordedBy = originalDataBackup.recordedBy; tempLocalData.splice(editingUserIndex, 1); tempLocalData.push(userData); actionAlert = `Utilisateur renommé de '${editKey}' en '${username}' et mis à jour.`; } else { alert(`Erreur : Utilisateur à modifier ('${editKey}') non trouvé.`); return; } } else { if (potentialDuplicateIndex > -1) { alert(`Erreur : Le nom d'utilisateur '${username}' existe déjà.`); adminUsernameInput.focus(); return; } userData.recordedBy = operatedBy; tempLocalData.push(userData); actionAlert = `Utilisateur '${username}' ajouté.`; } saveDataToFirebase('adminData', tempLocalData) .then(() => { alert(actionAlert); adminForm.reset(); updateConnectedUserFields(); setTodaysDate(); if(adminEditKeyInput) adminEditKeyInput.value = ''; adminPasswordInput.placeholder = "Entrer pour définir/modifier"; adminForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Utilisateur'; }) .catch(error => { /* Error handled */ });
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les permissions."); return;
+        }
+        const requestDate = permLrnReqDateInput?.value; const name = permLrnNameSelect?.value; const permissionDateOrPeriod = permLrnDateInput?.value.trim(); const reason = permLrnReasonTextarea?.value.trim(); if (!requestDate || !name || !permissionDateOrPeriod || !reason) { alert("Veuillez remplir tous les champs pour la demande de permission."); return; } const newPermission = { requestDate, name, permissionDateOrPeriod, reason, status: 'En attente', recordedBy: currentUser?.username || 'N/A' }; let tempLocalData = [...learnerPermissionsData]; tempLocalData.push(newPermission);
+        saveDataToFirebase('learnerPermissionsData', tempLocalData)
+            .then(() => {
+                alert(`Demande de permission ajoutée pour ${name}.`);
+                permissionLearnerForm.reset();
+                setTodaysDate();
+                updateConnectedUserFields();
+                permissionLearnerForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+            })
+            .catch(error => { /* Error handled */ });
+    });
+    if (adminForm) adminForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les utilisateurs."); return;
+        }
+        const editKey = adminEditKeyInput?.value || ''; const isEditing = !!editKey; const username = adminUsernameInput?.value.trim(); const post = adminPostInput?.value.trim(); const password = adminPasswordInput?.value; const status = adminStatusSelect?.value; const operatedBy = currentUser?.username || 'N/A'; if (!username) { alert("Le nom d'utilisateur est requis."); adminUsernameInput?.focus(); return; } if (!status) { alert("Le statut est requis."); adminStatusSelect?.focus(); return; } let passwordToSave = undefined; let existingPassword = null; const editingUserIndex = isEditing ? adminData.findIndex(u => u.username === editKey) : -1; if (isEditing && editingUserIndex > -1) { existingPassword = adminData[editingUserIndex].password; } if (password) { passwordToSave = password; console.warn(`SECURITY RISK: Saving/Updating password directly for user '${username}'. Use Firebase Auth.`); } else if (isEditing) { passwordToSave = existingPassword; } else if (!isEditing && !password) { alert("Le mot de passe est requis pour un nouvel utilisateur."); adminPasswordInput?.focus(); return; } const userData = { username, post: post || '', status, ...(passwordToSave !== undefined && { password: passwordToSave }), lastModifiedBy: operatedBy, lastModifiedDate: new Date().toISOString() }; const potentialDuplicateIndex = adminData.findIndex(u => u.username === username); let originalDataBackup = null; if (isEditing && editingUserIndex > -1) { originalDataBackup = JSON.parse(JSON.stringify(adminData[editingUserIndex])); } let tempLocalData = [...adminData]; let actionAlert = ''; if (isEditing && editKey === username) { if (editingUserIndex > -1) { userData.recordedBy = originalDataBackup.recordedBy; tempLocalData[editingUserIndex] = { ...originalDataBackup, ...userData }; actionAlert = `Utilisateur '${username}' mis à jour.`; } else { alert(`Erreur : Utilisateur à modifier ('${editKey}') non trouvé.`); return; } } else if (isEditing && editKey !== username) { if (potentialDuplicateIndex > -1) { alert(`Erreur : Le nouveau nom d'utilisateur '${username}' existe déjà.`); adminUsernameInput.value = editKey; adminUsernameInput.focus(); return; } if (editingUserIndex > -1) { userData.recordedBy = originalDataBackup.recordedBy; tempLocalData.splice(editingUserIndex, 1); tempLocalData.push(userData); actionAlert = `Utilisateur renommé de '${editKey}' en '${username}' et mis à jour.`; } else { alert(`Erreur : Utilisateur à modifier ('${editKey}') non trouvé.`); return; } } else { if (potentialDuplicateIndex > -1) { alert(`Erreur : Le nom d'utilisateur '${username}' existe déjà.`); adminUsernameInput.focus(); return; } userData.recordedBy = operatedBy; tempLocalData.push(userData); actionAlert = `Utilisateur '${username}' ajouté.`; }
+        saveDataToFirebase('adminData', tempLocalData)
+            .then(() => {
+                alert(actionAlert);
+                adminForm.reset();
+                updateConnectedUserFields();
+                setTodaysDate();
+                if (adminEditKeyInput) adminEditKeyInput.value = '';
+                adminPasswordInput.placeholder = "Entrer pour définir/modifier";
+                adminForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Utilisateur';
+                adminForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+            })
+            .catch(error => { /* Error handled */ });
     });
     if (equipmentForm) equipmentForm.addEventListener('submit', function (event) {
         event.preventDefault();
         if (!currentUser || currentUser.status !== 'Administrateur') {
             alert("Accès Refusé: Seuls les administrateurs peuvent gérer les appareils confiés."); return;
         }
-        // ... rest of equipment form logic ...
-        const editIndex = equipmentEditIndexInput ? parseInt(equipmentEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; const name = equipmentNameInput?.value.trim(); const quantity = parseInt(equipmentQuantityInput?.value); const assignedDate = equipmentAssignedDateInput?.value; const accessories = equipmentAccessoriesInput?.value.trim(); const employeeName = equipmentEmployeeNameSelect?.value; const otherInfo = equipmentOtherInfoTextarea?.value.trim(); if (!name || !quantity || quantity < 1 || !assignedDate || !employeeName) { alert("Veuillez remplir correctement tous les champs requis (Nom Appareil, Nombre > 0, Date Attribution, Employé)."); return; } const equipmentItemData = { name, quantity, assignedDate, accessories: accessories || '', employeeName, otherInfo: otherInfo || '' }; let originalDataBackup = null; let tempLocalData = [...equipmentData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index appareil invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); equipmentItemData.recordedBy = originalDataBackup.recordedBy; equipmentItemData.lastModifiedBy = currentUser?.username || 'N/A'; equipmentItemData.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = equipmentItemData; } else { equipmentItemData.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(equipmentItemData); } saveDataToFirebase('equipmentData', tempLocalData) .then(() => { const action = isEditing ? 'mis à jour' : 'ajouté'; alert(`Appareil/outil confié ${action}.`); equipmentForm.reset(); setTodaysDate(); updateConnectedUserFields(); populateEmployeeSelect(equipmentEmployeeNameSelect); if (equipmentEditIndexInput) equipmentEditIndexInput.value = ''; equipmentForm.querySelector('button[type="submit"]').textContent = 'Ajouter Appareil Confié'; }) .catch(error => { /* Error handled */ });
+        const editIndex = equipmentEditIndexInput ? parseInt(equipmentEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; const name = equipmentNameInput?.value.trim(); const quantity = parseInt(equipmentQuantityInput?.value); const assignedDate = equipmentAssignedDateInput?.value; const accessories = equipmentAccessoriesInput?.value.trim(); const employeeName = equipmentEmployeeNameSelect?.value; const otherInfo = equipmentOtherInfoTextarea?.value.trim(); if (!name || !quantity || quantity < 1 || !assignedDate || !employeeName) { alert("Veuillez remplir correctement tous les champs requis (Nom Appareil, Nombre > 0, Date Attribution, Employé)."); return; } const equipmentItemData = { name, quantity, assignedDate, accessories: accessories || '', employeeName, otherInfo: otherInfo || '' }; let originalDataBackup = null; let tempLocalData = [...equipmentData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index appareil invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); equipmentItemData.recordedBy = originalDataBackup.recordedBy; equipmentItemData.lastModifiedBy = currentUser?.username || 'N/A'; equipmentItemData.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = equipmentItemData; } else { equipmentItemData.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(equipmentItemData); }
+        saveDataToFirebase('equipmentData', tempLocalData)
+            .then(() => {
+                const action = isEditing ? 'mis à jour' : 'ajouté';
+                alert(`Appareil/outil confié ${action}.`);
+                equipmentForm.reset();
+                setTodaysDate();
+                updateConnectedUserFields();
+                populateEmployeeSelect(equipmentEmployeeNameSelect);
+                if (equipmentEditIndexInput) equipmentEditIndexInput.value = '';
+                equipmentForm.querySelector('button[type="submit"]').textContent = 'Ajouter Appareil Confié';
+                equipmentForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+            })
+            .catch(error => { /* Error handled */ });
     });
 
 
@@ -1637,22 +1880,22 @@ document.addEventListener('DOMContentLoaded', function () {
     /** Helper Function to Save Data to Firebase */
     async function saveDataToFirebase(key, data) { /* ... Function remains the same ... */ try { const dataToSave = data === undefined || data === null ? [] : data; await dataRef.child(key).set(dataToSave); return Promise.resolve(); } catch (error) { console.error(`Firebase save error for key [${key}]:`, error); alert(`Erreur critique lors de la sauvegarde des données (${key}). Vos dernières modifications pourraient être perdues. Vérifiez votre connexion et réessayez.`); throw error; } }
 
-    // --- Delete Functions (Add permission checks) ---
-    window.deleteSupply = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteSupply ... */ if (index < 0 || index >= supplyData.length) return; const item = supplyData[index]; if (confirm(`Supprimer appro ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...supplyData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('supplyData', tempLocalData); alert('Approvisionnement supprimé.'); } catch (e) { /* Error handled */ } } };
-    window.deleteSale = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteSale ... */ if (index < 0 || index >= salesData.length) return; const item = salesData[index]; if (confirm(`Supprimer vente Papeterie ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...salesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('salesData', tempLocalData); alert('Vente Papeterie supprimée.'); } catch (e) { /* Error handled */ } } };
-    window.deleteMaterielElectriqueSale = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteMaterielElectriqueSale ... */ if (index < 0 || index >= materielElectriqueData.length) return; const item = materielElectriqueData[index]; if (confirm(`Supprimer vente Mat. Elec. ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...materielElectriqueData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('materielElectriqueData', tempLocalData); alert('Vente Mat. Elec. supprimée.'); } catch (e) { /* Error handled */ } } };
-    window.deleteExpense = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteExpense ... */ if (index < 0 || index >= expensesData.length) return; const item = expensesData[index]; if (confirm(`Supprimer dépense du ${item.date || '?'} ("${item.reason || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...expensesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('expensesData', tempLocalData); alert('Dépense supprimée.'); } catch (e) { /* Error handled */ } } };
-    window.deleteOther = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteOther ... */ if (index < 0 || index >= othersData.length) return; const item = othersData[index]; if (confirm(`Supprimer op. diverse du ${item.date || '?'} ("${item.designation || '?'}", Montant: ${formatAmount(item.totalAmount)}) ?`)) { let tempLocalData = [...othersData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('othersData', tempLocalData); alert('Opération diverse supprimée.'); } catch (e) { /* Error handled */ } } };
-    window.deleteEmployee = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteEmployee ... */ if (index < 0 || index >= employeesData.length) return; const item = employeesData[index]; if (confirm(`Supprimer l'employé: ${item.nom || '?'} ${item.prenom || ''} ? Définitif.`)) { let tempLocalData = [...employeesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('employeesData', tempLocalData); alert('Employé supprimé.'); } catch (e) { /* Error handled */ } } };
-    window.deleteLearner = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteLearner ... */ if (index < 0 || index >= learnersData.length) return; const item = learnersData[index]; if (confirm(`Supprimer l'apprenant: ${item.nom || '?'} ${item.prenom || ''} (Filière: ${item.filiere || 'N/A'}) ? Définitif.`)) { let tempLocalData = [...learnersData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('learnersData', tempLocalData); alert('Apprenant supprimé.'); } catch (e) { /* Error handled */ } } };
-    window.deleteMobileMoney = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteMobileMoney ... */ if (originalIndex < 0 || originalIndex >= mobileMoneyData.length) { alert("Index invalide."); return; } const item = mobileMoneyData[originalIndex]; if (confirm(`Supprimer Point MM du ${item.date || '?'} (Agent: ${item.agent || '?'}) ?`)) { let tempLocalData = [...mobileMoneyData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('mobileMoneyData', tempLocalData); alert('Point Mobile Money supprimé.'); } catch (e) { /* Error handled */ } } };
-    window.deleteMmFournisseur = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteMmFournisseur ... */ const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const fournisseurFullName = `${sN} ${sP}`.trim(); const initialLength = mmFournisseursData.length; let tempLocalData = mmFournisseursData.filter(f => !(f.nom === sN && f.prenom === sP)); if (tempLocalData.length < initialLength) { if (confirm(`Supprimer fournisseur MM : ${fournisseurFullName} ?`)) { try { await saveDataToFirebase('mmFournisseursData', tempLocalData); alert(`Fournisseur ${fournisseurFullName} supprimé.`); } catch (e) { /* Error handled */ } } } else { alert(`Erreur : Fournisseur ${fournisseurFullName} non trouvé.`); } };
-    window.deleteClientProfile = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteClientProfile ... */ const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const clientFullName = `${sN} ${sP}`.trim(); const hasActiveCredit = creditorsData.some(c => c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005) ); if (hasActiveCredit) { alert(`Impossible supprimer profil ${clientFullName}, crédits non soldés associés.`); return; } const profileIndex = clientProfilesData.findIndex(p => p.nom === sN && p.prenom === sP); if (profileIndex === -1) { alert(`Erreur : Profil ${clientFullName} non trouvé.`); return; } if (confirm(`Supprimer profil client : ${clientFullName} ?\nATTENTION : Ceci supprimera aussi crédits SOLDÉS associés.`)) { let tempProfilesData = [...clientProfilesData]; let tempCreditorsData = [...creditorsData]; let credRemovedCount = 0; tempProfilesData.splice(profileIndex, 1); const initialCreditorLength = tempCreditorsData.length; tempCreditorsData = tempCreditorsData.filter(c => !( c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) <= 0.005) )); credRemovedCount = initialCreditorLength - tempCreditorsData.length; try { const savePromises = [saveDataToFirebase('clientProfilesData', tempProfilesData)]; if (credRemovedCount > 0) { savePromises.push(saveDataToFirebase('creditorsData', tempCreditorsData)); } await Promise.all(savePromises); alert(`Profil ${clientFullName} supprimé.` + (credRemovedCount > 0 ? ` ${credRemovedCount} crédit(s) soldé(s) associé(s) supprimé(s).` : '')); if(clientProfileEditKeyInput?.value === `${sN}_${sP}`) { clientProfileForm.reset(); clientProfileEditKeyInput.value = ''; clientProfileForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Profil'; updateConnectedUserFields(); } } catch (e) { /* Error handled */ } } };
-    window.deleteCreditor = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteCreditor ... */ if (originalIndex < 0 || originalIndex >= creditorsData.length) { alert("Index invalide."); return; } const item = creditorsData[originalIndex]; const remaining = (item.totalAmountDue || 0) - (item.amountPaidTotal || 0); if (confirm(`Supprimer TOUTE la transaction crédit pour ${item.name || '?'} ("${item.designation || '?'}")?\nSolde: ${formatAmount(remaining)}. IRREVERSIBLE.`)) { let tempLocalData = [...creditorsData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('creditorsData', tempLocalData); alert('Transaction crédit supprimée.'); } catch (e) { /* Error handled */ } } };
-    window.deleteDebt = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteDebt ... */ if (originalIndex < 0 || originalIndex >= debtData.length) { alert("Index invalide."); return; } const item = debtData[originalIndex]; if (confirm(`Supprimer ${item.type || 'entrée'} : ${item.name || '?'} ("${item.description || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...debtData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('debtData', tempLocalData); alert(`${item.type || 'Entrée'} supprimé(e).`); } catch (e) { /* Error handled */ } } };
-    window.deletePermission = async (type, index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deletePermission ... */ let dataArray, storageKey, itemType; if (type === 'employee') { dataArray = employeePermissionsData; storageKey = 'employeePermissionsData'; itemType = 'employé'; } else if (type === 'learner') { dataArray = learnerPermissionsData; storageKey = 'learnerPermissionsData'; itemType = 'apprenant'; } else { return; } if (index < 0 || index >= dataArray.length) { alert("Index invalide."); return; } const perm = dataArray[index]; if (confirm(`Supprimer demande permission pour ${perm.name || '?'} (${itemType}) du ${perm.requestDate || '?'} ?`)) { let tempLocalData = [...dataArray]; tempLocalData.splice(index, 1); try { await saveDataToFirebase(storageKey, tempLocalData); alert('Demande permission supprimée.'); } catch (e) { /* Error handled */ } } };
-    window.deleteAdminUser = async (username) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteAdminUser ... */ const safeUsername = String(username || '').replace(/\\'/g, "'"); const userIndex = adminData.findIndex(u => u.username === safeUsername); if (userIndex === -1) { alert(`Utilisateur '${safeUsername}' non trouvé.`); return; } const userToDelete = adminData[userIndex]; if(currentUser && currentUser.username === safeUsername) { alert("Impossible supprimer votre propre compte."); return; } const adminCount = adminData.filter(u => u.status === 'Administrateur').length; if(userToDelete.status === 'Administrateur' && adminCount <= 1) { alert("Impossible supprimer le dernier administrateur."); return; } if (confirm(`Supprimer utilisateur '${safeUsername}' (${userToDelete.status || ''}) ? IRREVERSIBLE.`)) { let tempLocalData = [...adminData]; tempLocalData.splice(userIndex, 1); try { await saveDataToFirebase('adminData', tempLocalData); alert(`Utilisateur '${safeUsername}' supprimé.`); if (adminEditKeyInput?.value === safeUsername) { adminForm.reset(); updateConnectedUserFields(); adminEditKeyInput.value = ''; adminPasswordInput.placeholder = "Entrer pour définir/modifier"; adminForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Utilisateur'; } } catch (e) { /* Error handled */ } } };
-    window.deleteEquipment = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteEquipment ... */ if (index < 0 || index >= equipmentData.length) { alert("Index invalide."); return; } const item = equipmentData[index]; if (confirm(`Supprimer l'attribution de "${item.name || '?'}" (Qté: ${item.quantity || '?'}) à ${item.employeeName || '?'} du ${item.assignedDate || '?'} ?`)) { let tempLocalData = [...equipmentData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('equipmentData', tempLocalData); alert('Attribution appareil/outil supprimée.'); if (equipmentEditIndexInput?.value === String(index)) { equipmentForm.reset(); equipmentEditIndexInput.value = ''; equipmentForm.querySelector('button[type="submit"]').textContent = 'Ajouter Appareil Confié'; updateConnectedUserFields(); populateEmployeeSelect(equipmentEmployeeNameSelect); } } catch (e) { /* Error handled */ } } };
+    // --- Delete Functions (Add permission checks and Scroll) ---
+    window.deleteSupply = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= supplyData.length) return; const item = supplyData[index]; if (confirm(`Supprimer appro ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...supplyData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('supplyData', tempLocalData); alert('Approvisionnement supprimé.'); supplyForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteSale = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= salesData.length) return; const item = salesData[index]; if (confirm(`Supprimer vente Papeterie ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...salesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('salesData', tempLocalData); alert('Vente Papeterie supprimée.'); salesForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteMaterielElectriqueSale = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= materielElectriqueData.length) return; const item = materielElectriqueData[index]; if (confirm(`Supprimer vente Mat. Elec. ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...materielElectriqueData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('materielElectriqueData', tempLocalData); alert('Vente Mat. Elec. supprimée.'); salesForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteExpense = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= expensesData.length) return; const item = expensesData[index]; if (confirm(`Supprimer dépense du ${item.date || '?'} ("${item.reason || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...expensesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('expensesData', tempLocalData); alert('Dépense supprimée.'); salesForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteOther = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= othersData.length) return; const item = othersData[index]; if (confirm(`Supprimer op. diverse du ${item.date || '?'} ("${item.designation || '?'}", Montant: ${formatAmount(item.totalAmount)}) ?`)) { let tempLocalData = [...othersData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('othersData', tempLocalData); alert('Opération diverse supprimée.'); salesForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteEmployee = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= employeesData.length) return; const item = employeesData[index]; if (confirm(`Supprimer l'employé: ${item.nom || '?'} ${item.prenom || ''} ? Définitif.`)) { let tempLocalData = [...employeesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('employeesData', tempLocalData); alert('Employé supprimé.'); employeeForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteLearner = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= learnersData.length) return; const item = learnersData[index]; if (confirm(`Supprimer l'apprenant: ${item.nom || '?'} ${item.prenom || ''} (Filière: ${item.filiere || 'N/A'}) ? Définitif.`)) { let tempLocalData = [...learnersData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('learnersData', tempLocalData); alert('Apprenant supprimé.'); learnerForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteMobileMoney = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= mobileMoneyData.length) { alert("Index invalide."); return; } const item = mobileMoneyData[originalIndex]; if (confirm(`Supprimer Point MM du ${item.date || '?'} (Agent: ${item.agent || '?'}) ?`)) { let tempLocalData = [...mobileMoneyData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('mobileMoneyData', tempLocalData); alert('Point Mobile Money supprimé.'); mobileMoneyForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteMmFournisseur = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const fournisseurFullName = `${sN} ${sP}`.trim(); const initialLength = mmFournisseursData.length; let tempLocalData = mmFournisseursData.filter(f => !(f.nom === sN && f.prenom === sP)); if (tempLocalData.length < initialLength) { if (confirm(`Supprimer fournisseur MM : ${fournisseurFullName} ?`)) { try { await saveDataToFirebase('mmFournisseursData', tempLocalData); alert(`Fournisseur ${fournisseurFullName} supprimé.`); mmFournisseurForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } } else { alert(`Erreur : Fournisseur ${fournisseurFullName} non trouvé.`); } };
+    window.deleteClientProfile = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const clientFullName = `${sN} ${sP}`.trim(); const hasActiveCredit = creditorsData.some(c => c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005) ); if (hasActiveCredit) { alert(`Impossible supprimer profil ${clientFullName}, crédits non soldés associés.`); return; } const profileIndex = clientProfilesData.findIndex(p => p.nom === sN && p.prenom === sP); if (profileIndex === -1) { alert(`Erreur : Profil ${clientFullName} non trouvé.`); return; } if (confirm(`Supprimer profil client : ${clientFullName} ?\nATTENTION : Ceci supprimera aussi crédits SOLDÉS associés.`)) { let tempProfilesData = [...clientProfilesData]; let tempCreditorsData = [...creditorsData]; let credRemovedCount = 0; tempProfilesData.splice(profileIndex, 1); const initialCreditorLength = tempCreditorsData.length; tempCreditorsData = tempCreditorsData.filter(c => !( c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) <= 0.005) )); credRemovedCount = initialCreditorLength - tempCreditorsData.length; try { const savePromises = [saveDataToFirebase('clientProfilesData', tempProfilesData)]; if (credRemovedCount > 0) { savePromises.push(saveDataToFirebase('creditorsData', tempCreditorsData)); } await Promise.all(savePromises); alert(`Profil ${clientFullName} supprimé.` + (credRemovedCount > 0 ? ` ${credRemovedCount} crédit(s) soldé(s) associé(s) supprimé(s).` : '')); if(clientProfileEditKeyInput?.value === `${sN}_${sP}`) { clientProfileForm.reset(); clientProfileEditKeyInput.value = ''; clientProfileForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Profil'; updateConnectedUserFields(); } clientProfileForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteCreditor = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= creditorsData.length) { alert("Index invalide."); return; } const item = creditorsData[originalIndex]; const remaining = (item.totalAmountDue || 0) - (item.amountPaidTotal || 0); if (confirm(`Supprimer TOUTE la transaction crédit pour ${item.name || '?'} ("${item.designation || '?'}")?\nSolde: ${formatAmount(remaining)}. IRREVERSIBLE.`)) { let tempLocalData = [...creditorsData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('creditorsData', tempLocalData); alert('Transaction crédit supprimée.'); creditorForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteDebt = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= debtData.length) { alert("Index invalide."); return; } const item = debtData[originalIndex]; if (confirm(`Supprimer ${item.type || 'entrée'} : ${item.name || '?'} ("${item.description || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...debtData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('debtData', tempLocalData); alert(`${item.type || 'Entrée'} supprimé(e).`); debtForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deletePermission = async (type, index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } let dataArray, storageKey, itemType, targetForm; if (type === 'employee') { dataArray = employeePermissionsData; storageKey = 'employeePermissionsData'; itemType = 'employé'; targetForm = permissionEmployeeForm; } else if (type === 'learner') { dataArray = learnerPermissionsData; storageKey = 'learnerPermissionsData'; itemType = 'apprenant'; targetForm = permissionLearnerForm; } else { return; } if (index < 0 || index >= dataArray.length) { alert("Index invalide."); return; } const perm = dataArray[index]; if (confirm(`Supprimer demande permission pour ${perm.name || '?'} (${itemType}) du ${perm.requestDate || '?'} ?`)) { let tempLocalData = [...dataArray]; tempLocalData.splice(index, 1); try { await saveDataToFirebase(storageKey, tempLocalData); alert('Demande permission supprimée.'); targetForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteAdminUser = async (username) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const safeUsername = String(username || '').replace(/\\'/g, "'"); const userIndex = adminData.findIndex(u => u.username === safeUsername); if (userIndex === -1) { alert(`Utilisateur '${safeUsername}' non trouvé.`); return; } const userToDelete = adminData[userIndex]; if(currentUser && currentUser.username === safeUsername) { alert("Impossible supprimer votre propre compte."); return; } const adminCount = adminData.filter(u => u.status === 'Administrateur').length; if(userToDelete.status === 'Administrateur' && adminCount <= 1) { alert("Impossible supprimer le dernier administrateur."); return; } if (confirm(`Supprimer utilisateur '${safeUsername}' (${userToDelete.status || ''}) ? IRREVERSIBLE.`)) { let tempLocalData = [...adminData]; tempLocalData.splice(userIndex, 1); try { await saveDataToFirebase('adminData', tempLocalData); alert(`Utilisateur '${safeUsername}' supprimé.`); if (adminEditKeyInput?.value === safeUsername) { adminForm.reset(); updateConnectedUserFields(); adminEditKeyInput.value = ''; adminPasswordInput.placeholder = "Entrer pour définir/modifier"; adminForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Utilisateur'; } adminForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    window.deleteEquipment = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= equipmentData.length) { alert("Index invalide."); return; } const item = equipmentData[index]; if (confirm(`Supprimer l'attribution de "${item.name || '?'}" (Qté: ${item.quantity || '?'}) à ${item.employeeName || '?'} du ${item.assignedDate || '?'} ?`)) { let tempLocalData = [...equipmentData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('equipmentData', tempLocalData); alert('Attribution appareil/outil supprimée.'); if (equipmentEditIndexInput?.value === String(index)) { equipmentForm.reset(); equipmentEditIndexInput.value = ''; equipmentForm.querySelector('button[type="submit"]').textContent = 'Ajouter Appareil Confié'; updateConnectedUserFields(); populateEmployeeSelect(equipmentEmployeeNameSelect); } equipmentForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
 
     // START ADDITION: Table Sorting Logic
 
@@ -2056,21 +2299,22 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
 
-    // --- Permission Status Update Function (Added date update) ---
+    // --- Permission Status Update Function (Added date update and Scroll) ---
     window.updatePermissionStatus = async (type, index, newStatus) => {
         if (!currentUser || currentUser.status !== 'Administrateur') {
             alert("Accès Refusé: Admin seulement."); return;
         }
-        /* ... rest of updatePermissionStatus ... */
-        let dataArray, storageKey, itemType;
+        let dataArray, storageKey, itemType, targetForm;
         if (type === 'employee') {
             dataArray = employeePermissionsData;
             storageKey = 'employeePermissionsData';
             itemType = 'employé';
+            targetForm = permissionEmployeeForm;
         } else if (type === 'learner') {
             dataArray = learnerPermissionsData;
             storageKey = 'learnerPermissionsData';
             itemType = 'apprenant';
+            targetForm = permissionLearnerForm;
         } else {
             return;
         }
@@ -2087,17 +2331,17 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             await saveDataToFirebase(storageKey, tempLocalData);
             alert(`Statut demande mis à jour à "${newStatus}".`);
+            targetForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
         } catch(e) {
             // Error handled by saveDataToFirebase
         }
     };
 
-    // --- Payment Recording Functions ---
+    // --- Payment Recording Functions (Added Scroll) ---
     window.recordSalaryPayment = async (index) => {
         if (!currentUser || currentUser.status !== 'Administrateur') {
             alert("Accès Refusé: Admin seulement."); return;
         }
-        /* ... rest of recordSalaryPayment ... */
         if (index < 0 || index >= employeesData.length) return;
         const emp = employeesData[index];
         const salary = emp.salary !== null ? parseFloat(emp.salary) : 0;
@@ -2138,6 +2382,7 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             await saveDataToFirebase('employeesData', tempLocalData);
             alert(`Paiement de ${formatAmount(amountPaidThisTime)} enregistré pour ${emp.nom} ${emp.prenom} le ${paymentDate}.`);
+            employeeForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
             if (confirm('Imprimer reçu ?')) {
                 printSalaryInvoice(index, paymentDate, amountPaidThisTime);
             }
@@ -2150,7 +2395,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!currentUser || currentUser.status !== 'Administrateur') {
             alert("Accès Refusé: Admin seulement."); return;
         }
-        /* ... rest of recordTranchePayment ... */
         if (index < 0 || index >= learnersData.length) return;
         const lrn = learnersData[index];
 
@@ -2211,6 +2455,7 @@ document.addEventListener('DOMContentLoaded', function () {
              try {
                 await saveDataToFirebase('learnersData', tempLocalData);
                 alert(`Paiement de ${formatAmount(amountPaidThisTime)} pour "${paymentReason}" enregistré pour ${lrn.nom} ${lrn.prenom} le ${paymentDate}.`);
+                learnerForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
                  if (confirm('Imprimer reçu ?')) {
                      printLearnerInvoice(index, paymentDate, paymentReason, amountPaidThisTime);
                  }
@@ -2421,6 +2666,235 @@ document.addEventListener('DOMContentLoaded', function () {
             let isValid = true; invoiceGeneratorForm?.querySelectorAll('.invalid-field').forEach(el => el.classList.remove('invalid-field')); if (!invoiceGenDateInput?.value) { isValid = false; invoiceGenDateInput?.classList.add('invalid-field'); } if (!invoiceGenClientNameInput?.value.trim()) { isValid = false; invoiceGenClientNameInput?.classList.add('invalid-field'); } if (!invoiceGenNumberInput?.value) { isValid = false; invoiceGenNumberInput?.classList.add('invalid-field'); } const items = []; const itemRows = invoiceItemsContainer?.querySelectorAll('.invoice-item-row'); if (!itemRows || itemRows.length === 0) { alert("Ajoutez au moins une ligne."); return; } itemRows.forEach((row) => { const designationInput = row.querySelector('.item-designation'); const quantityInput = row.querySelector('.item-quantity'); const unitPriceInput = row.querySelector('.item-unit-price'); const designation = designationInput?.value.trim(); const quantity = parseFloat(quantityInput?.value); const unitPrice = parseFloat(unitPriceInput?.value); let rowIsValid = true; if (!designation) { isValid = false; rowIsValid = false; designationInput?.classList.add('invalid-field'); } if (isNaN(quantity) || quantity < 0) { isValid = false; rowIsValid = false; quantityInput?.classList.add('invalid-field'); } if (isNaN(unitPrice) || unitPrice < 0) { isValid = false; rowIsValid = false; unitPriceInput?.classList.add('invalid-field'); } if (rowIsValid) { items.push({ designation, quantity, unitPrice, total: quantity * unitPrice }); } }); if (!isValid) { alert("Vérifiez champs en rouge."); const firstInvalid = invoiceGeneratorForm?.querySelector('.invalid-field'); firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' }); firstInvalid?.focus(); return; } calculateInvoiceTotal(); const finalTotalAmount = parseFloat(invoiceGenTotalAmountInput.value); const invoiceData = { date: invoiceGenDateInput.value, number: invoiceGenNumberInput.value, clientName: invoiceGenClientNameInput.value.trim(), clientContact: invoiceGenClientContactInput?.value.trim() || '', items: items, totalAmount: finalTotalAmount, totalWords: numberToWordsFrench(finalTotalAmount) }; const invoiceHTML = generateInvoiceHTML(invoiceData); const invoiceArea = document.getElementById('invoice-print-area'); if (invoiceArea) { invoiceArea.innerHTML = invoiceHTML; printElement('invoice-print-area'); } else { alert("Erreur critique: Zone impression facture introuvable."); }
         });
         previewPrintInvoiceButton._hasClickListener = true;
+    }
+
+    // --- NEW: Invoice PDF Export Function ---
+    async function exportInvoiceToPdf(invoiceData) {
+        try {
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined' || typeof window.jspdf.jsPDF.API?.autoTable === 'undefined') {
+                throw new Error("Librairies PDF (jsPDF, jsPDF-AutoTable) non chargées.");
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+            const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+            const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
+            const margin = 40;
+            let currentY = margin;
+            const contentWidth = pageWidth - 2 * margin;
+
+            // --- Load and Add Logo ---
+            let logoDataUrl = null;
+            try {
+                logoDataUrl = await getBase64Image(LOGO_PATH);
+            } catch (error) {
+                console.warn("Impossible de charger/encoder le logo pour PDF:", error);
+            }
+
+            const logoHeight = 45;
+            const logoWidth = 45; // Adjust if needed
+            const logoX = margin;
+            const headerTextX = logoDataUrl ? logoX + logoWidth + 10 : margin;
+
+            if (logoDataUrl) {
+                doc.addImage(logoDataUrl, 'JPEG', logoX, currentY, logoWidth, logoHeight);
+            }
+
+            // --- Add Text Header ---
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text(ESTABLISHMENT_NAME, headerTextX, currentY + 10);
+
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'normal');
+            // Split COMPANY_INFO_PRINT by <br> and print line by line
+            const companyInfoLines = COMPANY_INFO_PRINT.replace(/<br>/gi, '\n').split('\n');
+            doc.text(companyInfoLines, headerTextX, currentY + 22); // Start slightly lower
+            let companyInfoHeight = doc.getTextDimensions(companyInfoLines.join('\n')).h;
+
+            // --- Add Invoice Title/Details (Top Right) ---
+            const rightColX = pageWidth - margin;
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text("FACTURE", rightColX, currentY + 10, { align: 'right' });
+
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`N° Facture : ${invoiceData.number}`, rightColX, currentY + 25, { align: 'right' });
+            doc.text(`Date : ${invoiceData.date}`, rightColX, currentY + 37, { align: 'right' });
+
+            currentY += Math.max(logoHeight, companyInfoHeight) + 25; // Move below header
+
+            // --- Client Details ---
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.text("Client :", margin, currentY);
+            doc.setFont(undefined, 'normal');
+            doc.text(invoiceData.clientName, margin, currentY + 12);
+            if (invoiceData.clientContact) {
+                doc.text(`Contact: ${invoiceData.clientContact}`, margin, currentY + 24);
+                currentY += 36;
+            } else {
+                currentY += 24;
+            }
+            currentY += 10; // Space before table
+
+            // --- Items Table ---
+            doc.autoTable({
+                startY: currentY,
+                head: [['Désignation', 'Quantité', 'Prix Unitaire', 'Montant Total']],
+                body: invoiceData.items.map(item => [
+                    item.designation || '',
+                    item.quantity || 0,
+                    formatAmount(item.unitPrice),
+                    formatAmount(item.total)
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [230, 230, 230], textColor: 30, fontStyle: 'bold', halign: 'center' },
+                columnStyles: {
+                    0: { halign: 'left' }, // Designation
+                    1: { halign: 'center' }, // Quantity
+                    2: { halign: 'right' }, // Unit Price
+                    3: { halign: 'right' }  // Total Amount
+                },
+                margin: { left: margin, right: margin }
+            });
+
+            currentY = doc.lastAutoTable.finalY + 20; // Update Y after table
+
+            // --- Summary ---
+            // START MODIFICATION: Adjusted PDF Total positioning
+            const totalLabel = "MONTANT TOTAL :"; // Label Text
+            const totalValue = `${formatAmount(invoiceData.totalAmount)} FCFA`; // Value Text
+            const totalLabelFontSize = 11; // Font size for the label
+            const totalValueFontSize = 11; // Font size for the value
+            const labelValueGap = 10; // Space between label and value
+
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal'); // Ensure normal font for the preceding text
+            doc.text("Arrêté la présente facture à la somme de :", rightColX, currentY, { align: 'right', maxWidth: contentWidth });
+            doc.setFont(undefined, 'bold');
+            doc.text(invoiceData.totalWords, rightColX, currentY + 12, { align: 'right', maxWidth: contentWidth });
+            currentY += 30; // Increase space before total line
+
+            // Draw the dashed line
+            doc.setLineDashPattern([2, 2], 0);
+            doc.line(margin, currentY - 5, pageWidth - margin, currentY - 5); // Draw line slightly above text
+            doc.setLineDashPattern([], 0); // Reset dash pattern
+
+            doc.setFontSize(totalLabelFontSize); // Set font size for label
+            doc.setFont(undefined, 'bold'); // Make label bold
+            const totalLabelWidth = doc.getStringUnitWidth(totalLabel) * totalLabelFontSize / doc.internal.scaleFactor;
+
+            doc.setFontSize(totalValueFontSize); // Set font size for value (can be different)
+            doc.setFont(undefined, 'bold');   // Make value bold
+            const totalValueWidth = doc.getStringUnitWidth(totalValue) * totalValueFontSize / doc.internal.scaleFactor;
+
+            // Calculate positions
+            const totalX_Value = rightColX; // Align value to the right margin
+            const totalX_Label = rightColX - totalValueWidth - labelValueGap; // Position label to the left of the value
+
+            // Draw text
+            doc.setFontSize(totalLabelFontSize); // Apply label font size
+             doc.setFont(undefined, 'bold');   // Apply label font style
+            doc.text(totalLabel, totalX_Label, currentY, { align: 'right'}); // Align label right up to its position
+
+            doc.setFontSize(totalValueFontSize); // Apply value font size
+             doc.setFont(undefined, 'bold');   // Apply value font style
+            doc.text(totalValue, totalX_Value, currentY, { align: 'right' }); // Align value to the right margin
+            // END MODIFICATION
+
+            currentY += 40; // Space before signature
+
+            // --- Signature ---
+            doc.setFontSize(10);
+             doc.setFont(undefined, 'normal'); // Ensure normal font for signature label
+            doc.text("Signature du Responsable :", rightColX, currentY, { align: 'right' });
+            doc.text("_________________________", rightColX, currentY + 35, { align: 'right' });
+            doc.setFont(undefined, 'italic');
+            doc.text("Modeste KODA MICHEL", rightColX, currentY + 48, { align: 'right' });
+
+            currentY += 70; // Space before footer
+
+            // --- Footer ---
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(100);
+            doc.text("Merci de votre confiance.", pageWidth / 2, currentY, { align: 'center' });
+
+            // Page numbers (if needed, add logic similar to table export footer)
+
+            doc.save(`Facture_${invoiceData.number}_${invoiceData.clientName}.pdf`);
+
+        } catch (error) {
+            console.error("Erreur export facture PDF:", error);
+            alert(`Erreur lors de l'export PDF de la facture: ${error.message}`);
+        }
+    }
+
+    // --- NEW: Event Listener for Invoice PDF Export Button ---
+    if (exportInvoicePdfButton && !exportInvoicePdfButton._hasClickListener) {
+        exportInvoicePdfButton.addEventListener('click', () => {
+            if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) {
+                alert("Accès Refusé.");
+                return;
+            }
+            // Validation logic copied from previewPrintInvoiceButton listener
+            let isValid = true;
+            invoiceGeneratorForm?.querySelectorAll('.invalid-field').forEach(el => el.classList.remove('invalid-field'));
+            if (!invoiceGenDateInput?.value) { isValid = false; invoiceGenDateInput?.classList.add('invalid-field'); }
+            if (!invoiceGenClientNameInput?.value.trim()) { isValid = false; invoiceGenClientNameInput?.classList.add('invalid-field'); }
+            if (!invoiceGenNumberInput?.value) { isValid = false; invoiceGenNumberInput?.classList.add('invalid-field'); }
+
+            const items = [];
+            const itemRows = invoiceItemsContainer?.querySelectorAll('.invoice-item-row');
+            if (!itemRows || itemRows.length === 0) {
+                alert("Ajoutez au moins une ligne d'article à la facture.");
+                return; // Stop if no items
+            }
+
+            itemRows.forEach((row) => {
+                const designationInput = row.querySelector('.item-designation');
+                const quantityInput = row.querySelector('.item-quantity');
+                const unitPriceInput = row.querySelector('.item-unit-price');
+                const designation = designationInput?.value.trim();
+                const quantity = parseFloat(quantityInput?.value);
+                const unitPrice = parseFloat(unitPriceInput?.value);
+                let rowIsValid = true;
+                if (!designation) { isValid = false; rowIsValid = false; designationInput?.classList.add('invalid-field'); }
+                if (isNaN(quantity) || quantity < 0) { isValid = false; rowIsValid = false; quantityInput?.classList.add('invalid-field'); }
+                if (isNaN(unitPrice) || unitPrice < 0) { isValid = false; rowIsValid = false; unitPriceInput?.classList.add('invalid-field'); }
+                if (rowIsValid) {
+                    items.push({ designation, quantity, unitPrice, total: quantity * unitPrice });
+                }
+            });
+
+            if (!isValid) {
+                alert("Veuillez vérifier et corriger les champs marqués en rouge.");
+                const firstInvalid = invoiceGeneratorForm?.querySelector('.invalid-field');
+                firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalid?.focus();
+                return;
+            }
+
+            calculateInvoiceTotal(); // Ensure totals are up-to-date
+            const finalTotalAmount = parseFloat(invoiceGenTotalAmountInput.value);
+
+            const invoiceData = {
+                date: invoiceGenDateInput.value,
+                number: invoiceGenNumberInput.value,
+                clientName: invoiceGenClientNameInput.value.trim(),
+                clientContact: invoiceGenClientContactInput?.value.trim() || '',
+                items: items,
+                totalAmount: finalTotalAmount,
+                totalWords: numberToWordsFrench(finalTotalAmount)
+            };
+
+            // Call the new PDF export function
+            exportInvoiceToPdf(invoiceData);
+
+        });
+        exportInvoicePdfButton._hasClickListener = true;
     }
 
 

@@ -502,6 +502,16 @@ button[type="submit"]:hover:not(:disabled) {
 #add-invoice-item-button:hover:not(:disabled) {
      background-color: var(--color-info-dark);
 }
+/* Specific styling for Invoice Export PDF button */
+#export-invoice-pdf-button {
+    background-color: var(--color-info); /* Teal like other export buttons */
+    color: white;
+    font-weight: bold;
+}
+#export-invoice-pdf-button:hover:not(:disabled) {
+     background-color: var(--color-info-dark); /* Darker teal */
+}
+
 
 
 /* --- Details Containers (Tables) --- */
@@ -978,6 +988,7 @@ footer p {
     .search-container, /* Hide global search container */
     #invoice-generator-section, /* Hide invoice generator FORM */
     #add-invoice-item-button, .remove-invoice-item-btn,
+    #export-invoice-pdf-button, /* Hide PDF export button */
     th.actions-header, td.actions-cell, th.no-print, td.no-print, /* Also hide explicitly marked no-print */
     footer, /* Hide the footer when printing tables/invoices */
     /* Keep Admin section hidden by default unless explicitly printed */
