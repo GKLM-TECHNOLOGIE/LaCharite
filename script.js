@@ -2,6 +2,7 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     // --- START: FIREBASE SETUP ---
+    // ... (Firebase config remains the same) ...
     const firebaseConfig = {
         apiKey: "AIzaSyCIwjMsTA3RlMTMDy5AN3jXzw_UVA7Fqkw", // WARNING: Keep API keys secure in real apps!
         authDomain: "la-charite.firebaseapp.com",
@@ -37,7 +38,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const dataRef = database.ref('gestionnaireData');
     let firebaseListenerHandle = null; // Pour stocker la référence du listener
 
+    // --- Constants ---
+    const ESTABLISHMENT_NAME = "LA CHARITÉ MODESTE";
+    const COMPANY_INFO_PRINT = `TOUS TRAVAUX DE SECRETARIAT : Photocopie-Saisie, Tirage, Plastification-Vente Des<br> fournitures scolaires – Vente des ampoules électriques Etc.....<br> N°RCCM: RB / PK 0/A5519 /IFU 0201810420946<br> PARAKOU (Rép Du Bénin) - Tél: 61 71 36 92 / 64 41 58 95 `; // For print header
+    const LOGO_PATH = 'logo.jpg'; // Ensure this path is correct relative to index.html
+
     // --- Login Elements ---
+    // ... (Login elements remain the same) ...
     const loginContainer = document.getElementById('login-container');
     const loginForm = document.getElementById('login-form');
     const loginUsernameInput = document.getElementById('login-username');
@@ -49,7 +56,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const userInfoUsernameSpan = document.getElementById('user-info-username');
     const userInfoStatusSpan = document.getElementById('user-info-status');
 
+
     // --- Formulaires et Boutons Principaux ---
+    // ... (Formulaires et boutons remain the same) ...
     const supplyForm = document.getElementById('supply-form');
     const salesForm = document.getElementById('sales-form');
     const employeeForm = document.getElementById('employee-form');
@@ -91,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const globalSearchInput = document.getElementById('global-search-input');
 
     // --- Tables (tbody) ---
+    // ... (Tables remain the same) ...
     const salesTable = document.getElementById('sales-table')?.querySelector('tbody');
     const materielElectriqueTable = document.getElementById('materiel-electrique-table')?.querySelector('tbody');
     const expensesTable = document.getElementById('expenses-table')?.querySelector('tbody');
@@ -110,7 +120,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const adminTable = document.getElementById('admin-table')?.querySelector('tbody');
     const equipmentTable = document.getElementById('equipment-table')?.querySelector('tbody'); // NEW
 
+
     // --- Boutons Afficher/Masquer Détails ---
+    // ... (Buttons remain the same) ...
     const showSupplyListButton = document.getElementById('show-supply-list-button');
     const showStockDetailsButton = document.getElementById('show-stock-details-button');
     const showSalesDetailsButton = document.getElementById('show-sales-details-button');
@@ -130,7 +142,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const showAdminUsersButton = document.getElementById('show-admin-users-button');
     const showEquipmentDetailsButton = document.getElementById('show-equipment-details-button'); // NEW
 
+
     // --- Conteneurs Détails ---
+    // ... (Containers remain the same) ...
     const supplyListContainer = document.getElementById('supply-list-container');
     const stockDetailsContainer = document.getElementById('stock-details-container');
     const salesDetailsContainer = document.getElementById('sales-details-container');
@@ -151,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const equipmentDetailsContainer = document.getElementById('equipment-details-container'); // NEW
 
     // --- Boutons Print/Export ---
+    // ... (Print/Export buttons remain the same) ...
     const printSupplyButton = document.getElementById('print-supply');
     const printStockButton = document.getElementById('print-stock');
     const printSalesButton = document.getElementById('print-sales');
@@ -208,8 +223,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const exportAdminUsersPdfButton = document.getElementById('export-admin-users-pdf');
     const exportEquipmentPdfButton = document.getElementById('export-equipment-pdf'); // NEW
 
+
     // --- Champs Formulaire ---
-    // (Keep all the existing declarations - unchanged)
+    // ... (Form fields remain the same) ...
     const supplyDateInput = document.getElementById('supply-date');
     const supplyTypeSelect = document.getElementById('supply-type');
     const supplyDesignationInput = document.getElementById('supply-designation');
@@ -369,6 +385,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const equipmentOtherInfoTextarea = document.getElementById('equipment-other-info');
 
     // Hidden edit fields
+    // ... (Hidden edit fields remain the same) ...
     const supplyEditIndexInput = document.getElementById('supply-edit-index');
     const salesEditIndexInput = document.getElementById('sales-edit-index');
     const salesEditTypeInput = document.getElementById('sales-edit-type');
@@ -381,11 +398,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const adminEditKeyInput = document.getElementById('admin-edit-key');
     const equipmentEditIndexInput = document.getElementById('equipment-edit-index'); // NEW
 
+
     // Invoice Counter
     let invoiceItemIndex = 1;
     let localInvoiceCounter = 1; // Reset on load/refresh, simple counter
 
     // --- Global Data Variables ---
+    // ... (Global data variables remain the same) ...
     let salesData = [];
     let materielElectriqueData = [];
     let expensesData = [];
@@ -404,11 +423,12 @@ document.addEventListener('DOMContentLoaded', function () {
     let stockData = [];
     let equipmentData = []; // NEW
 
+
     // --- Login State ---
     let currentUser = null;
 
     // --- Utility Functions ---
-    // (Keep all utility functions - unchanged)
+    // ... (Existing utility functions remain the same) ...
     function formatAmount(amount) { const num = parseFloat(amount); return !isNaN(num) ? num.toFixed(2) : '0.00'; }
     function updateProductDesignationsForCategory(category) { let targetSelect; let sourceData = []; if (category === 'Papeterie') { targetSelect = saleDesignationSelect; sourceData = stockData.filter(item => item.type === 'Papeterie' && item.remainingQuantity > 0); } else if (category === 'Matériels électrique') { targetSelect = meDesignationSelect; sourceData = stockData.filter(item => item.type === 'Matériels électrique' && item.remainingQuantity > 0); } else { if (saleDesignationSelect) saleDesignationSelect.innerHTML = '<option value="">-- Choisir --</option>'; if (meDesignationSelect) meDesignationSelect.innerHTML = '<option value="">-- Choisir --</option>'; return; } if (!targetSelect) return; const currentValue = targetSelect.value; const designations = [...new Set(sourceData.map(item => item.designation))].sort((a, b) => (a || '').localeCompare(b || '')); targetSelect.innerHTML = '<option value="">-- Choisir --</option>' + designations.map(designation => `<option value="${designation}" ${designation === currentValue ? 'selected' : ''}>${designation}</option>`).join(''); if (!designations.includes(currentValue)) { targetSelect.selectedIndex = 0; } else { targetSelect.value = currentValue; } }
     function calculateTotalAmount(quantityInput, unitPriceInput, totalAmountInput) { if (!quantityInput || !unitPriceInput || !totalAmountInput) return; const quantity = parseFloat(quantityInput.value) || 0; const unitPrice = parseFloat(unitPriceInput.value) || 0; totalAmountInput.value = formatAmount(quantity * unitPrice); }
@@ -418,7 +438,74 @@ document.addEventListener('DOMContentLoaded', function () {
     function toggleSalesSubSectionVisibility(containerToShow) { const allSalesSubSections = [ salesDetailsContainer, materielElectriqueDetailsContainer, expensesDetailsContainer, othersDetailsContainer ]; allSalesSubSections.forEach(container => { if (container) { if (container === containerToShow && container.classList.contains('hidden')) { container.classList.remove('hidden'); } else if (container !== containerToShow) { container.classList.add('hidden'); } else if (container === containerToShow && !container.classList.contains('hidden')) { container.classList.add('hidden'); } } }); }
     function setSectionVisibility(sectionToShow, sectionsToHide) { if (!sectionToShow) return; sectionsToHide.forEach(section => { if(section) section.classList.add('hidden'); }); sectionToShow.classList.remove('hidden'); const nonToggleDetails = [ reportDetailsContainer, reportFilters, showReportDetailsButton, document.getElementById('invoice-print-area') ].filter(Boolean); nonToggleDetails.forEach(container => container.classList.add('hidden')); if (sectionToShow !== supplySection && supplyEditIndexInput) supplyEditIndexInput.value = ''; if (sectionToShow !== salesSection) { if (salesEditIndexInput) salesEditIndexInput.value = ''; if (salesEditTypeInput) salesEditTypeInput.value = ''; if (salesForm) salesForm.querySelector('button[type="submit"]').textContent = 'Ajouter'; } if (sectionToShow !== employeesSection && employeeEditIndexInput) employeeEditIndexInput.value = ''; if (sectionToShow !== learnersSection && learnerEditIndexInput) learnerEditIndexInput.value = ''; if (sectionToShow !== mobileMoneySection) { if (mobileMoneyEditIndexInput) mobileMoneyEditIndexInput.value = ''; if (mmFournisseurEditKeyInput) mmFournisseurEditKeyInput.value = ''; } if (sectionToShow !== creditorsSection && clientProfileEditKeyInput) clientProfileEditKeyInput.value = ''; if (sectionToShow !== debtSection && debtEditIndexInput) debtEditIndexInput.value = ''; if (sectionToShow !== adminSection && adminEditKeyInput) adminEditKeyInput.value = ''; if (sectionToShow !== equipmentSection && equipmentEditIndexInput) equipmentEditIndexInput.value = ''; if (invoiceGeneratorSection && sectionToShow !== invoiceGeneratorSection) { invoiceGeneratorSection.classList.add('hidden'); } if (adminSection && sectionToShow !== adminSection) { adminSection.classList.add('hidden'); } if (equipmentSection && sectionToShow !== equipmentSection) { equipmentSection.classList.add('hidden'); } }
     function handleOperationTypeChange() { if (!operationTypeSelect) return; const type = operationTypeSelect.value; const subForms = { 'Papeterie': papeterieDetailsForm, 'Matériels électrique': materielElectriqueDetailsForm, 'Dépenses': depensesDetailsForm, 'Divers': diversDetailsForm }; Object.values(subForms).forEach(form => { if (form) form.style.display = 'none'; }); const formToShow = subForms[type]; if (formToShow) { formToShow.style.display = 'flex'; } if (type === 'Papeterie' || type === 'Matériels électrique') { updateProductDesignationsForCategory(type); } else { updateProductDesignationsForCategory(''); } const isEditing = !!salesEditIndexInput?.value; if (!isEditing) { Object.entries(subForms).forEach(([formType, formElement]) => { if (formType !== type && formElement) { formElement.querySelectorAll('input, select').forEach(input => { if (input.type === 'select-one') { input.selectedIndex = 0; } else if (input.type !== 'hidden' && !input.readOnly) { input.value = ''; } }); } }); } }
-    function printSpecificTable(containerId) { const containerToPrint = document.getElementById(containerId); if (!containerToPrint) { console.error("Conteneur à imprimer non trouvé:", containerId); alert("Erreur: Impossible de trouver le contenu à imprimer."); return; } document.body.classList.add('printing-active'); containerToPrint.classList.add('show-in-print'); const afterPrintHandler = () => { document.body.classList.remove('printing-active'); containerToPrint.classList.remove('show-in-print'); window.removeEventListener('afterprint', afterPrintHandler); window.removeEventListener('unload', afterPrintHandler); }; window.addEventListener('afterprint', afterPrintHandler); window.addEventListener('unload', afterPrintHandler); try { window.print(); setTimeout(() => { if (document.body.classList.contains('printing-active')) { afterPrintHandler(); } }, 1500); } catch (e) { console.error("Erreur window.print():", e); alert("Erreur lors du lancement de l'impression."); afterPrintHandler(); } }
+
+    // --- NEW: Helper to get Title ---
+    function getPrintExportTitle(containerId) {
+        const container = document.getElementById(containerId);
+        const h3 = container?.querySelector('h3');
+        // Fallback logic for report container which has a different structure
+        if (containerId === 'report-details-container' && h3) {
+            return h3.innerText; // Use the dynamically generated report title
+        }
+        return h3?.innerText || 'Détails'; // Default title
+    }
+
+    // --- MODIFIED printSpecificTable ---
+    function printSpecificTable(containerId) {
+        const containerToPrint = document.getElementById(containerId);
+        if (!containerToPrint) {
+            console.error("Conteneur à imprimer non trouvé:", containerId);
+            alert("Erreur: Impossible de trouver le contenu à imprimer.");
+            return;
+        }
+
+        const tableTitle = getPrintExportTitle(containerId); // Get the specific title
+
+        // Create temporary header
+        const tempHeader = document.createElement('div');
+        tempHeader.id = 'print-header-temp'; // Use ID for easy removal
+        tempHeader.innerHTML = `
+            <img src="${LOGO_PATH}" alt="Logo" class="print-logo-temp">
+            <div class="print-header-text">
+                <h2>${ESTABLISHMENT_NAME}</h2>
+                <h3>${tableTitle}</h3>
+            </div>
+            `;
+
+        // Insert header before the content inside the container
+        containerToPrint.prepend(tempHeader);
+
+        document.body.classList.add('printing-active');
+        containerToPrint.classList.add('show-in-print');
+
+        const afterPrintHandler = () => {
+            document.body.classList.remove('printing-active');
+            containerToPrint.classList.remove('show-in-print');
+            const headerToRemove = document.getElementById('print-header-temp');
+            if (headerToRemove) {
+                headerToRemove.remove(); // Remove the temporary header
+            }
+            window.removeEventListener('afterprint', afterPrintHandler);
+            window.removeEventListener('unload', afterPrintHandler);
+        };
+        window.addEventListener('afterprint', afterPrintHandler);
+        window.addEventListener('unload', afterPrintHandler);
+
+        try {
+            window.print();
+            // Timeout fallback for browsers that don't fire afterprint reliably
+            setTimeout(() => {
+                if (document.body.classList.contains('printing-active')) {
+                    afterPrintHandler();
+                }
+            }, 1500);
+        } catch (e) {
+            console.error("Erreur window.print():", e);
+            alert("Erreur lors du lancement de l'impression.");
+            afterPrintHandler(); // Ensure cleanup happens on error
+        }
+    }
+
     function printElement(elementId) {
         const elementToPrint = document.getElementById(elementId);
         if (!elementToPrint || !elementToPrint.innerHTML.trim() || elementToPrint.classList.contains('hidden')) {
@@ -453,8 +540,247 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }, 100);
     }
-    function exportToExcel(tableId, fileName) { try { const table = document.getElementById(tableId); if (!table) throw new Error(`Tableau ID '${tableId}' non trouvé.`); if (typeof XLSX === 'undefined') throw new Error("Librairie XLSX (SheetJS) non chargée."); const tableClone = table.cloneNode(true); const actionHeaderIndex = Array.from(tableClone.querySelectorAll('thead th')).findIndex(th => th.classList.contains('actions-header')); if (actionHeaderIndex !== -1) { Array.from(tableClone.rows).forEach(row => { if (row.cells.length > actionHeaderIndex) { row.deleteCell(actionHeaderIndex); } }); } const worksheet = XLSX.utils.table_to_sheet(tableClone, { raw: true }); const columnWidths = []; if (worksheet['!ref']) { const range = XLSX.utils.decode_range(worksheet['!ref']); for (let C = range.s.c; C <= range.e.c; ++C) { let maxLen = 0; const headerAddr = {c: C, r: range.s.r}; const headerRef = XLSX.utils.encode_cell(headerAddr); if(worksheet[headerRef]) maxLen = String(worksheet[headerRef].v || '').length; for (let R = range.s.r + 1; R <= range.e.r; ++R) { const cellAddress = { c: C, r: R }; const cellRef = XLSX.utils.encode_cell(cellAddress); if (!worksheet[cellRef]) continue; const cellText = String(worksheet[cellRef].v ?? ''); if (cellText.length > maxLen) maxLen = cellText.length; } columnWidths[C] = { wch: Math.max(12, maxLen + 4) }; } if (columnWidths.length > 0) worksheet['!cols'] = columnWidths; } const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, worksheet, "Données"); XLSX.writeFile(workbook, fileName || "Export.xlsx"); } catch (error) { console.error("Erreur export Excel:", error); alert(`Erreur lors de l'export Excel: ${error.message}`); } }
-    function exportToPdf(tableId, fileName) { try { const table = document.getElementById(tableId); if (!table) throw new Error(`Tableau ID '${tableId}' non trouvé.`); const container = table.closest('.printable-content'); const titleElement = container?.querySelector('h3'); const title = titleElement ? titleElement.innerText : `Export PDF`; if (typeof jspdf === 'undefined' || !jspdf.jsPDF || typeof jspdf.plugin?.autotable === 'undefined') { throw new Error("Librairies PDF (jsPDF, jsPDF-AutoTable) non chargées."); } const { jsPDF } = window.jspdf; const allHeaders = Array.from(table.querySelectorAll('thead th')); const actionHeaderIndex = allHeaders.findIndex(th => th.classList.contains('actions-header')); const headers = allHeaders.filter((_, index) => index !== actionHeaderIndex).map(th => th.innerText.trim()); const colCount = headers.length; const orientation = colCount > 7 ? "landscape" : "portrait"; const doc = new jsPDF({ orientation: orientation, unit: "pt", format: "a4" }); doc.setFontSize(16); doc.setTextColor(40, 40, 40); doc.text(title, 40, 50); doc.autoTable({ html: `#${tableId}`, startY: 70, theme: 'grid', headStyles: { fillColor: [26, 58, 109], textColor: 255, fontStyle: 'bold', halign: 'center' }, styles: { fontSize: orientation === "landscape" ? 8 : 9, cellPadding: 4, overflow: 'linebreak', lineWidth: 0.5, lineColor: [222, 226, 230] }, alternateRowStyles: { fillColor: [248, 249, 250] }, margin: { top: 70, right: 30, bottom: 40, left: 30 }, tableWidth: 'auto', columns: allHeaders.map((_, index) => index).filter(index => index !== actionHeaderIndex), didParseCell: function(data) { if (data.cell.section === 'body' && data.column.index !== undefined) { let originalColIndex = -1; let currentExportedCol = -1; for(let i = 0; i < allHeaders.length; i++) { if (i !== actionHeaderIndex) { currentExportedCol++; if (currentExportedCol === data.column.index) { originalColIndex = i; break; } } } if (originalColIndex !== -1) { const headerClasses = allHeaders[originalColIndex].classList; if (['unit-price-col', 'salary-col', 'amount-col', 'total-cost-col', 'balance-col', 'credit-col', 'remaining-salary-col'].some(cls => headerClasses.contains(cls))) { data.cell.styles.halign = 'right'; } else if (['quantity-col', 'supply-col', 'sold-col', 'remaining-col', 'age-col', 'interest-col', 'time-col'].some(cls => headerClasses.contains(cls))) { data.cell.styles.halign = 'center'; } else { data.cell.styles.halign = 'left'; } if (headerClasses.contains('user-col')) { data.cell.styles.fontStyle = 'italic'; data.cell.styles.fontSize = (data.cell.styles.fontSize || 9) * 0.9; data.cell.styles.textColor = [100, 100, 100]; } } } } }); const pageCount = doc.internal.getNumberOfPages(); doc.setFontSize(8); doc.setTextColor(100); for(let i = 1; i <= pageCount; i++) { doc.setPage(i); doc.text('Page ' + String(i) + '/' + String(pageCount), doc.internal.pageSize.width - 60, doc.internal.pageSize.height - 20); } doc.save(fileName || 'Export.pdf'); } catch (error) { console.error("Erreur export PDF:", error); alert(`Erreur lors de l'export PDF: ${error.message}`); } }
+
+    // --- MODIFIED EXCEL EXPORT FUNCTION ---
+    function exportToExcel(tableId, fileName) {
+        try {
+            const table = document.getElementById(tableId);
+            if (!table) throw new Error(`Tableau ID '${tableId}' non trouvé.`);
+            if (typeof XLSX === 'undefined') throw new Error("Librairie XLSX (SheetJS) non chargée.");
+
+            const container = table.closest('.printable-content');
+            const specificTitle = getPrintExportTitle(container?.id || tableId); // Get specific title
+
+            const tableClone = table.cloneNode(true);
+            const actionHeaderIndex = Array.from(tableClone.querySelectorAll('thead th')).findIndex(th => th.classList.contains('actions-header') || th.classList.contains('no-export'));
+            if (actionHeaderIndex !== -1) {
+                Array.from(tableClone.rows).forEach(row => {
+                    if (row.cells.length > actionHeaderIndex) {
+                        row.deleteCell(actionHeaderIndex);
+                    }
+                });
+            }
+
+            // Create worksheet from HTML table
+            const worksheet = XLSX.utils.table_to_sheet(tableClone, { raw: true });
+
+            // --- Add Title Rows ---
+            const titleData = [
+                [ESTABLISHMENT_NAME], // Row 1: Establishment Name
+                [specificTitle],      // Row 2: Specific Title
+                []                    // Row 3: Empty separator row
+            ];
+
+            // Prepend title rows to the worksheet data
+            XLSX.utils.sheet_add_aoa(worksheet, titleData, { origin: 'A1' });
+
+            // Adjust worksheet range if necessary (SheetJS might do this automatically)
+            // This ensures the prepended rows are included in the ref.
+            const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+            range.s.r = 0; // Start from row 0 (which is A1 in Excel)
+            if(range.e.r < 2) range.e.r = 2; // Ensure range includes the 3 header rows
+            worksheet['!ref'] = XLSX.utils.encode_range(range);
+
+            // --- Optional: Merge Title Cells ---
+            const numCols = range.e.c; // Number of columns based on table data
+            if (numCols > 0) { // Check if there are columns
+                if (!worksheet['!merges']) worksheet['!merges'] = [];
+                // Merge cells for Establishment Name (Row 1)
+                worksheet['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: numCols } });
+                // Merge cells for Specific Title (Row 2)
+                worksheet['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: numCols } });
+
+                 // --- Optional: Style Title Rows ---
+                 // Note: Basic styling like bold might work, complex styling often doesn't via sheet_add_aoa
+                 // Style Establishment Name (Row 1, Cell A1)
+                 if(!worksheet['A1']) worksheet['A1'] = { t:'s', v: ESTABLISHMENT_NAME };
+                 worksheet['A1'].s = { font: { bold: true, sz: 14 }, alignment: { horizontal: "center" } };
+                 // Style Specific Title (Row 2, Cell A2)
+                 if(!worksheet['A2']) worksheet['A2'] = { t:'s', v: specificTitle };
+                 worksheet['A2'].s = { font: { bold: true, sz: 12 }, alignment: { horizontal: "center" } };
+            }
+
+
+            // --- Auto-adjust column widths (Existing logic) ---
+            const columnWidths = [];
+             // Start width calculation from the actual table header row (Row 4, index 3)
+            const tableHeaderRowNum = 3;
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                let maxLen = 0;
+                // Check table header first
+                const headerAddr = {c: C, r: tableHeaderRowNum};
+                const headerRef = XLSX.utils.encode_cell(headerAddr);
+                 if(worksheet[headerRef]) maxLen = String(worksheet[headerRef].v || '').length;
+
+                // Check data rows (starting below the table header row)
+                for (let R = tableHeaderRowNum + 1; R <= range.e.r; ++R) {
+                    const cellAddress = { c: C, r: R };
+                    const cellRef = XLSX.utils.encode_cell(cellAddress);
+                    if (!worksheet[cellRef]) continue;
+                    const cellText = String(worksheet[cellRef].v ?? '');
+                    if (cellText.length > maxLen) maxLen = cellText.length;
+                }
+                 // Also consider title length if it's in the first column
+                 if (C === 0) {
+                      maxLen = Math.max(maxLen, ESTABLISHMENT_NAME.length, specificTitle.length);
+                 }
+                columnWidths[C] = { wch: Math.max(12, maxLen + 4) }; // Minimum width 12, add padding
+            }
+            if (columnWidths.length > 0) worksheet['!cols'] = columnWidths;
+
+
+            // Create workbook and export
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Données"); // Sheet name
+            XLSX.writeFile(workbook, fileName || "Export.xlsx");
+
+        } catch (error) {
+            console.error("Erreur export Excel:", error);
+            alert(`Erreur lors de l'export Excel: ${error.message}`);
+        }
+    }
+
+    // --- Function to load image and convert to Base64 ---
+    async function getBase64Image(imgUrl) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous'; // Important if the image isn't hosted on the exact same origin
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth; // Use natural dimensions
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                try {
+                    const dataURL = canvas.toDataURL('image/jpeg'); // Or 'image/png'
+                    resolve(dataURL);
+                } catch (e) {
+                     console.error("Error converting canvas to Data URL:", e);
+                     reject("Erreur conversion image en Base64.");
+                }
+            };
+            img.onerror = (e) => {
+                console.error("Error loading image for PDF export:", e);
+                reject(`Impossible de charger le logo depuis ${imgUrl}`);
+            };
+            img.src = imgUrl;
+             // Add a timeout in case loading hangs indefinitely
+            setTimeout(() => reject(`Timeout chargement logo depuis ${imgUrl}`), 10000); // 10 seconds timeout
+        });
+    }
+
+
+    // --- MODIFIED PDF EXPORT FUNCTION with Logo ---
+    async function exportToPdf(tableId, fileName) {
+        try {
+            // Library Check
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined' || typeof window.jspdf.jsPDF.API?.autoTable === 'undefined') {
+                throw new Error("Librairies PDF (jsPDF, jsPDF-AutoTable) non chargées.");
+            }
+
+            const table = document.getElementById(tableId);
+            if (!table) throw new Error(`Tableau ID '${tableId}' non trouvé.`);
+
+            const container = table.closest('.printable-content');
+            const specificTitle = getPrintExportTitle(container?.id || tableId);
+
+            const { jsPDF } = window.jspdf;
+
+            // Header/Column setup
+            const allHeaders = Array.from(table.querySelectorAll('thead th'));
+            const actionHeaderIndex = allHeaders.findIndex(th => th.classList.contains('actions-header') || th.classList.contains('no-export'));
+            const colCount = allHeaders.length - (actionHeaderIndex > -1 ? 1 : 0);
+            const orientation = colCount > 7 ? "landscape" : "portrait";
+
+            const doc = new jsPDF({ orientation: orientation, unit: "pt", format: "a4" });
+            const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+            const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
+            const margin = 30;
+            let currentY = margin; // Start Y near top margin
+
+            // --- Load and Add Logo ---
+            let logoDataUrl = null;
+            try {
+                 console.log("Tentative chargement logo pour PDF...");
+                 logoDataUrl = await getBase64Image(LOGO_PATH);
+                 console.log("Logo chargé avec succès.");
+            } catch (error) {
+                 console.warn("Impossible de charger/encoder le logo pour PDF:", error);
+                 // Continue without logo if it fails
+            }
+
+            const logoHeight = 40; // Desired logo height in points
+            const logoWidth = 40; // Desired logo width (adjust aspect ratio if needed)
+            const logoX = margin; // Align left
+            const textHeaderX = logoX + logoWidth + 10; // Start text after logo + space
+            const headerCenter = pageWidth / 2;
+
+            if (logoDataUrl) {
+                 doc.addImage(logoDataUrl, 'JPEG', logoX, currentY, logoWidth, logoHeight);
+                 currentY += 5; // Add a small buffer
+            }
+
+            // --- Add Text Header (adjust X based on logo presence) ---
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            // Center name relative to the page width, even with logo
+            doc.text(ESTABLISHMENT_NAME, headerCenter, currentY + (logoHeight / 2) - 6, { align: 'center' }); // Vertically align roughly with logo center
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+             // Center title relative to the page width
+            doc.text(specificTitle, headerCenter, currentY + (logoHeight / 2) + 10, { align: 'center' }); // Below name
+
+            currentY += logoHeight + 15; // Ensure enough space after the tallest header element
+
+
+            // --- Table Generation ---
+            doc.autoTable({
+                html: `#${tableId}`,
+                startY: currentY,
+                theme: 'grid',
+                headStyles: { /* ... */ fillColor: [26, 58, 109], textColor: 255, fontStyle: 'bold', halign: 'center' },
+                styles: { /* ... */ fontSize: orientation === "landscape" ? 8 : 9, cellPadding: 4, overflow: 'linebreak', lineWidth: 0.5, lineColor: [222, 226, 230] },
+                alternateRowStyles: { /* ... */ fillColor: [248, 249, 250] },
+                margin: { top: currentY, right: margin, bottom: 40, left: margin }, // Adjusted top margin
+                tableWidth: 'auto',
+                columns: allHeaders.map((_, index) => index).filter(index => index !== actionHeaderIndex),
+                didParseCell: function(data) {
+                     // Cell styling logic (unchanged)
+                    if (data.cell.section === 'body' && data.column.index !== undefined) {
+                        let originalColIndex = -1; let currentExportedCol = -1;
+                        for (let i = 0; i < allHeaders.length; i++) { if (i !== actionHeaderIndex) { currentExportedCol++; if (currentExportedCol === data.column.index) { originalColIndex = i; break; } } }
+                        if (originalColIndex !== -1) {
+                            const headerClasses = allHeaders[originalColIndex].classList;
+                            if (['unit-price-col', 'salary-col', 'amount-col', 'total-cost-col', 'balance-col', 'credit-col', 'remaining-salary-col'].some(cls => headerClasses.contains(cls))) { data.cell.styles.halign = 'right'; }
+                            else if (['quantity-col', 'supply-col', 'sold-col', 'remaining-col', 'age-col', 'interest-col', 'time-col'].some(cls => headerClasses.contains(cls))) { data.cell.styles.halign = 'center'; }
+                            else { data.cell.styles.halign = 'left'; }
+                            if (headerClasses.contains('user-col')) { data.cell.styles.fontStyle = 'italic'; data.cell.styles.fontSize = (data.cell.styles.fontSize || 9) * 0.9; data.cell.styles.textColor = [100, 100, 100]; }
+                        }
+                    }
+                }
+            });
+
+            // --- Footer (Page Numbers & Date) ---
+            const pageCount = doc.internal.getNumberOfPages();
+            doc.setFontSize(8);
+            doc.setTextColor(100);
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.text('Page ' + String(i) + '/' + String(pageCount), pageWidth - margin - 40, pageHeight - 20);
+                doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, margin, pageHeight - 20);
+            }
+
+            doc.save(fileName || 'Export.pdf');
+
+        } catch (error) {
+            console.error("Erreur export PDF:", error);
+            alert(`Erreur lors de l'export PDF: ${error.message}`);
+        }
+    }
+    // --- END OF MODIFIED PDF EXPORT FUNCTION ---
+
+
     function getDateOfISOWeek(w, y) { try { const simple = new Date(Date.UTC(y, 0, 1 + (w - 1) * 7)); const dow = simple.getUTCDay(); const ISOweekStart = simple; ISOweekStart.setUTCDate(simple.getUTCDate() - dow + (dow === 0 ? -6 : 1)); return ISOweekStart; } catch (e) { console.error(`Error calculating start of week for ${y}-W${w}:`, e); return new Date(NaN); } }
     function populateEmployeeSelect(targetSelect) { if (!targetSelect || !employeesData) return; const currentVal = targetSelect.value; targetSelect.innerHTML = '<option value="">-- Choisir Employé --</option>'; const sortedEmployees = [...employeesData].sort((a, b) => (a.nom || '').localeCompare(b.nom || '')); sortedEmployees.forEach(emp => { const fullName = `${emp.nom || ''} ${emp.prenom || ''}`.trim(); if (fullName) { const option = document.createElement('option'); option.value = fullName; option.textContent = fullName; targetSelect.appendChild(option); } }); if (Array.from(targetSelect.options).some(opt => opt.value === currentVal)) { targetSelect.value = currentVal; } else { targetSelect.selectedIndex = 0; } }
     function populateLearnerSelectForPermission() { if (!permLrnNameSelect || !learnersData) return; const currentVal = permLrnNameSelect.value; permLrnNameSelect.innerHTML = '<option value="">-- Choisir Apprenant --</option>'; const sortedLearners = [...learnersData].sort((a, b) => (a.nom || '').localeCompare(b.nom || '')); sortedLearners.forEach(lrn => { const fullName = `${lrn.nom || ''} ${lrn.prenom || ''}`.trim(); if (fullName) { const option = document.createElement('option'); option.value = fullName; option.textContent = fullName; permLrnNameSelect.appendChild(option); } }); if (Array.from(permLrnNameSelect.options).some(opt => opt.value === currentVal)) { permLrnNameSelect.value = currentVal; } else { permLrnNameSelect.selectedIndex = 0; } }
@@ -980,8 +1306,10 @@ document.addEventListener('DOMContentLoaded', function () {
             row.classList.remove('solde', 'partiel');
             if (isSolde) { row.classList.add('solde'); } else if (amountPaid > 0) { row.classList.add('partiel'); }
             const actionCell = row.insertCell(); actionCell.classList.add('actions-cell', 'no-print', 'no-export');
+            // Allow invoice printing for Admin and Editor, deletion only for Admin
+            const canPrintInvoice = isAdmin || (currentUser && currentUser.status === 'Editeur');
             actionCell.innerHTML = `
-                <button class="action-btn invoice-btn" aria-label="Imprimer Relevé Crédit" title="Imprimer Relevé" onclick="printCreditReceipt(${originalIndex})" ${originalIndex === -1 ? 'disabled' : ''}>🧾</button>
+                <button class="action-btn invoice-btn" aria-label="Imprimer Relevé Crédit" title="Imprimer Relevé" onclick="printCreditReceipt(${originalIndex})" ${originalIndex === -1 || !canPrintInvoice ? 'disabled' : ''}>🧾</button>
                 <button class="action-btn delete-btn" aria-label="Supprimer Transaction Crédit" title="Supprimer Transaction" onclick="deleteCreditor(${originalIndex})" ${originalIndex === -1 || !isAdmin ? 'disabled' : ''}>❌</button>
             `;
         });
@@ -1044,6 +1372,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
     // END MODIFICATION: Update Table function to accept data source
+
+    // START OF SECTION SPECIFIED IN PROMPT
     // START MODIFICATION: Update Table function to accept data source
     function updateLearnerPermissionsTable(dataToDisplay = learnerPermissionsData) {
         if (!learnerPermissionsTable) return;
@@ -1269,8 +1599,33 @@ document.addEventListener('DOMContentLoaded', function () {
     addPrintListener(printSupplyButton, 'supply-list-container'); addPrintListener(printStockButton, 'stock-details-container'); addPrintListener(printSalesButton, 'sales-details-container'); addPrintListener(printMaterielElectriqueButton, 'materiel-electrique-details-container'); addPrintListener(printExpensesButton, 'expenses-details-container'); addPrintListener(printOthersButton, 'others-details-container'); addPrintListener(printEmployeesButton, 'employees-details-container'); addPrintListener(printLearnersButton, 'learners-details-container'); addPrintListener(printMobileMoneyButton, 'mobile-money-details-container'); addPrintListener(printMmFournisseursButton, 'mm-fournisseurs-details-container'); addPrintListener(printClientProfilesButton, 'client-profiles-container'); addPrintListener(printCreditorsButton, 'creditors-details-container'); addPrintListener(printDebtButton, 'debt-details-container'); addPrintListener(printReportButton, 'report-details-container'); addPrintListener(printEmployeePermissionsButton, 'employee-permissions-container'); addPrintListener(printLearnerPermissionsButton, 'learner-permissions-container'); addPrintListener(printAdminUsersButton, 'admin-users-container'); addPrintListener(printEquipmentButton, 'equipment-details-container');
     const addExcelListener = (button, tableId, fileName) => { if (button && !button._hasExcelListener) { button.addEventListener('click', () => exportToExcel(tableId, fileName)); button._hasExcelListener = true; } else if (button && !document.getElementById(tableId)) { console.warn(`Excel export button found, but table #${tableId} not found.`); } };
     addExcelListener(exportSupplyExcelButton, 'supply-table', 'Approvisionnements.xlsx'); addExcelListener(exportStockExcelButton, 'stock-table', 'Etat_Stocks.xlsx'); addExcelListener(exportSalesExcelButton, 'sales-table', 'Ventes_Papeterie.xlsx'); addExcelListener(exportMaterielElectriqueExcelButton, 'materiel-electrique-table', 'Ventes_Mat_Electrique.xlsx'); addExcelListener(exportExpensesExcelButton, 'expenses-table', 'Depenses.xlsx'); addExcelListener(exportOthersExcelButton, 'others-table', 'Operations_Diverses.xlsx'); addExcelListener(exportEmployeesExcelButton, 'employees-table', 'Employes.xlsx'); addExcelListener(exportLearnersExcelButton, 'learners-table', 'Apprenants.xlsx'); addExcelListener(exportMobileMoneyExcelButton, 'mobile-money-table', 'Mobile_Money_Points.xlsx'); addExcelListener(exportMmFournisseursExcelButton, 'mm-fournisseurs-table', 'Mobile_Money_Fournisseurs.xlsx'); addExcelListener(exportClientProfilesExcelButton, 'client-profiles-table', 'Profils_Clients.xlsx'); addExcelListener(exportCreditorsExcelButton, 'creditors-table', 'Credits_Clients_Transactions.xlsx'); addExcelListener(exportDebtExcelButton, 'debt-table', 'Dettes_Prets_Entreprise.xlsx'); addExcelListener(exportReportExcelButton, 'report-table', 'Bilan_Genere.xlsx'); addExcelListener(exportEmployeePermissionsExcelButton, 'employee-permissions-table', 'Permissions_Employes.xlsx');     addExcelListener(exportLearnerPermissionsExcelButton, 'learner-permissions-table', 'Permissions_Apprenants.xlsx'); addExcelListener(exportAdminUsersExcelButton, 'admin-table', 'Utilisateurs.xlsx'); addExcelListener(exportEquipmentExcelButton, 'equipment-table', 'Appareils_Confies.xlsx');
-    const addPdfListener = (button, tableId, fileName) => { if (button && !button._hasPdfListener) { button.addEventListener('click', () => exportToPdf(tableId, fileName)); button._hasPdfListener = true; } else if (button && !document.getElementById(tableId)) { console.warn(`PDF export button found, but table #${tableId} not found.`); } };
-    addPdfListener(exportSupplyPdfButton, 'supply-table', 'Approvisionnements.pdf'); addPdfListener(exportStockPdfButton, 'stock-table', 'Etat_Stocks.pdf'); addPdfListener(exportSalesPdfButton, 'sales-table', 'Ventes_Papeterie.pdf'); addPdfListener(exportMaterielElectriquePdfButton, 'materiel-electrique-table', 'Ventes_Mat_Electrique.pdf'); addPdfListener(exportExpensesPdfButton, 'expenses-table', 'Depenses.pdf'); addPdfListener(exportOthersPdfButton, 'others-table', 'Operations_Diverses.pdf'); addPdfListener(exportEmployeesPdfButton, 'employees-table', 'Employes.pdf'); addPdfListener(exportLearnersPdfButton, 'learners-table', 'Apprenants.pdf'); addPdfListener(exportMobileMoneyPdfButton, 'mobile-money-table', 'Mobile_Money_Points.pdf'); addPdfListener(exportMmFournisseursPdfButton, 'mm-fournisseurs-table', 'Mobile_Money_Fournisseurs.pdf'); addPdfListener(exportClientProfilesPdfButton, 'client-profiles-table', 'Profils_Clients.pdf'); addPdfListener(exportCreditorsPdfButton, 'creditors-table', 'Credits_Clients_Transactions.pdf'); addPdfListener(exportDebtPdfButton, 'debt-table', 'Dettes_Prets_Entreprise.pdf'); addPdfListener(exportReportPdfButton, 'report-table', 'Bilan_Genere.pdf'); addPdfListener(exportEmployeePermissionsPdfButton, 'employee-permissions-table', 'Permissions_Employes.pdf'); addPdfListener(exportLearnerPermissionsPdfButton, 'learner-permissions-table', 'Permissions_Apprenants.pdf'); addPdfListener(exportAdminUsersPdfButton, 'admin-table', 'Utilisateurs.pdf'); addPdfListener(exportEquipmentPdfButton, 'equipment-table', 'Appareils_Confies.pdf');
+    // PDF Listener Setup
+    const addPdfListener = (button, tableId, fileName) => {
+        if (button && !button._hasPdfListener) {
+            button.addEventListener('click', () => exportToPdf(tableId, fileName));
+            button._hasPdfListener = true;
+        } else if (button && !document.getElementById(tableId)) {
+             console.warn(`PDF export button found, but table #${tableId} not found.`);
+        }
+    };
+    addPdfListener(exportSupplyPdfButton, 'supply-table', 'Approvisionnements.pdf');
+    addPdfListener(exportStockPdfButton, 'stock-table', 'Etat_Stocks.pdf');
+    addPdfListener(exportSalesPdfButton, 'sales-table', 'Ventes_Papeterie.pdf');
+    addPdfListener(exportMaterielElectriquePdfButton, 'materiel-electrique-table', 'Ventes_Mat_Electrique.pdf');
+    addPdfListener(exportExpensesPdfButton, 'expenses-table', 'Depenses.pdf');
+    addPdfListener(exportOthersPdfButton, 'others-table', 'Operations_Diverses.pdf');
+    addPdfListener(exportEmployeesPdfButton, 'employees-table', 'Employes.pdf');
+    addPdfListener(exportLearnersPdfButton, 'learners-table', 'Apprenants.pdf');
+    addPdfListener(exportMobileMoneyPdfButton, 'mobile-money-table', 'Mobile_Money_Points.pdf');
+    addPdfListener(exportMmFournisseursPdfButton, 'mm-fournisseurs-table', 'Mobile_Money_Fournisseurs.pdf');
+    addPdfListener(exportClientProfilesPdfButton, 'client-profiles-table', 'Profils_Clients.pdf');
+    addPdfListener(exportCreditorsPdfButton, 'creditors-table', 'Credits_Clients_Transactions.pdf');
+    addPdfListener(exportDebtPdfButton, 'debt-table', 'Dettes_Prets_Entreprise.pdf');
+    addPdfListener(exportReportPdfButton, 'report-table', 'Bilan_Genere.pdf');
+    addPdfListener(exportEmployeePermissionsPdfButton, 'employee-permissions-table', 'Permissions_Employes.pdf');
+    addPdfListener(exportLearnerPermissionsPdfButton, 'learner-permissions-table', 'Permissions_Apprenants.pdf');
+    addPdfListener(exportAdminUsersPdfButton, 'admin-table', 'Utilisateurs.pdf');
+    addPdfListener(exportEquipmentPdfButton, 'equipment-table', 'Appareils_Confies.pdf');
 
     // --- Report Generation Event Listeners ---
     const showReportFilters = (showDaily, showWeekly, showMonthly, showYearly) => { /* ... Function remains the same ... */ if (reportFilters) reportFilters.classList.remove('hidden'); if (dailyFilter) dailyFilter.classList.toggle('hidden', !showDaily); if (weeklyFilter) weeklyFilter.classList.toggle('hidden', !showWeekly); if (monthlyFilter) monthlyFilter.classList.toggle('hidden', !showMonthly); if (yearlyFilter) yearlyFilter.classList.toggle('hidden', !showYearly); if (reportDetailsContainer) reportDetailsContainer.classList.add('hidden'); if (showReportDetailsButton) showReportDetailsButton.classList.add('hidden'); setTodaysDate(); };
@@ -1294,7 +1649,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.deleteMmFournisseur = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteMmFournisseur ... */ const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const fournisseurFullName = `${sN} ${sP}`.trim(); const initialLength = mmFournisseursData.length; let tempLocalData = mmFournisseursData.filter(f => !(f.nom === sN && f.prenom === sP)); if (tempLocalData.length < initialLength) { if (confirm(`Supprimer fournisseur MM : ${fournisseurFullName} ?`)) { try { await saveDataToFirebase('mmFournisseursData', tempLocalData); alert(`Fournisseur ${fournisseurFullName} supprimé.`); } catch (e) { /* Error handled */ } } } else { alert(`Erreur : Fournisseur ${fournisseurFullName} non trouvé.`); } };
     window.deleteClientProfile = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteClientProfile ... */ const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const clientFullName = `${sN} ${sP}`.trim(); const hasActiveCredit = creditorsData.some(c => c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005) ); if (hasActiveCredit) { alert(`Impossible supprimer profil ${clientFullName}, crédits non soldés associés.`); return; } const profileIndex = clientProfilesData.findIndex(p => p.nom === sN && p.prenom === sP); if (profileIndex === -1) { alert(`Erreur : Profil ${clientFullName} non trouvé.`); return; } if (confirm(`Supprimer profil client : ${clientFullName} ?\nATTENTION : Ceci supprimera aussi crédits SOLDÉS associés.`)) { let tempProfilesData = [...clientProfilesData]; let tempCreditorsData = [...creditorsData]; let credRemovedCount = 0; tempProfilesData.splice(profileIndex, 1); const initialCreditorLength = tempCreditorsData.length; tempCreditorsData = tempCreditorsData.filter(c => !( c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) <= 0.005) )); credRemovedCount = initialCreditorLength - tempCreditorsData.length; try { const savePromises = [saveDataToFirebase('clientProfilesData', tempProfilesData)]; if (credRemovedCount > 0) { savePromises.push(saveDataToFirebase('creditorsData', tempCreditorsData)); } await Promise.all(savePromises); alert(`Profil ${clientFullName} supprimé.` + (credRemovedCount > 0 ? ` ${credRemovedCount} crédit(s) soldé(s) associé(s) supprimé(s).` : '')); if(clientProfileEditKeyInput?.value === `${sN}_${sP}`) { clientProfileForm.reset(); clientProfileEditKeyInput.value = ''; clientProfileForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Profil'; updateConnectedUserFields(); } } catch (e) { /* Error handled */ } } };
     window.deleteCreditor = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteCreditor ... */ if (originalIndex < 0 || originalIndex >= creditorsData.length) { alert("Index invalide."); return; } const item = creditorsData[originalIndex]; const remaining = (item.totalAmountDue || 0) - (item.amountPaidTotal || 0); if (confirm(`Supprimer TOUTE la transaction crédit pour ${item.name || '?'} ("${item.designation || '?'}")?\nSolde: ${formatAmount(remaining)}. IRREVERSIBLE.`)) { let tempLocalData = [...creditorsData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('creditorsData', tempLocalData); alert('Transaction crédit supprimée.'); } catch (e) { /* Error handled */ } } };
-    window.deleteDebt = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteDebt ... */ if (originalIndex < 0 || originalIndex >= debtData.length) { alert("Index invalide."); return; } const item = debtData[originalIndex]; if (confirm(`Supprimer ${item.type || 'entrée'} : ${item.name || '?'} ("${item.description || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...debtData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('debtData', tempLocalData); alert(`${item.type || 'Entrée'} supprimé(e).`); } catch (e) { /* Error handled */ } } };
+    window.deleteDebt = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteDebt ... */ if (originalIndex < 0 || originalIndex >= debtData.length) { alert("Index invalide."); return; } const item = debtData[originalIndex]; if (confirm(`Supprimer ${item.type || 'entrée'} : ${item.name || '?'} ("${item.description || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...debtData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('debtData', tempLocalData); alert(`${item.type || 'Entrée'} supprimé(e).`); } catch (e) { /* Error handled */ } } };
     window.deletePermission = async (type, index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deletePermission ... */ let dataArray, storageKey, itemType; if (type === 'employee') { dataArray = employeePermissionsData; storageKey = 'employeePermissionsData'; itemType = 'employé'; } else if (type === 'learner') { dataArray = learnerPermissionsData; storageKey = 'learnerPermissionsData'; itemType = 'apprenant'; } else { return; } if (index < 0 || index >= dataArray.length) { alert("Index invalide."); return; } const perm = dataArray[index]; if (confirm(`Supprimer demande permission pour ${perm.name || '?'} (${itemType}) du ${perm.requestDate || '?'} ?`)) { let tempLocalData = [...dataArray]; tempLocalData.splice(index, 1); try { await saveDataToFirebase(storageKey, tempLocalData); alert('Demande permission supprimée.'); } catch (e) { /* Error handled */ } } };
     window.deleteAdminUser = async (username) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteAdminUser ... */ const safeUsername = String(username || '').replace(/\\'/g, "'"); const userIndex = adminData.findIndex(u => u.username === safeUsername); if (userIndex === -1) { alert(`Utilisateur '${safeUsername}' non trouvé.`); return; } const userToDelete = adminData[userIndex]; if(currentUser && currentUser.username === safeUsername) { alert("Impossible supprimer votre propre compte."); return; } const adminCount = adminData.filter(u => u.status === 'Administrateur').length; if(userToDelete.status === 'Administrateur' && adminCount <= 1) { alert("Impossible supprimer le dernier administrateur."); return; } if (confirm(`Supprimer utilisateur '${safeUsername}' (${userToDelete.status || ''}) ? IRREVERSIBLE.`)) { let tempLocalData = [...adminData]; tempLocalData.splice(userIndex, 1); try { await saveDataToFirebase('adminData', tempLocalData); alert(`Utilisateur '${safeUsername}' supprimé.`); if (adminEditKeyInput?.value === safeUsername) { adminForm.reset(); updateConnectedUserFields(); adminEditKeyInput.value = ''; adminPasswordInput.placeholder = "Entrer pour définir/modifier"; adminForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Utilisateur'; } } catch (e) { /* Error handled */ } } };
     window.deleteEquipment = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of deleteEquipment ... */ if (index < 0 || index >= equipmentData.length) { alert("Index invalide."); return; } const item = equipmentData[index]; if (confirm(`Supprimer l'attribution de "${item.name || '?'}" (Qté: ${item.quantity || '?'}) à ${item.employeeName || '?'} du ${item.assignedDate || '?'} ?`)) { let tempLocalData = [...equipmentData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('equipmentData', tempLocalData); alert('Attribution appareil/outil supprimée.'); if (equipmentEditIndexInput?.value === String(index)) { equipmentForm.reset(); equipmentEditIndexInput.value = ''; equipmentForm.querySelector('button[type="submit"]').textContent = 'Ajouter Appareil Confié'; updateConnectedUserFields(); populateEmployeeSelect(equipmentEmployeeNameSelect); } } catch (e) { /* Error handled */ } } };
@@ -1496,25 +1851,569 @@ document.addEventListener('DOMContentLoaded', function () {
         salesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
     window.editEmployee = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editEmployee ... */ if (index < 0 || index >= employeesData.length) return; const emp = employeesData[index]; if (!employeeForm || !employeeEditIndexInput || !employeeUserConnectedInput) { alert("Erreur: Formulaire employé introuvable."); return; } employeeForm.reset(); if(employeeNomInput) employeeNomInput.value = emp.nom || ''; if(employeePrenomInput) employeePrenomInput.value = emp.prenom || ''; if(employeeRoleInput) employeeRoleInput.value = emp.statut || ''; if(employeeAdresseInput) employeeAdresseInput.value = emp.adresse || ''; if(employeeTelephoneInput) employeeTelephoneInput.value = emp.telephone || ''; if(employeeLieuResidenceInput) employeeLieuResidenceInput.value = emp.lieuResidence || ''; if(employeeJoursTravailInput) employeeJoursTravailInput.value = emp.joursTravail || ''; if(employeeHeureArriveeInput) employeeHeureArriveeInput.value = emp.heureArrivee || ''; if(employeeHeureDepartInput) employeeHeureDepartInput.value = emp.heureDepart || ''; if(employeeSalaryInput) employeeSalaryInput.value = emp.salary ?? ''; if(employeePaidAmountInput) employeePaidAmountInput.value = emp.paidAmount || ''; if(employeeHireDateInput) employeeHireDateInput.value = emp.hireDate || ''; if(employeeContactPersonNomInput) employeeContactPersonNomInput.value = emp.contactPersonNom || ''; if(employeeContactPersonPrenomInput) employeeContactPersonPrenomInput.value = emp.contactPersonPrenom || ''; if(employeeContactPersonAdresseInput) employeeContactPersonAdresseInput.value = emp.contactPersonAdresse || ''; if(employeeContactPersonTelephoneInput) employeeContactPersonTelephoneInput.value = emp.contactPersonTelephone || ''; if(employeeContactPersonLieuResidenceInput) employeeContactPersonLieuResidenceInput.value = emp.contactPersonLieuResidence || ''; updateConnectedUserFields(); employeeEditIndexInput.value = index; employeeForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Employé'; employeesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editLearner = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editLearner ... */ if (index < 0 || index >= learnersData.length) return; const lrn = learnersData[index]; if (!learnerForm || !learnerEditIndexInput || !learnerUserConnectedInput) { alert("Erreur: Formulaire apprenant introuvable."); return; } learnerForm.reset(); if(learnerNomInput) learnerNomInput.value = lrn.nom || ''; if(learnerPrenomInput) learnerPrenomInput.value = lrn.prenom || ''; if(learnerAgeInput) learnerAgeInput.value = lrn.age ?? ''; if(learnerAdresseInput) learnerAdresseInput.value = lrn.adresse || ''; if(learnerLieuResidenceInput) learnerLieuResidenceInput.value = lrn.lieuResidence || ''; if(learnerNiveauEtudesInput) learnerNiveauEtudesInput.value = lrn.niveauEtudes || ''; if(learnerSituationMatrimonialeSelect) learnerSituationMatrimonialeSelect.value = lrn.situationMatrimoniale || ''; if(learnerPereNomInput) learnerPereNomInput.value = lrn.pereNom || ''; if(learnerPerePrenomInput) learnerPerePrenomInput.value = lrn.perePrenom || ''; if(learnerMereNomInput) learnerMereNomInput.value = lrn.mereNom || ''; if(learnerMerePrenomInput) learnerMerePrenomInput.value = lrn.merePrenom || ''; if(learnerFiliereInput) learnerFiliereInput.value = lrn.filiere || ''; if(learnerDureeFormationInput) learnerDureeFormationInput.value = lrn.dureeFormation || ''; if(learnerFraisDocumentsInput) learnerFraisDocumentsInput.value = lrn.fraisDocuments || ''; if(learnerTranche1Input) learnerTranche1Input.value = lrn.tranche1 || ''; if(learnerTranche2Input) learnerTranche2Input.value = lrn.tranche2 || ''; if(learnerTranche3Input) learnerTranche3Input.value = lrn.tranche3 || ''; if(learnerTranche4Input) learnerTranche4Input.value = lrn.tranche4 || ''; if(learnerGarantNomInput) learnerGarantNomInput.value = lrn.garantNom || ''; if(learnerGarantPrenomInput) learnerGarantPrenomInput.value = lrn.garantPrenom || ''; if(learnerGarantTelephoneInput) learnerGarantTelephoneInput.value = lrn.garantTelephone || ''; if(learnerGarantAdresseInput) learnerGarantAdresseInput.value = lrn.garantAdresse || ''; updateConnectedUserFields(); learnerEditIndexInput.value = index; learnerForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Apprenant'; learnersSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editMobileMoney = (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editMobileMoney ... */ if (originalIndex < 0 || originalIndex >= mobileMoneyData.length) { alert("Index invalide."); return; } const item = mobileMoneyData[originalIndex]; if (!mobileMoneyForm || !mobileMoneyEditIndexInput || !mmPointUserConnectedInput) { alert("Erreur: Formulaire MM introuvable."); return; } mobileMoneyForm.reset(); if(mmDateInput) mmDateInput.value = item.date || ''; if(mmAgentInput) mmAgentInput.value = item.agent || ''; if(mmBalanceMoovInput) mmBalanceMoovInput.value = item.balanceMoov || ''; if(mmBalanceMtnInput) mmBalanceMtnInput.value = item.balanceMTN || ''; if(mmBalanceCelttisInput) mmBalanceCelttisInput.value = item.balanceCelttis || ''; if(mmBalanceCashInput) mmBalanceCashInput.value = item.balanceCash || ''; if(mmCreditMoovInput) mmCreditMoovInput.value = item.creditMoov || ''; if(mmCreditMtnInput) mmCreditMtnInput.value = item.creditMTN || ''; if(mmCreditCelttisInput) mmCreditCelttisInput.value = item.creditCelttis || ''; if(mmPerteTransfertInput) mmPerteTransfertInput.value = item.perteTransfert || ''; if(mmPerteCreditInput) mmPerteCreditInput.value = item.perteCredit || ''; updateConnectedUserFields(); mobileMoneyEditIndexInput.value = originalIndex; mobileMoneyForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Point MM'; mobileMoneySection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editMmFournisseur = (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editMmFournisseur ... */ const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const key = `${sN}_${sP}`; const f = mmFournisseursData.find(f => f.nom === sN && f.prenom === sP); if (f && mmFournisseurForm && mmFournisseurEditKeyInput && mmFournisseurUserConnectedInput) { mmFournisseurForm.reset(); if(mmFournisseurNomInput) mmFournisseurNomInput.value = f.nom || ''; if(mmFournisseurPrenomInput) mmFournisseurPrenomInput.value = f.prenom || ''; if(mmFournisseurContactInput) mmFournisseurContactInput.value = f.contact || ''; if(mmFournisseurMontantInput) mmFournisseurMontantInput.value = f.montantFourni || ''; if(mmFournisseurInteretInput) mmFournisseurInteretInput.value = f.interet ?? ''; if(mmFournisseurVenduInput) mmFournisseurVenduInput.value = f.creditVendu || ''; updateConnectedUserFields(); mmFournisseurEditKeyInput.value = key; mmFournisseurForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Fournisseur'; mmFournisseurForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } else { alert(`Fournisseur ${sN} ${sP} non trouvé ou form incomplet.`); if(mmFournisseurEditKeyInput) mmFournisseurEditKeyInput.value = ''; } };
-    window.editClientProfile = (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editClientProfile ... */ const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const key = `${sN}_${sP}`; const p = clientProfilesData.find(p => p.nom === sN && p.prenom === sP); if (p && clientProfileForm && clientProfileEditKeyInput && clientUserConnectedInput) { clientProfileForm.reset(); if(clientProfileNomInput) clientProfileNomInput.value = p.nom || ''; if(clientProfilePrenomInput) clientProfilePrenomInput.value = p.prenom || ''; if(clientProfileAdresseInput) clientProfileAdresseInput.value = p.adresse || ''; if(clientProfileContactInput) clientProfileContactInput.value = p.contact || ''; if(clientProfileStatutInput) clientProfileStatutInput.value = p.statut || ''; updateConnectedUserFields(); clientProfileEditKeyInput.value = key; clientProfileForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Profil'; clientProfileForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } else { alert(`Profil ${sN} ${sP} non trouvé ou form incomplet.`); if(clientProfileEditKeyInput) clientProfileEditKeyInput.value = ''; } };
-    window.editDebt = (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editDebt ... */ if (originalIndex < 0 || originalIndex >= debtData.length) { alert("Index invalide."); return; } const item = debtData[originalIndex]; if (!debtForm || !debtEditIndexInput || !debtUserConnectedInput) { alert("Erreur: Formulaire Dette/Prêt introuvable."); return; } debtForm.reset(); if(debtDateInput) debtDateInput.value = item.date || ''; if(debtTypeSelect) debtTypeSelect.value = item.type || ''; if(debtNameInput) debtNameInput.value = item.name || ''; if(debtDescriptionInput) debtDescriptionInput.value = item.description || ''; if(debtAmountInput) debtAmountInput.value = item.amount || ''; if(debtDueDateInput) debtDueDateInput.value = item.dueDate || ''; if(debtStatusSelect) debtStatusSelect.value = item.status || ''; updateConnectedUserFields(); debtEditIndexInput.value = originalIndex; debtForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Dette/Prêt'; debtSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editAdminUser = (username) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editAdminUser ... */ const safeUsername = String(username || '').replace(/\\'/g, "'"); const user = adminData.find(u => u.username === safeUsername); if (!user) { alert(`Utilisateur '${safeUsername}' non trouvé.`); return; } if (!adminForm || !adminEditKeyInput || !adminUsernameInput || !adminPostInput || !adminPasswordInput || !adminStatusSelect || !adminOpUserConnectedInput) { alert("Erreur interne: Form Admin incomplet."); return; } if(currentUser && currentUser.username === safeUsername) { alert("Modif impossible : propre compte."); return; } adminForm.reset(); adminUsernameInput.value = user.username || ''; adminPostInput.value = user.post || ''; adminStatusSelect.value = user.status || 'Lecteur'; adminPasswordInput.value = ''; adminPasswordInput.placeholder = "Laisser vide si inchangé"; updateConnectedUserFields(); adminEditKeyInput.value = user.username; adminForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Utilisateur'; adminSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editEquipment = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editEquipment ... */ if (index < 0 || index >= equipmentData.length) { alert("Index invalide."); return; } const item = equipmentData[index]; if (!equipmentForm || !equipmentEditIndexInput || !equipmentUserConnectedInput) { alert("Erreur: Formulaire équipement introuvable."); return; } equipmentForm.reset(); if (equipmentNameInput) equipmentNameInput.value = item.name || ''; if (equipmentQuantityInput) equipmentQuantityInput.value = item.quantity || ''; if (equipmentAssignedDateInput) equipmentAssignedDateInput.value = item.assignedDate || ''; if (equipmentAccessoriesInput) equipmentAccessoriesInput.value = item.accessories || ''; if (equipmentEmployeeNameSelect) { populateEmployeeSelect(equipmentEmployeeNameSelect); equipmentEmployeeNameSelect.value = item.employeeName || ''; } if (equipmentOtherInfoTextarea) equipmentOtherInfoTextarea.value = item.otherInfo || ''; updateConnectedUserFields(); equipmentEditIndexInput.value = index; equipmentForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Appareil'; equipmentSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    window.editLearner = (index) => {
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Admin seulement."); return;
+        }
+        /* ... rest of editLearner ... */
+        if (index < 0 || index >= learnersData.length) return;
+        const lrn = learnersData[index];
+        if (!learnerForm || !learnerEditIndexInput || !learnerUserConnectedInput) {
+            alert("Erreur: Formulaire apprenant introuvable."); return;
+        }
+        learnerForm.reset();
+        if(learnerNomInput) learnerNomInput.value = lrn.nom || '';
+        if(learnerPrenomInput) learnerPrenomInput.value = lrn.prenom || '';
+        if(learnerAgeInput) learnerAgeInput.value = lrn.age ?? '';
+        if(learnerAdresseInput) learnerAdresseInput.value = lrn.adresse || '';
+        if(learnerLieuResidenceInput) learnerLieuResidenceInput.value = lrn.lieuResidence || '';
+        if(learnerNiveauEtudesInput) learnerNiveauEtudesInput.value = lrn.niveauEtudes || '';
+        if(learnerSituationMatrimonialeSelect) learnerSituationMatrimonialeSelect.value = lrn.situationMatrimoniale || '';
+        if(learnerPereNomInput) learnerPereNomInput.value = lrn.pereNom || '';
+        if(learnerPerePrenomInput) learnerPerePrenomInput.value = lrn.perePrenom || '';
+        if(learnerMereNomInput) learnerMereNomInput.value = lrn.mereNom || '';
+        if(learnerMerePrenomInput) learnerMerePrenomInput.value = lrn.merePrenom || '';
+        if(learnerFiliereInput) learnerFiliereInput.value = lrn.filiere || '';
+        if(learnerDureeFormationInput) learnerDureeFormationInput.value = lrn.dureeFormation || '';
+        if(learnerFraisDocumentsInput) learnerFraisDocumentsInput.value = lrn.fraisDocuments || '';
+        if(learnerTranche1Input) learnerTranche1Input.value = lrn.tranche1 || '';
+        if(learnerTranche2Input) learnerTranche2Input.value = lrn.tranche2 || '';
+        if(learnerTranche3Input) learnerTranche3Input.value = lrn.tranche3 || '';
+        if(learnerTranche4Input) learnerTranche4Input.value = lrn.tranche4 || '';
+        if(learnerGarantNomInput) learnerGarantNomInput.value = lrn.garantNom || '';
+        if(learnerGarantPrenomInput) learnerGarantPrenomInput.value = lrn.garantPrenom || '';
+        if(learnerGarantTelephoneInput) learnerGarantTelephoneInput.value = lrn.garantTelephone || '';
+        if(learnerGarantAdresseInput) learnerGarantAdresseInput.value = lrn.garantAdresse || '';
+        updateConnectedUserFields();
+        learnerEditIndexInput.value = index;
+        learnerForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Apprenant';
+        learnersSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    window.editMobileMoney = (originalIndex) => {
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Admin seulement."); return;
+        }
+        /* ... rest of editMobileMoney ... */
+        if (originalIndex < 0 || originalIndex >= mobileMoneyData.length) {
+            alert("Index invalide."); return;
+        }
+        const item = mobileMoneyData[originalIndex];
+        if (!mobileMoneyForm || !mobileMoneyEditIndexInput || !mmPointUserConnectedInput) {
+            alert("Erreur: Formulaire MM introuvable."); return;
+        }
+        mobileMoneyForm.reset();
+        if(mmDateInput) mmDateInput.value = item.date || '';
+        if(mmAgentInput) mmAgentInput.value = item.agent || '';
+        if(mmBalanceMoovInput) mmBalanceMoovInput.value = item.balanceMoov || '';
+        if(mmBalanceMtnInput) mmBalanceMtnInput.value = item.balanceMTN || '';
+        if(mmBalanceCelttisInput) mmBalanceCelttisInput.value = item.balanceCelttis || '';
+        if(mmBalanceCashInput) mmBalanceCashInput.value = item.balanceCash || '';
+        if(mmCreditMoovInput) mmCreditMoovInput.value = item.creditMoov || '';
+        if(mmCreditMtnInput) mmCreditMtnInput.value = item.creditMTN || '';
+        if(mmCreditCelttisInput) mmCreditCelttisInput.value = item.creditCelttis || '';
+        if(mmPerteTransfertInput) mmPerteTransfertInput.value = item.perteTransfert || '';
+        if(mmPerteCreditInput) mmPerteCreditInput.value = item.perteCredit || '';
+        updateConnectedUserFields();
+        mobileMoneyEditIndexInput.value = originalIndex;
+        mobileMoneyForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Point MM';
+        mobileMoneySection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    window.editMmFournisseur = (nom, prenom) => {
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Admin seulement."); return;
+        }
+        /* ... rest of editMmFournisseur ... */
+        const sN = String(nom || '').replace(/\\'/g, "'");
+        const sP = String(prenom || '').replace(/\\'/g, "'");
+        const key = `${sN}_${sP}`;
+        const f = mmFournisseursData.find(f => f.nom === sN && f.prenom === sP);
+        if (f && mmFournisseurForm && mmFournisseurEditKeyInput && mmFournisseurUserConnectedInput) {
+            mmFournisseurForm.reset();
+            if(mmFournisseurNomInput) mmFournisseurNomInput.value = f.nom || '';
+            if(mmFournisseurPrenomInput) mmFournisseurPrenomInput.value = f.prenom || '';
+            if(mmFournisseurContactInput) mmFournisseurContactInput.value = f.contact || '';
+            if(mmFournisseurMontantInput) mmFournisseurMontantInput.value = f.montantFourni || '';
+            if(mmFournisseurInteretInput) mmFournisseurInteretInput.value = f.interet ?? '';
+            if(mmFournisseurVenduInput) mmFournisseurVenduInput.value = f.creditVendu || '';
+            updateConnectedUserFields();
+            mmFournisseurEditKeyInput.value = key;
+            mmFournisseurForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Fournisseur';
+            mmFournisseurForm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            alert(`Fournisseur ${sN} ${sP} non trouvé ou form incomplet.`);
+            if(mmFournisseurEditKeyInput) mmFournisseurEditKeyInput.value = '';
+        }
+    };
+
+    window.editClientProfile = (nom, prenom) => {
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Admin seulement."); return;
+        }
+        /* ... rest of editClientProfile ... */
+        const sN = String(nom || '').replace(/\\'/g, "'");
+        const sP = String(prenom || '').replace(/\\'/g, "'");
+        const key = `${sN}_${sP}`;
+        const p = clientProfilesData.find(p => p.nom === sN && p.prenom === sP);
+        if (p && clientProfileForm && clientProfileEditKeyInput && clientUserConnectedInput) {
+            clientProfileForm.reset();
+            if(clientProfileNomInput) clientProfileNomInput.value = p.nom || '';
+            if(clientProfilePrenomInput) clientProfilePrenomInput.value = p.prenom || '';
+            if(clientProfileAdresseInput) clientProfileAdresseInput.value = p.adresse || '';
+            if(clientProfileContactInput) clientProfileContactInput.value = p.contact || '';
+            if(clientProfileStatutInput) clientProfileStatutInput.value = p.statut || '';
+            updateConnectedUserFields();
+            clientProfileEditKeyInput.value = key;
+            clientProfileForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Profil';
+            clientProfileForm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            alert(`Profil ${sN} ${sP} non trouvé ou form incomplet.`);
+            if(clientProfileEditKeyInput) clientProfileEditKeyInput.value = '';
+        }
+    };
+
+    window.editDebt = (originalIndex) => {
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Admin seulement."); return;
+        }
+        /* ... rest of editDebt ... */
+        if (originalIndex < 0 || originalIndex >= debtData.length) {
+            alert("Index invalide."); return;
+        }
+        const item = debtData[originalIndex];
+        if (!debtForm || !debtEditIndexInput || !debtUserConnectedInput) {
+            alert("Erreur: Formulaire Dette/Prêt introuvable."); return;
+        }
+        debtForm.reset();
+        if(debtDateInput) debtDateInput.value = item.date || '';
+        if(debtTypeSelect) debtTypeSelect.value = item.type || '';
+        if(debtNameInput) debtNameInput.value = item.name || '';
+        if(debtDescriptionInput) debtDescriptionInput.value = item.description || '';
+        if(debtAmountInput) debtAmountInput.value = item.amount || '';
+        if(debtDueDateInput) debtDueDateInput.value = item.dueDate || '';
+        if(debtStatusSelect) debtStatusSelect.value = item.status || '';
+        updateConnectedUserFields();
+        debtEditIndexInput.value = originalIndex;
+        debtForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Dette/Prêt';
+        debtSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    window.editAdminUser = (username) => {
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Admin seulement."); return;
+        }
+        /* ... rest of editAdminUser ... */
+        const safeUsername = String(username || '').replace(/\\'/g, "'");
+        const user = adminData.find(u => u.username === safeUsername);
+        if (!user) {
+            alert(`Utilisateur '${safeUsername}' non trouvé.`); return;
+        }
+        if (!adminForm || !adminEditKeyInput || !adminUsernameInput || !adminPostInput || !adminPasswordInput || !adminStatusSelect || !adminOpUserConnectedInput) {
+            alert("Erreur interne: Form Admin incomplet."); return;
+        }
+        if(currentUser && currentUser.username === safeUsername) {
+            alert("Modif impossible : propre compte."); return;
+        }
+        adminForm.reset();
+        adminUsernameInput.value = user.username || '';
+        adminPostInput.value = user.post || '';
+        adminStatusSelect.value = user.status || 'Lecteur';
+        adminPasswordInput.value = '';
+        adminPasswordInput.placeholder = "Laisser vide si inchangé";
+        updateConnectedUserFields();
+        adminEditKeyInput.value = user.username;
+        adminForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Utilisateur';
+        adminSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    window.editEquipment = (index) => {
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Admin seulement."); return;
+        }
+        /* ... rest of editEquipment ... */
+        if (index < 0 || index >= equipmentData.length) {
+            alert("Index invalide."); return;
+        }
+        const item = equipmentData[index];
+        if (!equipmentForm || !equipmentEditIndexInput || !equipmentUserConnectedInput) {
+            alert("Erreur: Formulaire équipement introuvable."); return;
+        }
+        equipmentForm.reset();
+        if (equipmentNameInput) equipmentNameInput.value = item.name || '';
+        if (equipmentQuantityInput) equipmentQuantityInput.value = item.quantity || '';
+        if (equipmentAssignedDateInput) equipmentAssignedDateInput.value = item.assignedDate || '';
+        if (equipmentAccessoriesInput) equipmentAccessoriesInput.value = item.accessories || '';
+        if (equipmentEmployeeNameSelect) {
+            populateEmployeeSelect(equipmentEmployeeNameSelect); // Ensure select is populated
+            equipmentEmployeeNameSelect.value = item.employeeName || '';
+        }
+        if (equipmentOtherInfoTextarea) equipmentOtherInfoTextarea.value = item.otherInfo || '';
+        updateConnectedUserFields();
+        equipmentEditIndexInput.value = index;
+        equipmentForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Appareil';
+        equipmentSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
 
     // --- Permission Status Update Function (Added date update) ---
-    window.updatePermissionStatus = async (type, index, newStatus) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of updatePermissionStatus ... */ let dataArray, storageKey, itemType; if (type === 'employee') { dataArray = employeePermissionsData; storageKey = 'employeePermissionsData'; itemType = 'employé'; } else if (type === 'learner') { dataArray = learnerPermissionsData; storageKey = 'learnerPermissionsData'; itemType = 'apprenant'; } else { return; } if (index < 0 || index >= dataArray.length) { alert("Index invalide."); return; } let tempLocalData = [...dataArray]; tempLocalData[index].status = newStatus; tempLocalData[index].statusUpdatedBy = currentUser?.username || 'N/A'; tempLocalData[index].statusUpdateDate = new Date().toISOString().split('T')[0]; try { await saveDataToFirebase(storageKey, tempLocalData); alert(`Statut demande mis à jour à "${newStatus}".`); } catch(e) { /* Error handled */ } };
-    // --- Payment Recording Functions ---
-    window.recordSalaryPayment = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of recordSalaryPayment ... */ if (index < 0 || index >= employeesData.length) return; const emp = employeesData[index]; const salary = emp.salary !== null ? parseFloat(emp.salary) : 0; const totalPaid = emp.paidAmount || 0; const remaining = salary - totalPaid; const paymentDate = prompt("Date paiement (AAAA-MM-JJ) :", new Date().toISOString().split('T')[0]); if (!paymentDate || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) { if (paymentDate !== null) alert("Format date invalide."); return; } const amountStr = prompt(`Employé: ${emp.nom || ''} ${emp.prenom || ''}\nSalaire Base: ${formatAmount(salary)}\nDéjà Payé: ${formatAmount(totalPaid)}\nRestant Dû: ${formatAmount(remaining)}\n\nMontant payé ce jour :`, remaining > 0 ? formatAmount(remaining) : '0.00'); if (amountStr === null) return; const amountPaidThisTime = parseFloat(amountStr); if (isNaN(amountPaidThisTime) || amountPaidThisTime < 0) { alert("Montant invalide."); return; } if (amountPaidThisTime === 0) { alert("Aucun paiement enregistré (montant = 0)."); return; } if (amountPaidThisTime > remaining + 0.005) { alert(`Montant payé (${formatAmount(amountPaidThisTime)}) dépasse solde restant (${formatAmount(remaining)}).`); return; } let tempLocalData = [...employeesData]; const empInCopy = tempLocalData[index]; empInCopy.paidAmount = (empInCopy.paidAmount || 0) + amountPaidThisTime; if (!empInCopy.paymentHistory) empInCopy.paymentHistory = []; empInCopy.paymentHistory.push({ date: paymentDate, amount: amountPaidThisTime, recordedBy: currentUser?.username || 'N/A' }); empInCopy.lastModifiedBy = currentUser?.username || 'N/A'; empInCopy.lastModifiedDate = new Date().toISOString(); try { await saveDataToFirebase('employeesData', tempLocalData); alert(`Paiement de ${formatAmount(amountPaidThisTime)} enregistré pour ${emp.nom} ${emp.prenom} le ${paymentDate}.`); if (confirm('Imprimer reçu ?')) { printSalaryInvoice(index, paymentDate, amountPaidThisTime); } } catch(e) { /* Error handled */ } };
-    window.recordTranchePayment = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of recordTranchePayment ... */ if (index < 0 || index >= learnersData.length) return; const lrn = learnersData[index]; const paymentDate = prompt("Date paiement (AAAA-MM-JJ) :", new Date().toISOString().split('T')[0]); if (!paymentDate || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) { if (paymentDate !== null) alert("Format date invalide."); return; } const paymentReason = prompt(`Paiement pour ${lrn.nom} ${lrn.prenom}.\nMotif (Ex: Tranche 1, Frais Docs):`, "Paiement Tranche Formation"); if (!paymentReason) return; const amountStr = prompt("Montant payé :"); if (amountStr === null) return; const amountPaidThisTime = parseFloat(amountStr); if (isNaN(amountPaidThisTime) || amountPaidThisTime <= 0) { alert("Montant invalide."); return; } const trancheChoice = prompt( `Ligne à créditer pour ${formatAmount(amountPaidThisTime)} ?\n1. Frais Docs (${formatAmount(lrn.fraisDocuments)})\n2. Tranche 1 (${formatAmount(lrn.tranche1)})\n3. Tranche 2 (${formatAmount(lrn.tranche2)})\n4. Tranche 3 (${formatAmount(lrn.tranche3)})\n5. Tranche 4 (${formatAmount(lrn.tranche4)})\nEntrez (1-5). MONTANT SERA AJOUTÉ.` ); if (!trancheChoice) return; const choice = parseInt(trancheChoice); if (isNaN(choice) || choice < 1 || choice > 5) { alert("Choix invalide."); return; } let tempLocalData = [...learnersData]; const lrnInCopy = tempLocalData[index]; let updated = false; let appliedTo = ''; switch (choice) { case 1: lrnInCopy.fraisDocuments = (lrnInCopy.fraisDocuments || 0) + amountPaidThisTime; appliedTo = 'Frais Docs'; updated = true; break; case 2: lrnInCopy.tranche1 = (lrnInCopy.tranche1 || 0) + amountPaidThisTime; appliedTo = 'Tranche 1'; updated = true; break; case 3: lrnInCopy.tranche2 = (lrnInCopy.tranche2 || 0) + amountPaidThisTime; appliedTo = 'Tranche 2'; updated = true; break; case 4: lrnInCopy.tranche3 = (lrnInCopy.tranche3 || 0) + amountPaidThisTime; appliedTo = 'Tranche 3'; updated = true; break; case 5: lrnInCopy.tranche4 = (lrnInCopy.tranche4 || 0) + amountPaidThisTime; appliedTo = 'Tranche 4'; updated = true; break; } if (!lrnInCopy.paymentHistory) lrnInCopy.paymentHistory = []; lrnInCopy.paymentHistory.push({ date: paymentDate, amount: amountPaidThisTime, reason: paymentReason, appliedTo, recordedBy: currentUser?.username || 'N/A' }); lrnInCopy.lastModifiedBy = currentUser?.username || 'N/A'; lrnInCopy.lastModifiedDate = new Date().toISOString(); if (updated) { try { await saveDataToFirebase('learnersData', tempLocalData); alert(`Paiement de ${formatAmount(amountPaidThisTime)} pour "${paymentReason}" enregistré pour ${lrn.nom} ${lrn.prenom} le ${paymentDate}.`); if (confirm('Imprimer reçu ?')) { printLearnerInvoice(index, paymentDate, paymentReason, amountPaidThisTime); } } catch (e) { /* Error handled */ } } };
+    window.updatePermissionStatus = async (type, index, newStatus) => {
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Admin seulement."); return;
+        }
+        /* ... rest of updatePermissionStatus ... */
+        let dataArray, storageKey, itemType;
+        if (type === 'employee') {
+            dataArray = employeePermissionsData;
+            storageKey = 'employeePermissionsData';
+            itemType = 'employé';
+        } else if (type === 'learner') {
+            dataArray = learnerPermissionsData;
+            storageKey = 'learnerPermissionsData';
+            itemType = 'apprenant';
+        } else {
+            return;
+        }
 
-    // --- Invoice Printing Functions (Keep existing) ---
-    function printSalaryInvoice(employeeIndex, paymentDate, amountPaidThisTime) { /* ... Function remains the same ... */ if (employeeIndex < 0 || employeeIndex >= employeesData.length) return; const emp = employeesData[employeeIndex]; const invoiceArea = document.getElementById('invoice-print-area'); if (!invoiceArea) { alert("Zone d'impression introuvable."); return; } const companyInfo = `TOUS TRAVAUX DE SECRETARIAT : Photocopie-Saisie, Tirage, Plastification-Vente Des<br> fournitures scolaires – Vente des ampoules électriques Etc.....<br> N°RCCM: RB / PK 0/A5519 /IFU 0201810420946<br> PARAKOU (Rép Du Bénin) - Tél: 61 71 36 92 / 64 41 58 95 `; const html = ` <div style="border: 1px solid #ccc; padding: 20px; width: 80%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;"> <div style="text-align: center; margin-bottom: 20px;"> <img src="logo.jpg" alt="Logo" style="max-height: 60px; border-radius: 50%; display: block; margin: 0 auto 10px auto;"> <h2 style="margin: 0;">REÇU DE PAIEMENT DE SALAIRE</h2> <strong>LA CHARITÉ MODESTE</strong><br> <small>${companyInfo}</small> </div> <hr> <p><strong>Date de Paiement :</strong> ${paymentDate}</p> <p><strong>Employé :</strong> ${emp.nom || ''} ${emp.prenom || ''}</p> <p><strong>Poste :</strong> ${emp.statut || 'N/A'}</p> <hr> <p><strong>Montant Payé :</strong> ${formatAmount(amountPaidThisTime)} FCFA</p> <p><strong>En Lettres :</strong> ${numberToWordsFrench(amountPaidThisTime)}</p> <hr> <div style="margin-top: 30px; display: flex; justify-content: space-between;"> <p><strong>Signature Employé :</strong><br><br>_________________________</p> <p><strong>Signature Employeur :</strong><br><br>_________________________</p> </div> <p style="text-align: center; font-size: 0.8em; margin-top: 40px;"> Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')} </p> </div> `; invoiceArea.innerHTML = html; printElement('invoice-print-area'); }
-    function printLearnerInvoice(learnerIndex, paymentDate, paymentReason, amountPaidThisTime) { /* ... Function remains the same ... */ if (learnerIndex < 0 || learnerIndex >= learnersData.length) return; const lrn = learnersData[learnerIndex]; const invoiceArea = document.getElementById('invoice-print-area'); if (!invoiceArea) { alert("Zone d'impression introuvable."); return; } const companyInfo = ` TOUS TRAVAUX DE SECRETARIAT : Photocopie-Saisie, Tirage, Plastification-Vente Des<br> fournitures scolaires – Vente des ampoules électriques Etc.....<br> N°RCCM: RB / PK 0/A5519 /IFU 0201810420946<br> PARAKOU (Rép Du Bénin) - Tél: 61 71 36 92 / 64 41 58 95 `; const html = ` <div style="border: 1px solid #ccc; padding: 20px; width: 80%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;"> <div style="text-align: center; margin-bottom: 20px;"> <img src="logo.jpg" alt="Logo" style="max-height: 60px; border-radius: 50%; display: block; margin: 0 auto 10px auto;"> <h2 style="margin: 0;">REÇU DE PAIEMENT FRAIS FORMATION</h2> <strong>LA CHARITÉ MODESTE</strong><br> <small>${companyInfo}</small> </div> <hr> <p><strong>Date de Paiement :</strong> ${paymentDate}</p> <p><strong>Apprenant :</strong> ${lrn.nom || ''} ${lrn.prenom || ''}</p> <p><strong>Filière :</strong> ${lrn.filiere || 'N/A'}</p> <hr> <p><strong>Motif Paiement :</strong> ${paymentReason || 'N/A'}</p> <p><strong>Montant Payé :</strong> ${formatAmount(amountPaidThisTime)} FCFA</p> <p><strong>En Lettres :</strong> ${numberToWordsFrench(amountPaidThisTime)}</p> <hr> <div style="margin-top: 30px; display: flex; justify-content: space-between;"> <p><strong>Signature Apprenant/Parent :</strong><br><br>_________________________</p> <p><strong>Signature Établissement :</strong><br><br>_________________________</p> </div> <p style="text-align: center; font-size: 0.8em; margin-top: 40px;"> Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')} </p> </div> `; invoiceArea.innerHTML = html; printElement('invoice-print-area'); }
-    window.printCreditReceipt = (originalIndex) => { /* ... Function remains the same ... */ if (originalIndex < 0 || originalIndex >= creditorsData.length) return; const credit = creditorsData[originalIndex]; const clientProfile = clientProfilesData.find(p => `${p.nom || ''} ${p.prenom || ''}`.trim() === credit.name); const invoiceArea = document.getElementById('invoice-print-area'); if (!invoiceArea) { alert("Zone d'impression introuvable."); return; } const totalAmount = credit.totalAmountDue || 0; const totalPaid = credit.amountPaidTotal || 0; const remaining = totalAmount - totalPaid; let paymentHistoryHTML = '<h4>Historique Paiements :</h4><ul>'; if (credit.paymentHistory && credit.paymentHistory.length > 0) { credit.paymentHistory.forEach(p => { paymentHistoryHTML += `<li>${p.date}: ${formatAmount(p.amount)} FCFA (par ${p.recordedBy || 'N/A'})</li>`; }); } else { paymentHistoryHTML += '<li>Aucun paiement enregistré dans l\'historique détaillé.</li>'; } paymentHistoryHTML += '</ul>'; const companyInfo = ` TOUS TRAVAUX DE SECRETARIAT : Photocopie-Saisie, Tirage, Plastification-Vente Des<br> fournitures scolaires – Vente des ampoules électriques Etc.....<br> N°RCCM: RB / PK 0/A5519 /IFU 0201810420946<br> PARAKOU (Rép Du Bénin) - Tél: 61 71 36 92 / 64 41 58 95 `; const html = ` <div style="border: 1px solid #ccc; padding: 20px; width: 90%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;"> <div style="text-align: center; margin-bottom: 15px;"> <img src="logo.jpg" alt="Logo" style="max-height: 50px; border-radius: 50%; display: block; margin: 0 auto 8px auto;"> <h3 style="margin: 0;">RELEVÉ DE COMPTE CRÉDIT</h3> <strong>LA CHARITÉ MODESTE</strong><br> <small>${companyInfo}</small> </div> <hr> <p><strong>Date Relevé :</strong> ${new Date().toLocaleDateString('fr-FR')}</p> <p><strong>Client :</strong> ${credit.name || ''}</p> ${clientProfile?.contact ? `<p><strong>Contact Client :</strong> ${clientProfile.contact}</p>` : ''} <hr> <p><strong>Désignation/Produit :</strong> ${credit.designation || 'N/A'}</p> ${credit.quantity !== null ? `<p><strong>Quantité :</strong> ${credit.quantity}</p>` : ''} ${credit.unitPrice !== null ? `<p><strong>Prix Unitaire :</strong> ${formatAmount(credit.unitPrice)}</p>` : ''} <p><strong>Date Initiale Transaction :</strong> ${credit.date || 'N/A'}</p> <p><strong>Date Échéance :</strong> ${credit.dueDate || 'N/A'}</p> <hr style="margin: 10px 0;"> <p><strong>Montant Total Dû :</strong> ${formatAmount(totalAmount)} FCFA</p> <p><strong>Montant Total Payé :</strong> ${formatAmount(totalPaid)} FCFA</p> <p><strong>Montant Restant Dû : <span style="font-weight: bold; color: ${remaining > 0 ? 'red' : 'green'};">${formatAmount(remaining)} FCFA</span></strong></p> <hr style="margin: 10px 0;"> ${paymentHistoryHTML} <hr style="margin: 10px 0;"> <p style="text-align: center; font-size: 0.8em; margin-top: 20px;"> Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')} </p> </div> `; invoiceArea.innerHTML = html; printElement('invoice-print-area'); };
-    function generateInvoiceHTML(invoiceData) { /* ... Function remains the same, BUT update manager name ... */ const { date, number, clientName, clientContact, items, totalAmount, totalWords } = invoiceData; let itemsHTML = ''; items.forEach(item => { itemsHTML += ` <tr> <td style="border: 1px solid #ddd; padding: 6px;">${item.designation || ''}</td> <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${item.quantity || 0}</td> <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatAmount(item.unitPrice)}</td> <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatAmount(item.total)}</td> </tr> `; }); const companyInfo = ` TOUS TRAVAUX DE SECRETARIAT : Photocopie-Saisie, Tirage, Plastification-Vente Des<br> fournitures scolaires – Vente des ampoules électriques Etc.....<br> N°RCCM: RB / PK 0/A5519 /IFU 0201810420946<br> PARAKOU (Rép Du Bénin) - Tél: 61 71 36 92 / 64 41 58 95 `; const html = ` <div class="invoice-wrapper" style="border: 1px solid #aaa; padding: 25px; margin: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10pt; background-color: #fff; color: #000;"> <div class="invoice-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #333;"> <div class="invoice-details"> <img src="logo.jpg" alt="Logo La Charité Modeste" class="invoice-logo" style="max-height: 60px; margin-bottom: 10px;"> <br><strong>LA CHARITÉ MODESTE</strong> <br><small>${companyInfo}</small> </div> <div class="invoice-title" style="text-align: right;"> <h2 style="margin: 0 0 10px 0; font-size: 18pt;">FACTURE</h2> <div class="invoice-details"> <strong>N° Facture :</strong> ${number}<br> <strong>Date :</strong> ${date} </div> </div> </div> <div class="invoice-client-details" style="margin-bottom: 25px; text-align: left;"> <strong>Client :</strong><br> ${clientName}<br> ${clientContact ? `Contact: ${clientContact}<br>` : ''} </div> <div class="invoice-items"> <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"> <thead> <tr> <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: left;">Désignation</th> <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: center; width: 10%;">Quantité</th> <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: right; width: 20%;">Prix Unitaire</th> <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: right; width: 20%;">Montant Total</th> </tr> </thead> <tbody> ${itemsHTML} </tbody> </table> </div> <div class="invoice-summary" style="text-align: right; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 11pt;"> Arrêté la présente facture à la somme de :<br> <strong style="font-size: 10.5pt;">${totalWords}</strong> <hr style="margin: 8px 0; border: none; border-top: 1px dashed #ccc;"> <strong>MONTANT TOTAL :</strong> <strong style="display: inline-block; min-width: 120px; text-align: right; margin-left: 10px;">${formatAmount(totalAmount)} FCFA</strong> </div> <div class="invoice-signature" style="margin-top: 40px; padding-top: 10px; text-align: right;"> <p><strong>Signature du Responsable :</strong></p> <p style="margin-top: 30px;">_________________________</p> <p><em>Modeste KODA MICHEL</em></p> </div> <div class="invoice-footer" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee; font-size: 8pt; text-align: center; color: #555;"> Merci de votre confiance.<br> </div> </div> `; return html; }
+        if (index < 0 || index >= dataArray.length) {
+            alert("Index invalide."); return;
+        }
+
+        let tempLocalData = [...dataArray];
+        tempLocalData[index].status = newStatus;
+        tempLocalData[index].statusUpdatedBy = currentUser?.username || 'N/A';
+        tempLocalData[index].statusUpdateDate = new Date().toISOString().split('T')[0]; // Store update date
+
+        try {
+            await saveDataToFirebase(storageKey, tempLocalData);
+            alert(`Statut demande mis à jour à "${newStatus}".`);
+        } catch(e) {
+            // Error handled by saveDataToFirebase
+        }
+    };
+
+    // --- Payment Recording Functions ---
+    window.recordSalaryPayment = async (index) => {
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Admin seulement."); return;
+        }
+        /* ... rest of recordSalaryPayment ... */
+        if (index < 0 || index >= employeesData.length) return;
+        const emp = employeesData[index];
+        const salary = emp.salary !== null ? parseFloat(emp.salary) : 0;
+        const totalPaid = emp.paidAmount || 0;
+        const remaining = salary - totalPaid;
+
+        const paymentDate = prompt("Date paiement (AAAA-MM-JJ) :", new Date().toISOString().split('T')[0]);
+        if (!paymentDate || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) {
+            if (paymentDate !== null) alert("Format date invalide.");
+            return;
+        }
+
+        const amountStr = prompt(`Employé: ${emp.nom || ''} ${emp.prenom || ''}\nSalaire Base: ${formatAmount(salary)}\nDéjà Payé: ${formatAmount(totalPaid)}\nRestant Dû: ${formatAmount(remaining)}\n\nMontant payé ce jour :`, remaining > 0 ? formatAmount(remaining) : '0.00');
+        if (amountStr === null) return; // User cancelled
+
+        const amountPaidThisTime = parseFloat(amountStr);
+        if (isNaN(amountPaidThisTime) || amountPaidThisTime < 0) {
+            alert("Montant invalide.");
+            return;
+        }
+        if (amountPaidThisTime === 0) {
+             alert("Aucun paiement enregistré (montant = 0).");
+             return;
+        }
+        if (amountPaidThisTime > remaining + 0.005) { // Added tolerance for floating point
+            alert(`Montant payé (${formatAmount(amountPaidThisTime)}) dépasse solde restant (${formatAmount(remaining)}).`);
+            return;
+        }
+
+        let tempLocalData = [...employeesData];
+        const empInCopy = tempLocalData[index];
+        empInCopy.paidAmount = (empInCopy.paidAmount || 0) + amountPaidThisTime;
+        if (!empInCopy.paymentHistory) empInCopy.paymentHistory = [];
+        empInCopy.paymentHistory.push({ date: paymentDate, amount: amountPaidThisTime, recordedBy: currentUser?.username || 'N/A' });
+        empInCopy.lastModifiedBy = currentUser?.username || 'N/A';
+        empInCopy.lastModifiedDate = new Date().toISOString();
+
+        try {
+            await saveDataToFirebase('employeesData', tempLocalData);
+            alert(`Paiement de ${formatAmount(amountPaidThisTime)} enregistré pour ${emp.nom} ${emp.prenom} le ${paymentDate}.`);
+            if (confirm('Imprimer reçu ?')) {
+                printSalaryInvoice(index, paymentDate, amountPaidThisTime);
+            }
+        } catch(e) {
+             // Error handled by saveDataToFirebase
+        }
+    };
+
+    window.recordTranchePayment = async (index) => {
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            alert("Accès Refusé: Admin seulement."); return;
+        }
+        /* ... rest of recordTranchePayment ... */
+        if (index < 0 || index >= learnersData.length) return;
+        const lrn = learnersData[index];
+
+        const paymentDate = prompt("Date paiement (AAAA-MM-JJ) :", new Date().toISOString().split('T')[0]);
+        if (!paymentDate || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) {
+            if (paymentDate !== null) alert("Format date invalide.");
+            return;
+        }
+
+        const paymentReason = prompt(`Paiement pour ${lrn.nom} ${lrn.prenom}.\nMotif (Ex: Tranche 1, Frais Docs):`, "Paiement Tranche Formation");
+        if (!paymentReason) return; // User cancelled
+
+        const amountStr = prompt("Montant payé :");
+        if (amountStr === null) return; // User cancelled
+
+        const amountPaidThisTime = parseFloat(amountStr);
+        if (isNaN(amountPaidThisTime) || amountPaidThisTime <= 0) {
+            alert("Montant invalide.");
+            return;
+        }
+
+        const trancheChoice = prompt(
+            `Ligne à créditer pour ${formatAmount(amountPaidThisTime)} ?\n` +
+            `1. Frais Docs (${formatAmount(lrn.fraisDocuments)})\n` +
+            `2. Tranche 1 (${formatAmount(lrn.tranche1)})\n` +
+            `3. Tranche 2 (${formatAmount(lrn.tranche2)})\n` +
+            `4. Tranche 3 (${formatAmount(lrn.tranche3)})\n` +
+            `5. Tranche 4 (${formatAmount(lrn.tranche4)})\n` +
+            `Entrez (1-5). MONTANT SERA AJOUTÉ.`
+        );
+        if (!trancheChoice) return; // User cancelled
+
+        const choice = parseInt(trancheChoice);
+        if (isNaN(choice) || choice < 1 || choice > 5) {
+            alert("Choix invalide.");
+            return;
+        }
+
+        let tempLocalData = [...learnersData];
+        const lrnInCopy = tempLocalData[index];
+        let updated = false;
+        let appliedTo = '';
+
+        switch (choice) {
+            case 1: lrnInCopy.fraisDocuments = (lrnInCopy.fraisDocuments || 0) + amountPaidThisTime; appliedTo = 'Frais Docs'; updated = true; break;
+            case 2: lrnInCopy.tranche1 = (lrnInCopy.tranche1 || 0) + amountPaidThisTime; appliedTo = 'Tranche 1'; updated = true; break;
+            case 3: lrnInCopy.tranche2 = (lrnInCopy.tranche2 || 0) + amountPaidThisTime; appliedTo = 'Tranche 2'; updated = true; break;
+            case 4: lrnInCopy.tranche3 = (lrnInCopy.tranche3 || 0) + amountPaidThisTime; appliedTo = 'Tranche 3'; updated = true; break;
+            case 5: lrnInCopy.tranche4 = (lrnInCopy.tranche4 || 0) + amountPaidThisTime; appliedTo = 'Tranche 4'; updated = true; break;
+        }
+
+        if (!lrnInCopy.paymentHistory) lrnInCopy.paymentHistory = [];
+        lrnInCopy.paymentHistory.push({ date: paymentDate, amount: amountPaidThisTime, reason: paymentReason, appliedTo, recordedBy: currentUser?.username || 'N/A' });
+        lrnInCopy.lastModifiedBy = currentUser?.username || 'N/A';
+        lrnInCopy.lastModifiedDate = new Date().toISOString();
+
+        if (updated) {
+             try {
+                await saveDataToFirebase('learnersData', tempLocalData);
+                alert(`Paiement de ${formatAmount(amountPaidThisTime)} pour "${paymentReason}" enregistré pour ${lrn.nom} ${lrn.prenom} le ${paymentDate}.`);
+                 if (confirm('Imprimer reçu ?')) {
+                     printLearnerInvoice(index, paymentDate, paymentReason, amountPaidThisTime);
+                 }
+            } catch (e) {
+                // Error handled by saveDataToFirebase
+            }
+        }
+    };
+
+    // --- Invoice Printing Functions (Unchanged Logic, Uses CONSTANTS) ---
+    function printSalaryInvoice(employeeIndex, paymentDate, amountPaidThisTime) {
+        if (employeeIndex < 0 || employeeIndex >= employeesData.length) return;
+        const emp = employeesData[employeeIndex];
+        const invoiceArea = document.getElementById('invoice-print-area');
+        if (!invoiceArea) { alert("Zone d'impression introuvable."); return; }
+
+        const html = `
+            <div style="border: 1px solid #ccc; padding: 20px; width: 80%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="${LOGO_PATH}" alt="Logo" style="max-height: 60px; border-radius: 50%; display: block; margin: 0 auto 10px auto;">
+                    <h2 style="margin: 0;">REÇU DE PAIEMENT DE SALAIRE</h2>
+                    <strong>${ESTABLISHMENT_NAME}</strong><br>
+                    <small>${COMPANY_INFO_PRINT}</small>
+                </div>
+                <hr>
+                <p><strong>Date de Paiement :</strong> ${paymentDate}</p>
+                <p><strong>Employé :</strong> ${emp.nom || ''} ${emp.prenom || ''}</p>
+                <p><strong>Poste :</strong> ${emp.statut || 'N/A'}</p>
+                <hr>
+                <p><strong>Montant Payé :</strong> ${formatAmount(amountPaidThisTime)} FCFA</p>
+                <p><strong>En Lettres :</strong> ${numberToWordsFrench(amountPaidThisTime)}</p>
+                <hr>
+                <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+                    <p><strong>Signature Employé :</strong><br><br>_________________________</p>
+                    <p><strong>Signature Employeur :</strong><br><br>_________________________</p>
+                </div>
+                <p style="text-align: center; font-size: 0.8em; margin-top: 40px;">
+                    Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}
+                </p>
+            </div>
+            `;
+        invoiceArea.innerHTML = html;
+        printElement('invoice-print-area');
+    }
+
+    function printLearnerInvoice(learnerIndex, paymentDate, paymentReason, amountPaidThisTime) {
+        if (learnerIndex < 0 || learnerIndex >= learnersData.length) return;
+        const lrn = learnersData[learnerIndex];
+        const invoiceArea = document.getElementById('invoice-print-area');
+        if (!invoiceArea) { alert("Zone d'impression introuvable."); return; }
+
+        const html = `
+            <div style="border: 1px solid #ccc; padding: 20px; width: 80%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="${LOGO_PATH}" alt="Logo" style="max-height: 60px; border-radius: 50%; display: block; margin: 0 auto 10px auto;">
+                    <h2 style="margin: 0;">REÇU DE PAIEMENT FRAIS FORMATION</h2>
+                    <strong>${ESTABLISHMENT_NAME}</strong><br>
+                    <small>${COMPANY_INFO_PRINT}</small>
+                </div>
+                <hr>
+                <p><strong>Date de Paiement :</strong> ${paymentDate}</p>
+                <p><strong>Apprenant :</strong> ${lrn.nom || ''} ${lrn.prenom || ''}</p>
+                <p><strong>Filière :</strong> ${lrn.filiere || 'N/A'}</p>
+                <hr>
+                <p><strong>Motif Paiement :</strong> ${paymentReason || 'N/A'}</p>
+                <p><strong>Montant Payé :</strong> ${formatAmount(amountPaidThisTime)} FCFA</p>
+                <p><strong>En Lettres :</strong> ${numberToWordsFrench(amountPaidThisTime)}</p>
+                <hr>
+                <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+                    <p><strong>Signature Apprenant/Parent :</strong><br><br>_________________________</p>
+                    <p><strong>Signature Établissement :</strong><br><br>_________________________</p>
+                </div>
+                <p style="text-align: center; font-size: 0.8em; margin-top: 40px;">
+                    Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}
+                </p>
+            </div>
+            `;
+        invoiceArea.innerHTML = html;
+        printElement('invoice-print-area');
+    }
+
+    window.printCreditReceipt = (originalIndex) => {
+        if (originalIndex < 0 || originalIndex >= creditorsData.length) return;
+        const credit = creditorsData[originalIndex];
+        const clientProfile = clientProfilesData.find(p => `${p.nom || ''} ${p.prenom || ''}`.trim() === credit.name);
+        const invoiceArea = document.getElementById('invoice-print-area');
+        if (!invoiceArea) { alert("Zone d'impression introuvable."); return; }
+        const totalAmount = credit.totalAmountDue || 0;
+        const totalPaid = credit.amountPaidTotal || 0;
+        const remaining = totalAmount - totalPaid;
+        let paymentHistoryHTML = '<h4>Historique Paiements :</h4><ul>';
+        if (credit.paymentHistory && credit.paymentHistory.length > 0) {
+            credit.paymentHistory.forEach(p => {
+                paymentHistoryHTML += `<li>${p.date}: ${formatAmount(p.amount)} FCFA (par ${p.recordedBy || 'N/A'})</li>`;
+            });
+        } else {
+            paymentHistoryHTML += '<li>Aucun paiement enregistré dans l\'historique détaillé.</li>';
+        }
+        paymentHistoryHTML += '</ul>';
+
+        const html = `
+            <div style="border: 1px solid #ccc; padding: 20px; width: 90%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;">
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <img src="${LOGO_PATH}" alt="Logo" style="max-height: 50px; border-radius: 50%; display: block; margin: 0 auto 8px auto;">
+                    <h3 style="margin: 0;">RELEVÉ DE COMPTE CRÉDIT</h3>
+                    <strong>${ESTABLISHMENT_NAME}</strong><br>
+                    <small>${COMPANY_INFO_PRINT}</small>
+                </div>
+                <hr>
+                <p><strong>Date Relevé :</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
+                <p><strong>Client :</strong> ${credit.name || ''}</p>
+                ${clientProfile?.contact ? `<p><strong>Contact Client :</strong> ${clientProfile.contact}</p>` : ''}
+                <hr>
+                <p><strong>Désignation/Produit :</strong> ${credit.designation || 'N/A'}</p>
+                ${credit.quantity !== null ? `<p><strong>Quantité :</strong> ${credit.quantity}</p>` : ''}
+                ${credit.unitPrice !== null ? `<p><strong>Prix Unitaire :</strong> ${formatAmount(credit.unitPrice)}</p>` : ''}
+                <p><strong>Date Initiale Transaction :</strong> ${credit.date || 'N/A'}</p>
+                <p><strong>Date Échéance :</strong> ${credit.dueDate || 'N/A'}</p>
+                <hr style="margin: 10px 0;">
+                <p><strong>Montant Total Dû :</strong> ${formatAmount(totalAmount)} FCFA</p>
+                <p><strong>Montant Total Payé :</strong> ${formatAmount(totalPaid)} FCFA</p>
+                <p><strong>Montant Restant Dû : <span style="font-weight: bold; color: ${remaining > 0 ? 'red' : 'green'};">${formatAmount(remaining)} FCFA</span></strong></p>
+                <hr style="margin: 10px 0;">
+                ${paymentHistoryHTML}
+                <hr style="margin: 10px 0;">
+                <p style="text-align: center; font-size: 0.8em; margin-top: 20px;">
+                    Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}
+                </p>
+            </div>
+            `;
+        invoiceArea.innerHTML = html;
+        printElement('invoice-print-area');
+    };
+
+    function generateInvoiceHTML(invoiceData) {
+        const { date, number, clientName, clientContact, items, totalAmount, totalWords } = invoiceData;
+        let itemsHTML = '';
+        items.forEach(item => {
+            itemsHTML += `
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 6px;">${item.designation || ''}</td>
+                    <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${item.quantity || 0}</td>
+                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatAmount(item.unitPrice)}</td>
+                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatAmount(item.total)}</td>
+                </tr>
+                `;
+        });
+
+        const html = `
+            <div class="invoice-wrapper" style="border: 1px solid #aaa; padding: 25px; margin: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10pt; background-color: #fff; color: #000;">
+                <div class="invoice-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #333;">
+                    <div class="invoice-details">
+                        <img src="${LOGO_PATH}" alt="Logo La Charité Modeste" class="invoice-logo" style="max-height: 60px; margin-bottom: 10px;">
+                        <br><strong>${ESTABLISHMENT_NAME}</strong>
+                        <br><small>${COMPANY_INFO_PRINT}</small>
+                    </div>
+                    <div class="invoice-title" style="text-align: right;">
+                        <h2 style="margin: 0 0 10px 0; font-size: 18pt;">FACTURE</h2>
+                        <div class="invoice-details">
+                            <strong>N° Facture :</strong> ${number}<br>
+                            <strong>Date :</strong> ${date}
+                        </div>
+                    </div>
+                </div>
+                <div class="invoice-client-details" style="margin-bottom: 25px; text-align: left;">
+                    <strong>Client :</strong><br>
+                    ${clientName}<br>
+                    ${clientContact ? `Contact: ${clientContact}<br>` : ''}
+                </div>
+                <div class="invoice-items">
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: left;">Désignation</th>
+                                <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: center; width: 10%;">Quantité</th>
+                                <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: right; width: 20%;">Prix Unitaire</th>
+                                <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: right; width: 20%;">Montant Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="invoice-summary" style="text-align: right; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 11pt;">
+                    Arrêté la présente facture à la somme de :<br>
+                    <strong style="font-size: 10.5pt;">${totalWords}</strong>
+                    <hr style="margin: 8px 0; border: none; border-top: 1px dashed #ccc;">
+                    <strong>MONTANT TOTAL :</strong> <strong style="display: inline-block; min-width: 120px; text-align: right; margin-left: 10px;">${formatAmount(totalAmount)} FCFA</strong>
+                </div>
+                <div class="invoice-signature" style="margin-top: 40px; padding-top: 10px; text-align: right;">
+                    <p><strong>Signature du Responsable :</strong></p>
+                    <p style="margin-top: 30px;">_________________________</p>
+                    <p><em>Modeste KODA MICHEL</em></p>
+                </div>
+                <div class="invoice-footer" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee; font-size: 8pt; text-align: center; color: #555;">
+                    Merci de votre confiance.<br>
+                </div>
+            </div>
+            `;
+        return html;
+    }
+
     if (previewPrintInvoiceButton && !previewPrintInvoiceButton._hasClickListener) {
         previewPrintInvoiceButton.addEventListener('click', () => {
             if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { alert("Accès Refusé."); return; }

@@ -983,7 +983,9 @@ footer p {
     /* Keep Admin section hidden by default unless explicitly printed */
     #admin-section:not(.show-in-print),
     /* Hide Sort Arrows */
-    th.sortable-header::after
+    th.sortable-header::after,
+    /* Hide original H3 titles within printable content */
+    .printable-content > h3
     {
         display: none !important;
     }
@@ -1008,13 +1010,40 @@ footer p {
      {
          display: none !important;
      }
-    /* Styles for printed content WITHIN .show-in-print (TABLE PRINT) */
-    .show-in-print h3 {
-        display: block !important; visibility: visible !important;
-        text-align: left; margin-top: 0; margin-bottom: 10px !important;
-        page-break-after: avoid; font-size: 12pt !important; font-weight: bold !important;
-        color: #000 !important; border-bottom: 1px solid #999 !important; padding-bottom: 4px !important;
+
+    /* START: New styles for temporary print header */
+    #print-header-temp {
+        display: flex !important; /* Use flexbox for layout */
+        align-items: center;
+        justify-content: center; /* Center content horizontally */
+        margin-bottom: 15px !important;
+        padding-bottom: 10px !important;
+        border-bottom: 1px solid #999 !important;
+        page-break-after: avoid !important;
+        text-align: center;
     }
+    .print-logo-temp {
+        max-height: 50px !important;
+        max-width: 100px !important; /* Prevent oversized logo */
+        margin-right: 15px !important;
+        border-radius: 50%;
+        vertical-align: middle; /* Align logo nicely with text */
+    }
+    .print-header-text h2 { /* Establishment Name */
+        margin: 0 0 2px 0 !important;
+        font-size: 14pt !important;
+        font-weight: bold !important;
+        color: #000 !important;
+    }
+    .print-header-text h3 { /* Specific Table Title */
+        margin: 0 !important;
+        font-size: 11pt !important;
+        font-weight: normal !important; /* Less emphasis than establishment name */
+        color: #333 !important;
+    }
+    /* END: New styles for temporary print header */
+
+    /* Styles for printed content WITHIN .show-in-print (TABLE PRINT) */
     .show-in-print .table-container { overflow: visible !important; width: 100% !important; margin-top: 0 !important; border: none !important; }
     .show-in-print table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto; font-size: 8pt !important; }
     .show-in-print th, .show-in-print td {
@@ -1056,6 +1085,7 @@ footer p {
     .show-in-print td.user-col { font-style: italic; font-size: 0.9em; color: #555 !important; } /* Style user col */
 
     /* --- Styles for Invoice Printing --- */
+    /* ... (Invoice printing styles remain the same, already have logo/name) ... */
     body.printing-invoice #printable-area { display: none !important; }
     body.printing-invoice #invoice-print-area.show-in-print {
         display: block !important; visibility: visible !important; page-break-inside: avoid;
