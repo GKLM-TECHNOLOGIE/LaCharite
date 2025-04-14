@@ -370,7 +370,7 @@
                 </div>
              </section>
 
-            <!-- Section Employees (Existing - Unchanged Structure) -->
+            <!-- Section Employees -->
             <section id="employees-section" class="form-container hidden">
                 <h2>Gestion des Employés</h2>
                 <form id="employee-form">
@@ -427,8 +427,20 @@
                                 <option value="">-- Choisir Employé --</option>
                             </select>
                         </div>
-                        <div>
-                            <label for="perm-emp-date">Date/Période Permission:</label>
+                         <!-- START: Added Category Select for Employee Permission -->
+                         <div>
+                            <label for="perm-emp-category">Catégorie:</label>
+                            <select id="perm-emp-category" required>
+                                <option value="">-- Choisir --</option>
+                                <option value="Permission">Permission</option>
+                                <option value="Absence">Absence</option>
+                                <option value="Congé">Congé</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                         <!-- END: Added Category Select for Employee Permission -->
+                         <div>
+                            <label for="perm-emp-date">Date/Période:</label>
                             <input type="text" id="perm-emp-date" placeholder="Ex: 15/08/2024 ou 15 au 17/08/2024" required>
                         </div>
                          <div>
@@ -465,7 +477,8 @@
                                 <tr >
                                     <th class="date-col sortable-header">Date Demande</th>
                                     <th class="name-col">Employé</th>
-                                    <th>Date/Période Permission</th>
+                                    <th class="category-col">Catégorie</th> <!-- NEW TH -->
+                                    <th>Date/Période</th>
                                     <th class="reason-col">Motif</th>
                                     <th class="status-col">Statut</th>
                                     <th class="user-col">Traitement (Utilisateur/Date)</th>
@@ -523,7 +536,7 @@
                 </div>
             </section>
 
-            <!-- Section Learners (Existing - Unchanged Structure) -->
+            <!-- Section Learners -->
             <section id="learners-section" class="form-container hidden">
                  <h2>Gestion des Apprenants</h2>
                   <form id="learner-form">
@@ -594,8 +607,20 @@
                                  <option value="">-- Choisir Apprenant --</option>
                              </select>
                          </div>
+                         <!-- START: Added Category Select for Learner Permission -->
                          <div>
-                             <label for="perm-lrn-date">Date/Période Permission:</label>
+                            <label for="perm-lrn-category">Catégorie:</label>
+                            <select id="perm-lrn-category" required>
+                                <option value="">-- Choisir --</option>
+                                <option value="Permission">Permission</option>
+                                <option value="Absence">Absence</option>
+                                <option value="Congé">Congé</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                         <!-- END: Added Category Select for Learner Permission -->
+                         <div>
+                             <label for="perm-lrn-date">Date/Période:</label>
                              <input type="text" id="perm-lrn-date" placeholder="Ex: 15/08/2024 ou 15 au 17/08/2024" required>
                          </div>
                          <div>
@@ -632,7 +657,8 @@
                                  <tr >
                                      <th class="date-col sortable-header">Date Demande</th>
                                      <th class="name-col">Apprenant</th>
-                                     <th>Date/Période Permission</th>
+                                     <th class="category-col">Catégorie</th> <!-- NEW TH -->
+                                     <th>Date/Période</th>
                                      <th class="reason-col">Motif</th>
                                      <th class="status-col">Statut</th>
                                      <th class="user-col">Traitement (Utilisateur/Date)</th>

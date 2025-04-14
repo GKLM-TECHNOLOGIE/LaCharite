@@ -628,7 +628,8 @@ th.name-col, th.reason-col, th.contact-col,
 th.type-col, th.status-col, th.description-col, th.address-col,
 th.residence-col, th.workdays-col, th.agent-col, th.post-col, th.filiere-col,
 th.employee-name-col, th.equipment-name-col, /* Added for new table */
-th.user-col /* Added user column alignment */
+th.user-col, /* Added user column alignment */
+th.category-col /* NEW: Category column */
 {
     text-align: left;
 }
@@ -648,7 +649,7 @@ tbody tr:hover {
     background-color: var(--color-success-bg) !important;
     color: var(--color-success-text);
 }
-.partiel td { /* Partially paid / In Progress / En Attente */
+.partiel td { /* Partially paid / In Progress / En attente */
     background-color: var(--color-warning-bg) !important;
     color: var(--color-warning-text);
 }
@@ -684,7 +685,8 @@ td.user-col {
 td.designation-col, td.name-col, td.reason-col, td.contact-col,
 td.type-col, td.status-col, td.description-col, td.address-col,
 td.residence-col, td.workdays-col, td.agent-col, td.post-col, td.filiere-col,
-td.employee-name-col, td.equipment-name-col /* Added for new table */
+td.employee-name-col, td.equipment-name-col, /* Added for new table */
+td.category-col /* NEW: Category column */
 {
     text-align: left;
 }
@@ -1067,13 +1069,16 @@ footer p {
          padding-right: 6px !important; /* Reset padding for print */
     }
     /* Specific header alignments */
-    /* START MODIFICATION: Add date-col to left alignment in print */
+    /* START MODIFICATION: Add date-col and category-col to left alignment in print */
     .show-in-print th.date-col,
-    /* END MODIFICATION */
     .show-in-print th.designation-col,
-    .show-in-print th.name-col, .show-in-print th.reason-col, .show-in-print th.contact-col, .show-in-print th.type-col, .show-in-print th.description-col, .show-in-print th.address-col, .show-in-print th.residence-col, .show-in-print th.workdays-col,
+    .show-in-print th.name-col, .show-in-print th.reason-col, .show-in-print th.contact-col,
+    .show-in-print th.type-col, .show-in-print th.description-col, .show-in-print th.address-col,
+    .show-in-print th.residence-col, .show-in-print th.workdays-col,
     .show-in-print th.user-col, .show-in-print th.agent-col, .show-in-print th.post-col, .show-in-print th.filiere-col,
-    .show-in-print th.employee-name-col, .show-in-print th.equipment-name-col /* Added */
+    .show-in-print th.employee-name-col, .show-in-print th.equipment-name-col, /* Added */
+    .show-in-print th.category-col /* NEW */
+    /* END MODIFICATION */
     { text-align: left !important; }
 
     .show-in-print tbody tr { page-break-inside: avoid !important; }
@@ -1084,9 +1089,11 @@ footer p {
     .show-in-print .danger td { background-color: #f8d7da !important; color: #721c24 !important; }
     /* Specific cell alignments */
     .show-in-print td.unit-price-col, .show-in-print td.salary-col, .show-in-print td.amount-col, .show-in-print td.total-cost-col, .show-in-print td.balance-col, .show-in-print td.credit-col, .show-in-print td.remaining-salary-col { text-align: right !important; font-family: sans-serif !important; }
-    /* START MODIFICATION: Left align date-col TD in print */
+    /* START MODIFICATION: Left align date-col and category-col TD in print */
     .show-in-print td.date-col,
+    .show-in-print td.category-col /* NEW */
     /* END MODIFICATION */
+    { text-align: left !important; } /* Ensure date and category are left aligned */
     .show-in-print td.quantity-col, .show-in-print td.supply-col, .show-in-print td.sold-col, .show-in-print td.remaining-col, .show-in-print td.age-col, .show-in-print td.interest-col, .show-in-print td.time-col { text-align: center !important; }
 
     .show-in-print td.designation-col, .show-in-print td.name-col, .show-in-print td.reason-col, .show-in-print td.contact-col, .show-in-print td.type-col, .show-in-print td.status-col, .show-in-print td.description-col, .show-in-print td.address-col, .show-in-print td.residence-col, .show-in-print td.workdays-col,

@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // --- Champs Formulaire ---
-    // ... (Form fields remain the same) ...
+    // ... (Most form fields remain the same) ...
     const supplyDateInput = document.getElementById('supply-date');
     const supplyTypeSelect = document.getElementById('supply-type');
     const supplyDesignationInput = document.getElementById('supply-designation');
@@ -298,11 +298,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const learnerGarantAdresseInput = document.getElementById('learner-garant-adresse');
     const permEmpReqDateInput = document.getElementById('perm-emp-req-date');
     const permEmpNameSelect = document.getElementById('perm-emp-name');
+    const permEmpCategorySelect = document.getElementById('perm-emp-category'); // NEW
     const permEmpDateInput = document.getElementById('perm-emp-date');
     const permEmpReasonTextarea = document.getElementById('perm-emp-reason');
     const permEmpUserConnectedInput = document.getElementById('perm-emp-user-connected');
     const permLrnReqDateInput = document.getElementById('perm-lrn-req-date');
     const permLrnNameSelect = document.getElementById('perm-lrn-name');
+    const permLrnCategorySelect = document.getElementById('perm-lrn-category'); // NEW
     const permLrnDateInput = document.getElementById('perm-lrn-date');
     const permLrnReasonTextarea = document.getElementById('perm-lrn-reason');
     const permLrnUserConnectedInput = document.getElementById('perm-lrn-user-connected');
@@ -443,8 +445,42 @@ document.addEventListener('DOMContentLoaded', function () {
         if (invoiceGeneratorSection && sectionToShow === invoiceGeneratorSection) {
             initializeInvoiceForm();
         }
-         if (adminSection && sectionToShow !== adminSection) { adminSection.classList.add('hidden'); } if (equipmentSection && sectionToShow !== equipmentSection) { equipmentSection.classList.add('hidden'); } }
-    function handleOperationTypeChange() { if (!operationTypeSelect) return; const type = operationTypeSelect.value; const subForms = { 'Papeterie': papeterieDetailsForm, 'Matériels électrique': materielElectriqueDetailsForm, 'Dépenses': depensesDetailsForm, 'Divers': diversDetailsForm }; Object.values(subForms).forEach(form => { if (form) form.style.display = 'none'; }); const formToShow = subForms[type]; if (formToShow) { formToShow.style.display = 'flex'; } if (type === 'Papeterie' || type === 'Matériels électrique') { updateProductDesignationsForCategory(type); } else { updateProductDesignationsForCategory(''); } const isEditing = !!salesEditIndexInput?.value; if (!isEditing) { Object.entries(subForms).forEach(([formType, formElement]) => { if (formType !== type && formElement) { formElement.querySelectorAll('input, select').forEach(input => { if (input.type === 'select-one') { input.selectedIndex = 0; } else if (input.type !== 'hidden' && !input.readOnly) { input.value = ''; } }); } }); } }
+        if (adminSection && sectionToShow !== adminSection) { adminSection.classList.add('hidden'); }
+        if (equipmentSection && sectionToShow !== equipmentSection) { equipmentSection.classList.add('hidden'); }
+    } // End of setSectionVisibility
+
+    function handleOperationTypeChange() {
+        if (!operationTypeSelect) return;
+        const type = operationTypeSelect.value;
+        const subForms = {
+            'Papeterie': papeterieDetailsForm,
+            'Matériels électrique': materielElectriqueDetailsForm,
+            'Dépenses': depensesDetailsForm,
+            'Divers': diversDetailsForm
+        };
+        Object.values(subForms).forEach(form => { if (form) form.style.display = 'none'; });
+        const formToShow = subForms[type];
+        if (formToShow) { formToShow.style.display = 'flex'; }
+        if (type === 'Papeterie' || type === 'Matériels électrique') {
+            updateProductDesignationsForCategory(type);
+        } else {
+            updateProductDesignationsForCategory('');
+        }
+        const isEditing = !!salesEditIndexInput?.value;
+        if (!isEditing) {
+            Object.entries(subForms).forEach(([formType, formElement]) => {
+                if (formType !== type && formElement) {
+                    formElement.querySelectorAll('input, select').forEach(input => {
+                        if (input.type === 'select-one') {
+                            input.selectedIndex = 0;
+                        } else if (input.type !== 'hidden' && !input.readOnly) {
+                            input.value = '';
+                        }
+                    });
+                }
+            });
+        }
+    }
 
     // --- NEW: Helper to get Title ---
     function getPrintExportTitle(containerId) {
@@ -804,6 +840,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             else if (['quantity-col', 'supply-col', 'sold-col', 'remaining-col', 'age-col', 'interest-col', 'time-col'].some(cls => headerClasses.contains(cls))) { data.cell.styles.halign = 'center'; }
                             else { data.cell.styles.halign = 'left'; }
                             if (headerClasses.contains('user-col')) { data.cell.styles.fontStyle = 'italic'; data.cell.styles.fontSize = (data.cell.styles.fontSize || 9) * 0.9; data.cell.styles.textColor = [100, 100, 100]; }
+                            if (headerClasses.contains('category-col')) { data.cell.styles.halign = 'left'; } // Ensure category is left aligned
                         }
                     }
                 }
@@ -1481,19 +1518,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
     // END MODIFICATION: Update Table function to accept data source
-    // START MODIFICATION: Update Table function to accept data source
+
+    // START MODIFICATION: Update Employee Permissions Table to include Category
     function updateEmployeePermissionsTable(dataToDisplay = employeePermissionsData) {
         if (!employeePermissionsTable) return;
         employeePermissionsTable.innerHTML = '';
         // Sorting handled externally
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; // Added for button logic
         dataToDisplay.forEach((perm) => {
             const originalIndex = employeePermissionsData.findIndex(p => p === perm);
             const row = employeePermissionsTable.insertRow();
             row.dataset.index = originalIndex;
             row.insertCell().textContent = perm.requestDate || '-'; row.cells[row.cells.length-1].classList.add('date-col'); // <-- Date column request
             row.insertCell().textContent = perm.name || '-'; row.cells[row.cells.length-1].classList.add('name-col');
+            row.insertCell().textContent = perm.category || '-'; row.cells[row.cells.length-1].classList.add('category-col'); // NEW: Category cell
             row.insertCell().textContent = perm.permissionDateOrPeriod || '-'; // This might contain dates but isn't consistently sortable
             const reasonCell = row.insertCell(); reasonCell.textContent = perm.reason || '-'; reasonCell.classList.add('reason-col');
             const statusCell = row.insertCell(); statusCell.textContent = perm.status || 'En attente'; statusCell.classList.add('status-col');
@@ -1508,22 +1546,21 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
         });
     }
-    // END MODIFICATION: Update Table function to accept data source
+    // END MODIFICATION
 
-    // START OF SECTION SPECIFIED IN PROMPT
-    // START MODIFICATION: Update Table function to accept data source
+    // START MODIFICATION: Update Learner Permissions Table to include Category
     function updateLearnerPermissionsTable(dataToDisplay = learnerPermissionsData) {
         if (!learnerPermissionsTable) return;
         learnerPermissionsTable.innerHTML = '';
         // Sorting handled externally
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; // Added for button logic
         dataToDisplay.forEach((perm) => {
             const originalIndex = learnerPermissionsData.findIndex(p => p === perm);
             const row = learnerPermissionsTable.insertRow();
             row.dataset.index = originalIndex;
             row.insertCell().textContent = perm.requestDate || '-'; row.cells[row.cells.length-1].classList.add('date-col'); // <-- Date column request
             row.insertCell().textContent = perm.name || '-'; row.cells[row.cells.length-1].classList.add('name-col');
+            row.insertCell().textContent = perm.category || '-'; row.cells[row.cells.length-1].classList.add('category-col'); // NEW: Category cell
             row.insertCell().textContent = perm.permissionDateOrPeriod || '-'; // Might contain dates but not consistently sortable
             const reasonCell = row.insertCell(); reasonCell.textContent = perm.reason || '-'; reasonCell.classList.add('reason-col');
             const statusCell = row.insertCell(); statusCell.textContent = perm.status || 'En attente'; statusCell.classList.add('status-col');
@@ -1538,7 +1575,8 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
         });
     }
-    // END MODIFICATION: Update Table function to accept data source
+    // END MODIFICATION
+
     function updateAdminTable() { if (!adminTable) return; adminTable.innerHTML = ''; const sortedAdminData = [...adminData].sort((a, b) => (a.username || '').localeCompare(b.username || '')); const isAdmin = currentUser && currentUser.status === 'Administrateur'; sortedAdminData.forEach(user => { const row = adminTable.insertRow(); row.dataset.key = user.username; row.insertCell().textContent = user.username || '-'; row.cells[row.cells.length-1].classList.add('name-col'); row.insertCell().textContent = user.post || '-'; row.cells[row.cells.length-1].classList.add('post-col'); const statusCell = row.insertCell(); statusCell.textContent = user.status || '-'; statusCell.classList.add('status-col'); statusCell.style.fontWeight = 'bold'; switch(user.status) { case 'Administrateur': statusCell.style.color = 'var(--color-danger)'; break; case 'Editeur': statusCell.style.color = 'var(--color-primary)'; break; case 'Lecteur': statusCell.style.color = 'var(--color-success)'; break; default: statusCell.style.color = 'var(--color-secondary-dark)'; } const actionCell = row.insertCell(); actionCell.classList.add('actions-cell', 'no-print', 'no-export'); const safeUsername = (user.username || '').replace(/'/g, "\\'"); const isSelf = currentUser && currentUser.username === user.username; const isLastAdmin = user.status === 'Administrateur' && adminData.filter(u => u.status === 'Administrateur').length <= 1; actionCell.innerHTML = ` <button class="action-btn edit-btn" aria-label="Modifier Utilisateur" title="Modifier" onclick="editAdminUser('${safeUsername}')" ${!isAdmin || isSelf ? 'disabled' : ''}>✏️</button> <button class="action-btn delete-btn" aria-label="Supprimer Utilisateur" title="Supprimer" onclick="deleteAdminUser('${safeUsername}')" ${!isAdmin || isSelf || isLastAdmin ? 'disabled' : ''}>❌</button> `; }); }
     // START MODIFICATION: Update Table function to accept data source
     function updateEquipmentTable(dataToDisplay = equipmentData) {
@@ -1867,16 +1905,37 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(error => { /* Error handled */ });
     });
+
+    // START MODIFICATION: Include category in permission form submit
     if (permissionEmployeeForm) permissionEmployeeForm.addEventListener('submit', function (event) {
         event.preventDefault();
          if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { // Allow Editor to add
             alert("Accès Refusé: Permissions insuffisantes."); return;
         }
         // Editing is not done via form, only status update via table buttons (Admin only)
-        const requestDate = permEmpReqDateInput?.value; const name = permEmpNameSelect?.value; const permissionDateOrPeriod = permEmpDateInput?.value.trim(); const reason = permEmpReasonTextarea?.value.trim(); if (!requestDate || !name || !permissionDateOrPeriod || !reason) { alert("Veuillez remplir tous les champs pour la demande de permission."); return; } const newPermission = { requestDate, name, permissionDateOrPeriod, reason, status: 'En attente', recordedBy: currentUser?.username || 'N/A' }; let tempLocalData = [...employeePermissionsData]; tempLocalData.push(newPermission);
+        const requestDate = permEmpReqDateInput?.value;
+        const name = permEmpNameSelect?.value;
+        const category = permEmpCategorySelect?.value; // Get selected category
+        const permissionDateOrPeriod = permEmpDateInput?.value.trim();
+        const reason = permEmpReasonTextarea?.value.trim();
+        if (!requestDate || !name || !category || !permissionDateOrPeriod || !reason) { // Check category
+            alert("Veuillez remplir tous les champs pour la demande (y compris la catégorie).");
+            return;
+        }
+        const newPermission = {
+            requestDate,
+            name,
+            category, // Save category
+            permissionDateOrPeriod,
+            reason,
+            status: 'En attente',
+            recordedBy: currentUser?.username || 'N/A'
+        };
+        let tempLocalData = [...employeePermissionsData];
+        tempLocalData.push(newPermission);
         saveDataToFirebase('employeePermissionsData', tempLocalData)
             .then(() => {
-                alert(`Demande de permission ajoutée pour ${name}.`);
+                alert(`Demande de permission (${category}) ajoutée pour ${name}.`);
                 permissionEmployeeForm.reset();
                 setTodaysDate();
                 updateConnectedUserFields();
@@ -1890,10 +1949,29 @@ document.addEventListener('DOMContentLoaded', function () {
             alert("Accès Refusé: Permissions insuffisantes."); return;
         }
         // Editing is not done via form, only status update via table buttons (Admin only)
-        const requestDate = permLrnReqDateInput?.value; const name = permLrnNameSelect?.value; const permissionDateOrPeriod = permLrnDateInput?.value.trim(); const reason = permLrnReasonTextarea?.value.trim(); if (!requestDate || !name || !permissionDateOrPeriod || !reason) { alert("Veuillez remplir tous les champs pour la demande de permission."); return; } const newPermission = { requestDate, name, permissionDateOrPeriod, reason, status: 'En attente', recordedBy: currentUser?.username || 'N/A' }; let tempLocalData = [...learnerPermissionsData]; tempLocalData.push(newPermission);
+        const requestDate = permLrnReqDateInput?.value;
+        const name = permLrnNameSelect?.value;
+        const category = permLrnCategorySelect?.value; // Get selected category
+        const permissionDateOrPeriod = permLrnDateInput?.value.trim();
+        const reason = permLrnReasonTextarea?.value.trim();
+        if (!requestDate || !name || !category || !permissionDateOrPeriod || !reason) { // Check category
+            alert("Veuillez remplir tous les champs pour la demande (y compris la catégorie).");
+            return;
+        }
+        const newPermission = {
+            requestDate,
+            name,
+            category, // Save category
+            permissionDateOrPeriod,
+            reason,
+            status: 'En attente',
+            recordedBy: currentUser?.username || 'N/A'
+        };
+        let tempLocalData = [...learnerPermissionsData];
+        tempLocalData.push(newPermission);
         saveDataToFirebase('learnerPermissionsData', tempLocalData)
             .then(() => {
-                alert(`Demande de permission ajoutée pour ${name}.`);
+                alert(`Demande de permission (${category}) ajoutée pour ${name}.`);
                 permissionLearnerForm.reset();
                 setTodaysDate();
                 updateConnectedUserFields();
@@ -1901,6 +1979,8 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(error => { /* Error handled */ });
     });
+    // END MODIFICATION
+
     if (adminForm) adminForm.addEventListener('submit', function (event) {
         event.preventDefault();
         if (!currentUser || currentUser.status !== 'Administrateur') {
@@ -2025,10 +2105,38 @@ document.addEventListener('DOMContentLoaded', function () {
     const addReportTypeListener = (button, daily, weekly, monthly, yearly) => { if (button && !button._hasReportTypeListener) { button.addEventListener('click', () => showReportFilters(daily, weekly, monthly, yearly)); button._hasReportTypeListener = true; } };
     addReportTypeListener(dailyReportButton, true, false, false, false); addReportTypeListener(weeklyReportButton, false, true, false, false); addReportTypeListener(monthlyReportButton, false, false, true, false); addReportTypeListener(yearlyReportButton, false, false, false, true);
     if(generateReportButton && !generateReportButton._hasClickListener) { generateReportButton.addEventListener('click', function () { if (!currentUser) { alert("Accès refusé."); return; } let selectedDate = null, selectedWeek = null, selectedMonth = null, selectedYear = null; let filterType = '', filterLabel = ''; if (!dailyFilter?.classList.contains('hidden')) { selectedDate = reportDateInput?.value; filterType = 'day'; filterLabel = selectedDate ? `Jour: ${selectedDate}` : 'Journalier'; } else if (!weeklyFilter?.classList.contains('hidden')) { selectedWeek = reportWeekInput?.value; filterType = 'week'; filterLabel = selectedWeek ? `Semaine: ${selectedWeek}` : 'Hebdomadaire'; } else if (!monthlyFilter?.classList.contains('hidden')) { selectedMonth = reportMonthInput?.value; filterType = 'month'; filterLabel = selectedMonth ? `Mois: ${selectedMonth}` : 'Mensuel'; } else if (!yearlyFilter?.classList.contains('hidden')) { selectedYear = reportYearInput?.value; filterType = 'year'; filterLabel = selectedYear ? `Année: ${selectedYear}` : 'Annuel'; } else { alert("Choisissez d'abord un type de bilan."); return; } if ((filterType === 'day' && !selectedDate) || (filterType === 'week' && !selectedWeek) || (filterType === 'month' && !selectedMonth) || (filterType === 'year' && !selectedYear)) { alert("Veuillez spécifier la période pour le bilan."); return; } const filterDataByDate = (data) => { if (!Array.isArray(data)) return []; return data.filter(item => { if (!item?.date) return false; const itemDateStr = item.date; try { if (filterType === 'day') { return itemDateStr === selectedDate; } if (filterType === 'month') { return itemDateStr.startsWith(selectedMonth); } if (filterType === 'year') { return itemDateStr.startsWith(selectedYear.toString()); } if (filterType === 'week') { if (!selectedWeek?.includes('-W')) return false; const [yW, wW] = selectedWeek.split('-W').map(Number); if (isNaN(yW) || isNaN(wW)) return false; const startOfWeek = getDateOfISOWeek(wW, yW); if (isNaN(startOfWeek.getTime())) return false; const endOfWeek = new Date(startOfWeek); endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6); endOfWeek.setUTCHours(23, 59, 59, 999); const itemDate = new Date(itemDateStr + 'T00:00:00Z'); if (isNaN(itemDate.getTime())) return false; return itemDate >= startOfWeek && itemDate <= endOfWeek; } return false; } catch (e) { console.error("Erreur filtre date:", item, filterType, e); return false; } }); }; const filteredSales = filterDataByDate(salesData); const filteredMESales = filterDataByDate(materielElectriqueData); const filteredExpenses = filterDataByDate(expensesData); const filteredOthers = filterDataByDate(othersData); const filteredSupplies = filterDataByDate(supplyData); const filteredMobileMoney = filterDataByDate(mobileMoneyData); updateReportTable(filteredSales, filteredMESales, filteredExpenses, filteredOthers, filteredSupplies, filteredMobileMoney, filterLabel); if (reportDetailsContainer) reportDetailsContainer.classList.remove('hidden'); if (showReportDetailsButton) showReportDetailsButton.classList.remove('hidden'); }); generateReportButton._hasClickListener = true; }
-    function updateReportTable(papeterieSales, meSales, expenses, others, supplies, mobileMoney, filterLabel) { /* ... Function remains the same ... */ if (!reportTable) return; reportTable.innerHTML = ''; const reportTitleH3 = reportDetailsContainer?.querySelector('h3'); if (reportTitleH3) reportTitleH3.textContent = `Bilan Généré (${filterLabel})`; let totalPapeterieIncome = 0, totalMEIncome = 0, totalOthersIncome = 0; let totalPapeterieExpense = 0, totalMEExpense = 0, totalOtherExpenses = 0, totalDiversExpense = 0; let totalMMCreditLoss = 0, totalMMTransferLoss = 0; const addRow = (type, detail, quantity, amount, isIncome = true) => { const row = reportTable.insertRow(); row.insertCell().textContent = type; row.cells[row.cells.length-1].classList.add('type-col'); row.insertCell().textContent = detail; row.cells[row.cells.length-1].classList.add('designation-col'); const qtyCell = row.insertCell(); qtyCell.textContent = quantity ?? '-'; qtyCell.classList.add('quantity-col'); const amountCell = row.insertCell(); amountCell.textContent = formatAmount(amount); amountCell.classList.add('amount-col'); amountCell.style.color = isIncome ? 'var(--color-success)' : 'var(--color-danger)'; }; papeterieSales.forEach(item => { const income = item.totalAmount || 0; addRow('Vente Papeterie', item.designation, item.quantity, income); totalPapeterieIncome += income; }); meSales.forEach(item => { const income = item.totalAmount || 0; addRow('Vente Mat. Elec.', item.designation, item.quantity, income); totalMEIncome += income; }); others.forEach(item => { const income = item.totalAmount || 0; addRow('Opération Diverse (Revenu)', item.designation, item.quantity, income); totalOthersIncome += income; }); expenses.forEach(item => { const expense = item.amount || 0; addRow('Dépense Directe', item.reason, item.quantity, expense, false); totalOtherExpenses += expense; }); supplies.forEach(item => { const expense = item.totalAmount || 0; const type = item.type === 'Papeterie' ? 'Appro. Papeterie' : (item.type === 'Matériels électrique' ? 'Appro. Mat. Elec.' : 'Appro. Divers'); addRow(type, item.designation, item.quantity, expense, false); if (item.type === 'Papeterie') totalPapeterieExpense += expense; else if (item.type === 'Matériels électrique') totalMEExpense += expense; else totalDiversExpense += expense; }); mobileMoney.forEach(item => { const creditLoss = item.perteCredit || 0; const transferLoss = item.perteTransfert || 0; if (creditLoss > 0) { addRow('Perte MM (Crédit)', `Agent: ${item.agent}`, '-', creditLoss, false); totalMMCreditLoss += creditLoss; } if (transferLoss > 0) { addRow('Perte MM (Transfert/Retrait)', `Agent: ${item.agent}`, '-', transferLoss, false); totalMMTransferLoss += transferLoss; } }); const totalIncome = totalPapeterieIncome + totalMEIncome + totalOthersIncome; const totalExpense = totalPapeterieExpense + totalMEExpense + totalDiversExpense + totalOtherExpenses + totalMMCreditLoss + totalMMTransferLoss; const netResult = totalIncome - totalExpense; const summaryRow = reportTable.insertRow(); summaryRow.style.fontWeight = 'bold'; summaryRow.style.backgroundColor = '#e9ecef'; summaryRow.insertCell().textContent = 'TOTAL'; summaryRow.insertCell().textContent = 'Revenus: ' + formatAmount(totalIncome); summaryRow.cells[1].style.color = 'var(--color-success)'; summaryRow.insertCell().textContent = 'Dépenses: ' + formatAmount(totalExpense); summaryRow.cells[2].style.color = 'var(--color-danger)'; const netCell = summaryRow.insertCell(); netCell.textContent = formatAmount(netResult); netCell.classList.add('amount-col'); netCell.style.color = netResult >= 0 ? 'var(--color-success)' : 'var(--color-danger)'; }
+    function updateReportTable(papeterieSales, meSales, expenses, others, supplies, mobileMoney, filterLabel) { /* ... Function remains the same ... */ if (!reportTable) return; reportTable.innerHTML = ''; const reportTitleH3 = reportDetailsContainer?.querySelector('h3'); if (reportTitleH3) reportTitleH3.textContent = `Bilan Généré (${filterLabel})`; let totalPapeterieIncome = 0, totalMEIncome = 0, totalOthersIncome = 0; let totalPapeterieExpense = 0, totalMEExpense = 0, totalOtherExpenses = 0, totalDiversExpense = 0; let totalMMCreditLoss = 0, totalMMTransferLoss = 0; const addRow = (type, detail, quantity, amount, isIncome = true) => { const row = reportTable.insertRow(); row.insertCell().textContent = type; row.cells[row.cells.length-1].classList.add('type-col'); row.insertCell().textContent = detail; row.cells[row.cells.length-1].classList.add('designation-col'); const qtyCell = row.insertCell(); qtyCell.textContent = quantity ?? '-'; qtyCell.classList.add('quantity-col'); const amountCell = row.insertCell(); amountCell.textContent = formatAmount(amount); amountCell.classList.add('amount-col'); amountCell.style.color = isIncome ? 'var(--color-success)' : 'var(--color-danger)'; }; papeterieSales.forEach(item => { const income = item.totalAmount || 0; addRow('Vente Papeterie', item.designation, item.quantity, income); totalPapeterieIncome += income; }); meSales.forEach(item => { const income = item.totalAmount || 0; addRow('Vente Mat. Elec.', item.designation, item.quantity, income); totalMEIncome += income; }); others.forEach(item => { const income = item.totalAmount || 0; addRow('Opération Diverse (Revenu)', item.designation, item.quantity, income); totalOthersIncome += income; }); expenses.forEach(item => { const expense = item.amount || 0; addRow('Dépense Directe', item.reason, item.quantity, expense, false); totalOtherExpenses += expense; }); supplies.forEach(item => { const expense = item.totalAmount || 0; const type = item.type === 'Papeterie' ? 'Appro. Papeterie' : (item.type === 'Matériels électrique' ? 'Appro. Mat. Elec.' : 'Appro. Divers'); addRow(type, item.designation, item.quantity, expense, false); if (item.type === 'Papeterie') totalPapeterieExpense += expense; else if (item.type === 'Matériels électrique') totalMEExpense += expense; else totalDiversExpense += expense; }); mobileMoney.forEach(item => { const creditLoss = item.perteCredit || 0; const transferLoss = item.perteTransfert || 0; if (creditLoss > 0) { addRow('Perte MM (Crédit)', `Agent: ${item.agent}`, '-', creditLoss, false); totalMMCreditLoss += creditLoss; } if (transferLoss > 0) { addRow('Perte MM (Transfert/Retrait)', `Agent: ${item.agent}`, '-', transferLoss, false); totalMMTransferLoss += transferLoss; } });
+        const totalIncome = totalPapeterieIncome + totalMEIncome + totalOthersIncome;
+        const totalExpense = totalPapeterieExpense + totalMEExpense + totalDiversExpense + totalOtherExpenses + totalMMCreditLoss + totalMMTransferLoss;
+        const netResult = totalIncome - totalExpense;
+
+        const summaryRow = reportTable.insertRow();
+        summaryRow.style.fontWeight = 'bold';
+        summaryRow.style.backgroundColor = '#e9ecef';
+        summaryRow.insertCell().textContent = 'TOTAL';
+        summaryRow.insertCell().textContent = 'Revenus: ' + formatAmount(totalIncome);
+        summaryRow.cells[1].style.color = 'var(--color-success)';
+        summaryRow.insertCell().textContent = 'Dépenses: ' + formatAmount(totalExpense);
+        summaryRow.cells[2].style.color = 'var(--color-danger)';
+        const netCell = summaryRow.insertCell();
+        netCell.textContent = formatAmount(netResult);
+        netCell.classList.add('amount-col');
+        netCell.style.color = netResult >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    }
 
     /** Helper Function to Save Data to Firebase */
-    async function saveDataToFirebase(key, data) { /* ... Function remains the same ... */ try { const dataToSave = data === undefined || data === null ? [] : data; await dataRef.child(key).set(dataToSave); return Promise.resolve(); } catch (error) { console.error(`Firebase save error for key [${key}]:`, error); alert(`Erreur critique lors de la sauvegarde des données (${key}). Vos dernières modifications pourraient être perdues. Vérifiez votre connexion et réessayez.`); throw error; } }
+    async function saveDataToFirebase(key, data) {
+        /* ... Function remains the same ... */
+        try {
+            const dataToSave = data === undefined || data === null ? [] : data;
+            await dataRef.child(key).set(dataToSave);
+            return Promise.resolve();
+        } catch (error) {
+            console.error(`Firebase save error for key [${key}]:`, error);
+            alert(`Erreur critique lors de la sauvegarde des données (${key}). Vos dernières modifications pourraient être perdues. Vérifiez votre connexion et réessayez.`);
+            throw error; // Re-throw to be caught by the caller if needed
+        }
+    }
 
     // --- Delete Functions (MODIFIED: Removed scroll) ---
     window.deleteSupply = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= supplyData.length) return; const item = supplyData[index]; if (confirm(`Supprimer appro ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...supplyData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('supplyData', tempLocalData); alert('Approvisionnement supprimé.'); /* REMOVED: supplyForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
