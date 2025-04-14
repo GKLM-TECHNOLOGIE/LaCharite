@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const database = firebase.database();
     const dataRef = database.ref('gestionnaireData');
+    const invoiceCounterRef = database.ref('gestionnaireSettings/invoiceCounter'); // Dedicated path for counter
     let firebaseListenerHandle = null; // Pour stocker la référence du listener
 
     // --- Constants ---
@@ -402,7 +403,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Invoice Counter
     let invoiceItemIndex = 1;
-    let localInvoiceCounter = 1; // Reset on load/refresh, simple counter
+    let localInvoiceCounter = 1; // This will hold the NEXT invoice number to use
 
     // --- Global Data Variables ---
     // ... (Global data variables remain the same) ...
@@ -437,7 +438,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function setTodaysDate() { const today = new Date().toISOString().split('T')[0]; const now = new Date(); const year = now.getFullYear(); const month = (now.getMonth() + 1).toString().padStart(2, '0'); ['sale-date', 'supply-date', 'mm-date', 'creditor-date', 'creditor-due-date', 'employee-hire-date', 'debt-date', 'debt-due-date', 'report-date', 'perm-emp-req-date', 'perm-lrn-req-date', 'invoice-gen-date', 'equipment-assigned-date'].forEach(id => { const element = document.getElementById(id); if (element && element.type === 'date' && !element.value) { element.value = today; } }); if (reportYearInput && !reportYearInput.value) reportYearInput.value = year; if(reportMonthInput && !reportMonthInput.value) reportMonthInput.value = `${year}-${month}`; if(reportWeekInput && !reportWeekInput.value){ try { const currentThursday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())); currentThursday.setUTCDate(currentThursday.getUTCDate() + 4 - (currentThursday.getUTCDay() || 7)); const yearStart = new Date(Date.UTC(currentThursday.getUTCFullYear(), 0, 1)); const weekNo = Math.ceil((((currentThursday - yearStart) / 86400000) + 1) / 7); const weekYear = currentThursday.getUTCFullYear(); reportWeekInput.value = `${weekYear}-W${weekNo.toString().padStart(2,'0')}`; } catch (dateError) { console.error("Erreur calcul semaine par défaut:", dateError); } } }
     function toggleVisibility(element) { if (element) element.classList.toggle('hidden'); }
     function toggleSalesSubSectionVisibility(containerToShow) { const allSalesSubSections = [ salesDetailsContainer, materielElectriqueDetailsContainer, expensesDetailsContainer, othersDetailsContainer ]; allSalesSubSections.forEach(container => { if (container) { if (container === containerToShow && container.classList.contains('hidden')) { container.classList.remove('hidden'); } else if (container !== containerToShow) { container.classList.add('hidden'); } else if (container === containerToShow && !container.classList.contains('hidden')) { container.classList.add('hidden'); } } }); }
-    function setSectionVisibility(sectionToShow, sectionsToHide) { if (!sectionToShow) return; sectionsToHide.forEach(section => { if(section) section.classList.add('hidden'); }); sectionToShow.classList.remove('hidden'); const nonToggleDetails = [ reportDetailsContainer, reportFilters, showReportDetailsButton, document.getElementById('invoice-print-area') ].filter(Boolean); nonToggleDetails.forEach(container => container.classList.add('hidden')); if (sectionToShow !== supplySection && supplyEditIndexInput) supplyEditIndexInput.value = ''; if (sectionToShow !== salesSection) { if (salesEditIndexInput) salesEditIndexInput.value = ''; if (salesEditTypeInput) salesEditTypeInput.value = ''; if (salesForm) salesForm.querySelector('button[type="submit"]').textContent = 'Ajouter'; } if (sectionToShow !== employeesSection && employeeEditIndexInput) employeeEditIndexInput.value = ''; if (sectionToShow !== learnersSection && learnerEditIndexInput) learnerEditIndexInput.value = ''; if (sectionToShow !== mobileMoneySection) { if (mobileMoneyEditIndexInput) mobileMoneyEditIndexInput.value = ''; if (mmFournisseurEditKeyInput) mmFournisseurEditKeyInput.value = ''; } if (sectionToShow !== creditorsSection && clientProfileEditKeyInput) clientProfileEditKeyInput.value = ''; if (sectionToShow !== debtSection && debtEditIndexInput) debtEditIndexInput.value = ''; if (sectionToShow !== adminSection && adminEditKeyInput) adminEditKeyInput.value = ''; if (sectionToShow !== equipmentSection && equipmentEditIndexInput) equipmentEditIndexInput.value = ''; if (invoiceGeneratorSection && sectionToShow !== invoiceGeneratorSection) { invoiceGeneratorSection.classList.add('hidden'); } if (adminSection && sectionToShow !== adminSection) { adminSection.classList.add('hidden'); } if (equipmentSection && sectionToShow !== equipmentSection) { equipmentSection.classList.add('hidden'); } }
+    function setSectionVisibility(sectionToShow, sectionsToHide) { if (!sectionToShow) return; sectionsToHide.forEach(section => { if(section) section.classList.add('hidden'); }); sectionToShow.classList.remove('hidden'); const nonToggleDetails = [ reportDetailsContainer, reportFilters, showReportDetailsButton, document.getElementById('invoice-print-area') ].filter(Boolean); nonToggleDetails.forEach(container => container.classList.add('hidden')); if (sectionToShow !== supplySection && supplyEditIndexInput) supplyEditIndexInput.value = ''; if (sectionToShow !== salesSection) { if (salesEditIndexInput) salesEditIndexInput.value = ''; if (salesEditTypeInput) salesEditTypeInput.value = ''; if (salesForm) salesForm.querySelector('button[type="submit"]').textContent = 'Ajouter'; } if (sectionToShow !== employeesSection && employeeEditIndexInput) employeeEditIndexInput.value = ''; if (sectionToShow !== learnersSection && learnerEditIndexInput) learnerEditIndexInput.value = ''; if (sectionToShow !== mobileMoneySection) { if (mobileMoneyEditIndexInput) mobileMoneyEditIndexInput.value = ''; if (mmFournisseurEditKeyInput) mmFournisseurEditKeyInput.value = ''; } if (sectionToShow !== creditorsSection && clientProfileEditKeyInput) clientProfileEditKeyInput.value = ''; if (sectionToShow !== debtSection && debtEditIndexInput) debtEditIndexInput.value = ''; if (sectionToShow !== adminSection && adminEditKeyInput) adminEditKeyInput.value = ''; if (sectionToShow !== equipmentSection && equipmentEditIndexInput) equipmentEditIndexInput.value = '';
+        // When showing invoice section, initialize the form (this generates the next invoice number)
+        if (invoiceGeneratorSection && sectionToShow === invoiceGeneratorSection) {
+            initializeInvoiceForm();
+        }
+         if (adminSection && sectionToShow !== adminSection) { adminSection.classList.add('hidden'); } if (equipmentSection && sectionToShow !== equipmentSection) { equipmentSection.classList.add('hidden'); } }
     function handleOperationTypeChange() { if (!operationTypeSelect) return; const type = operationTypeSelect.value; const subForms = { 'Papeterie': papeterieDetailsForm, 'Matériels électrique': materielElectriqueDetailsForm, 'Dépenses': depensesDetailsForm, 'Divers': diversDetailsForm }; Object.values(subForms).forEach(form => { if (form) form.style.display = 'none'; }); const formToShow = subForms[type]; if (formToShow) { formToShow.style.display = 'flex'; } if (type === 'Papeterie' || type === 'Matériels électrique') { updateProductDesignationsForCategory(type); } else { updateProductDesignationsForCategory(''); } const isEditing = !!salesEditIndexInput?.value; if (!isEditing) { Object.entries(subForms).forEach(([formType, formElement]) => { if (formType !== type && formElement) { formElement.querySelectorAll('input, select').forEach(input => { if (input.type === 'select-one') { input.selectedIndex = 0; } else if (input.type !== 'hidden' && !input.readOnly) { input.value = ''; } }); } }); } }
 
     // --- NEW: Helper to get Title ---
@@ -507,16 +513,32 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // --- Helper to increment and save invoice counter ---
+    async function incrementAndSaveInvoiceCounter() {
+        const nextCounterValue = localInvoiceCounter + 1;
+        try {
+            await invoiceCounterRef.set(nextCounterValue);
+            localInvoiceCounter = nextCounterValue; // Update local counter only on successful save
+            console.log("Compteur facture mis à jour à:", localInvoiceCounter);
+            // Regenerate the number for the *next* invoice in the form field
+            if (invoiceGeneratorSection && !invoiceGeneratorSection.classList.contains('hidden')) {
+                 if(invoiceGenNumberInput) invoiceGenNumberInput.value = generateInvoiceNumber();
+            }
+        } catch (error) {
+            console.error("Erreur sauvegarde compteur facture Firebase:", error);
+            alert("Erreur sauvegarde du prochain numéro de facture. Veuillez vérifier la connexion.");
+            // Don't update local counter if save failed
+        }
+    }
+
+    // --- MODIFIED: printElement to handle invoice counter increment ---
     function printElement(elementId) {
-        // --- MODIFICATION START: Revised check ---
         const elementToPrint = document.getElementById(elementId);
-        // Check if element exists and has meaningful content (not just whitespace or comments)
         let hasVisibleContent = false;
         if (elementToPrint && elementToPrint.innerHTML) {
-            // A simple check: does it have any element nodes? More robust than just innerHTML.trim()
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = elementToPrint.innerHTML;
-            if (tempDiv.querySelector('*')) { // Check if any element exists within
+            if (tempDiv.querySelector('*')) {
                 hasVisibleContent = true;
             }
         }
@@ -525,35 +547,47 @@ document.addEventListener('DOMContentLoaded', function () {
             alert("Erreur: Contenu à imprimer vide ou introuvable (ID: " + elementId + "). Veuillez générer le contenu d'abord.");
             return;
         }
-        document.body.classList.add('printing-invoice');
+
+        const isInvoice = (elementId === 'invoice-print-area'); // Check if it's the invoice
+
+        document.body.classList.add('printing-invoice'); // Use this class for invoice styling
         elementToPrint.classList.add('show-in-print');
         elementToPrint.classList.remove('hidden');
+
+        let printInitiated = false;
+
         const afterPrintHandler = () => {
             document.body.classList.remove('printing-invoice');
             elementToPrint.classList.remove('show-in-print');
             elementToPrint.classList.add('hidden');
             window.removeEventListener('afterprint', afterPrintHandler);
             window.removeEventListener('unload', afterPrintHandler);
+
+            // Increment counter AFTER print dialog is likely closed/processed
+            if (isInvoice && printInitiated) {
+                 incrementAndSaveInvoiceCounter();
+            }
         };
         window.addEventListener('afterprint', afterPrintHandler);
         window.addEventListener('unload', afterPrintHandler);
+
         setTimeout(() => {
             try {
                 window.print();
+                printInitiated = true; // Mark that print was called
+                // Fallback timeout
                 setTimeout(() => {
                     if (document.body.classList.contains('printing-invoice')) {
-                        afterPrintHandler();
+                        afterPrintHandler(); // Cleanup if afterprint didn't fire
                     }
                 }, 1500);
             } catch (e) {
                 console.error("Erreur window.print():", e);
                 alert("Erreur lors du lancement de l'impression.");
-                afterPrintHandler();
+                afterPrintHandler(); // Ensure cleanup happens on error
             }
         }, 100);
     }
-    // --- MODIFICATION END: Revised check ---
-
 
     // --- MODIFIED EXCEL EXPORT FUNCTION ---
     function exportToExcel(tableId, fileName) {
@@ -798,13 +832,33 @@ document.addEventListener('DOMContentLoaded', function () {
     function getDateOfISOWeek(w, y) { try { const simple = new Date(Date.UTC(y, 0, 1 + (w - 1) * 7)); const dow = simple.getUTCDay(); const ISOweekStart = simple; ISOweekStart.setUTCDate(simple.getUTCDate() - dow + (dow === 0 ? -6 : 1)); return ISOweekStart; } catch (e) { console.error(`Error calculating start of week for ${y}-W${w}:`, e); return new Date(NaN); } }
     function populateEmployeeSelect(targetSelect) { if (!targetSelect || !employeesData) return; const currentVal = targetSelect.value; targetSelect.innerHTML = '<option value="">-- Choisir Employé --</option>'; const sortedEmployees = [...employeesData].sort((a, b) => (a.nom || '').localeCompare(b.nom || '')); sortedEmployees.forEach(emp => { const fullName = `${emp.nom || ''} ${emp.prenom || ''}`.trim(); if (fullName) { const option = document.createElement('option'); option.value = fullName; option.textContent = fullName; targetSelect.appendChild(option); } }); if (Array.from(targetSelect.options).some(opt => opt.value === currentVal)) { targetSelect.value = currentVal; } else { targetSelect.selectedIndex = 0; } }
     function populateLearnerSelectForPermission() { if (!permLrnNameSelect || !learnersData) return; const currentVal = permLrnNameSelect.value; permLrnNameSelect.innerHTML = '<option value="">-- Choisir Apprenant --</option>'; const sortedLearners = [...learnersData].sort((a, b) => (a.nom || '').localeCompare(b.nom || '')); sortedLearners.forEach(lrn => { const fullName = `${lrn.nom || ''} ${lrn.prenom || ''}`.trim(); if (fullName) { const option = document.createElement('option'); option.value = fullName; option.textContent = fullName; permLrnNameSelect.appendChild(option); } }); if (Array.from(permLrnNameSelect.options).some(opt => opt.value === currentVal)) { permLrnNameSelect.value = currentVal; } else { permLrnNameSelect.selectedIndex = 0; } }
-    function generateInvoiceNumber() { const year = new Date().getFullYear(); const number = localInvoiceCounter++; return `FACT-${year}-${number.toString().padStart(5, '0')}`; }
+    // --- MODIFIED: Generates invoice number using the current counter ---
+    function generateInvoiceNumber() {
+        const year = new Date().getFullYear();
+        const number = localInvoiceCounter; // Use the current counter value
+        return `FACT-${year}-${number.toString().padStart(5, '0')}`;
+    }
     function numberToWordsFrench(num) { if (num === null || num === undefined || isNaN(num)) return ''; num = Math.abs(num); const belowTwenty = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"]; const tens = ["", "", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingt", "quatre-vingt-dix"]; const scales = ["", "mille", "million", "milliard", "billion"]; function convertChunk(n) { if (n === 0) return ''; if (n < 20) return belowTwenty[n]; if (n < 70) { let ten = Math.floor(n / 10); let unit = n % 10; if (unit === 0) return tens[ten]; if (unit === 1 && ten !== 8 && ten !== 9) return tens[ten] + "-et-" + belowTwenty[unit]; return tens[ten] + (unit ? "-" + belowTwenty[unit] : ""); } if (n < 80) { return "soixante" + (n === 71 ? "-et-" : "-") + belowTwenty[n - 60]; } if (n < 100) { if (n === 80) return tens[8] + "s"; if (n < 90) return tens[8] + "-" + belowTwenty[n - 80]; return tens[9] + "-" + belowTwenty[n - 90]; } let h = Math.floor(n / 100); let remainder = n % 100; let hWord = (h > 1 ? belowTwenty[h] + " " : "") + "cent"; if (h > 1 && remainder === 0) hWord += "s"; return hWord + (remainder === 0 ? "" : " " + convertChunk(remainder)); } if (num === 0) return "Zéro Francs CFA"; let word = ''; let i = 0; while (num > 0) { if (num % 1000 !== 0) { let chunk = num % 1000; let chunkWord = convertChunk(chunk); if (scales[i] === 'mille' && chunk === 1) { chunkWord = ''; } word = chunkWord + (scales[i] ? " " + scales[i] + (chunk > 1 && scales[i] !== 'mille' ? "s" : "") : "") + (word ? " " : "") + word; } num = Math.floor(num / 1000); i++; } if (i === 1 && word === "") word = "mille"; word = word.charAt(0).toUpperCase() + word.slice(1); return word.replace(/\s+/g, ' ').trim() + " Francs CFA"; }
     function updateConnectedUserFields() { const username = currentUser?.username || ''; const fields = document.querySelectorAll('.user-connected-field'); fields.forEach(field => { if (field instanceof HTMLInputElement) { field.value = username; } }); }
 
     /** Initializes the application UI - Called after login and on Firebase data update */
     function initializeAppUI() {
-        localInvoiceCounter = 1; // Reset invoice counter
+        // Fetch invoice counter if not already fetched or if login just happened
+        // This ensures 'localInvoiceCounter' is up-to-date before generating invoice numbers
+        if (localInvoiceCounter <= 1) { // Simple check, might need refinement
+            invoiceCounterRef.once('value').then(snapshot => {
+                localInvoiceCounter = snapshot.val() || 1; // Default to 1 if not set in DB
+                console.log("Compteur facture initial chargé:", localInvoiceCounter);
+                // Re-initialize invoice form if it's currently visible, to show the correct number
+                if (invoiceGeneratorSection && !invoiceGeneratorSection.classList.contains('hidden')) {
+                    initializeInvoiceForm();
+                }
+            }).catch(error => {
+                console.error("Erreur chargement compteur facture:", error);
+                localInvoiceCounter = 1; // Fallback
+            });
+        }
+
 
         setTodaysDate();
         // Update tables (includes sorting)
@@ -844,7 +898,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ].filter(Boolean);
         nonToggleDetails.forEach(container => container.classList.add('hidden'));
 
-        initializeInvoiceForm(); // Set up invoice generator defaults
+        // initializeInvoiceForm(); // Moved: Only call when section is shown or counter updates
         updateConnectedUserFields(); // Populate user fields based on currentUser
 
         // Apply role restrictions last to enable/disable elements correctly
@@ -888,7 +942,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const status = currentUser.status;
-        console.log(`Application des restrictions pour: ${status}`);
+        // console.log(`Application des restrictions pour: ${status}`); // Keep for debugging if needed
 
         const isAdmin = status === 'Administrateur';
         const isEditor = status === 'Editeur';
@@ -907,7 +961,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // --- DEFAULT STATE (Restrict all first) ---
         allNavButtons.forEach(btn => btn.style.display = 'none'); // Hide all nav buttons
-        allSections.forEach(section => section.classList.add('hidden')); // Hide all sections
+        // Keep sections as they are, visibility is controlled by setSectionVisibility
+        // allSections.forEach(section => section.classList.add('hidden')); // DO NOT hide all sections here, breaks navigation
         allSubmitButtons.forEach(btn => btn.disabled = true); // Disable all form submissions
         allActionButtons.forEach(btn => btn.disabled = true); // Disable all table actions
         if (addInvoiceItemButton) addInvoiceItemButton.disabled = true; // Disable add invoice item
@@ -921,7 +976,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isAdmin) {
             // console.log("Accès Administrateur Complet");
             allNavButtons.forEach(btn => btn.style.display = ''); // Show all nav buttons
-            // NOTE: Section visibility is handled by clicking the nav buttons
             allSubmitButtons.forEach(btn => btn.disabled = false); // Enable all submit buttons
             updateAllTablesForPermissions(); // This will re-enable action buttons based on admin logic
 
@@ -937,28 +991,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
         } else if (isEditor) {
             // console.log("Accès Editeur");
-            // Allowed Nav Buttons & Sections (implicitly show section when button clicked)
+            // Allowed Nav Buttons
             if (showSupplySectionButton) showSupplySectionButton.style.display = '';
             if (showSalesSectionButton) showSalesSectionButton.style.display = '';
+            if (showEmployeesSectionButton) showEmployeesSectionButton.style.display = ''; // Allow access
+            if (showLearnersSectionButton) showLearnersSectionButton.style.display = ''; // Allow access
+            if (showCreditorsSectionButton) showCreditorsSectionButton.style.display = ''; // Allow access
+            if (showEquipmentSectionButton) showEquipmentSectionButton.style.display = ''; // Allow access
             if (generateInvoiceButton) generateInvoiceButton.style.display = '';
-            // Hide Report button for Editor
+            // Hide others
+            if (showMobileMoneySectionButton) showMobileMoneySectionButton.style.display = 'none';
+            if (showDebtSectionButton) showDebtSectionButton.style.display = 'none';
             if (showReportSectionButton) showReportSectionButton.style.display = 'none';
+            if (showAdminSectionButton) showAdminSectionButton.style.display = 'none';
 
             // Allowed Form Submits (Adding only)
             if (supplyForm) supplyForm.querySelector('button[type="submit"]').disabled = false;
             if (salesForm) salesForm.querySelector('button[type="submit"]').disabled = false;
+            if (employeeForm) employeeForm.querySelector('button[type="submit"]').disabled = false; // Allow adding employees
+            if (learnerForm) learnerForm.querySelector('button[type="submit"]').disabled = false; // Allow adding learners
+            if (clientProfileForm) clientProfileForm.querySelector('button[type="submit"]').disabled = false; // Allow adding profiles
+            if (creditorForm) creditorForm.querySelector('button[type="submit"]').disabled = false; // Allow adding credit/payments
+            if (equipmentForm) equipmentForm.querySelector('button[type="submit"]').disabled = false; // Allow adding equipment assignments
+            if (permissionEmployeeForm) permissionEmployeeForm.querySelector('button[type="submit"]').disabled = false; // Allow adding emp permissions
+            if (permissionLearnerForm) permissionLearnerForm.querySelector('button[type="submit"]').disabled = false; // Allow adding lrn permissions
+
             // Explicitly disable submits for other forms
-            if (employeeForm) employeeForm.querySelector('button[type="submit"]').disabled = true;
-            if (learnerForm) learnerForm.querySelector('button[type="submit"]').disabled = true;
             if (mobileMoneyForm) mobileMoneyForm.querySelector('button[type="submit"]').disabled = true;
             if (mmFournisseurForm) mmFournisseurForm.querySelector('button[type="submit"]').disabled = true;
-            if (clientProfileForm) clientProfileForm.querySelector('button[type="submit"]').disabled = true;
-            if (creditorForm) creditorForm.querySelector('button[type="submit"]').disabled = true;
             if (debtForm) debtForm.querySelector('button[type="submit"]').disabled = true;
-            if (permissionEmployeeForm) permissionEmployeeForm.querySelector('button[type="submit"]').disabled = true;
-            if (permissionLearnerForm) permissionLearnerForm.querySelector('button[type="submit"]').disabled = true;
             if (adminForm) adminForm.querySelector('button[type="submit"]').disabled = true;
-            if (equipmentForm) equipmentForm.querySelector('button[type="submit"]').disabled = true;
+
 
             // Enable Invoice Generation for Editor
             if (addInvoiceItemButton) addInvoiceItemButton.disabled = false;
@@ -973,21 +1036,12 @@ document.addEventListener('DOMContentLoaded', function () {
             allInvoicePrintButtons.forEach(btn => btn.disabled = false); // Allow printing credit receipts
 
             // Explicitly Disable actions not allowed for Editor
-            allEditButtons.forEach(btn => btn.disabled = true);
-            allDeleteButtons.forEach(btn => btn.disabled = true);
-            allPayButtons.forEach(btn => btn.disabled = true);
-            allPermissionButtons.forEach(btn => btn.disabled = true);
+            updateAllTablesForPermissions(); // Let table update functions handle disabling based on role check
+            allEditButtons.forEach(btn => btn.disabled = true); // Override: Editors cannot edit
+            allDeleteButtons.forEach(btn => btn.disabled = true); // Override: Editors cannot delete
+            allPayButtons.forEach(btn => btn.disabled = true); // Override: Editors cannot pay salary/tranche directly via button
+            allPermissionButtons.forEach(btn => btn.disabled = true); // Override: Editors cannot approve/reject permissions
 
-            // Ensure other sections remain hidden (even if nav button was missed)
-            if (employeesSection) employeesSection.classList.add('hidden');
-            if (learnersSection) learnersSection.classList.add('hidden');
-            if (mobileMoneySection) mobileMoneySection.classList.add('hidden');
-            if (creditorsSection) creditorsSection.classList.add('hidden');
-            if (debtSection) debtSection.classList.add('hidden');
-            if (adminSection) adminSection.classList.add('hidden');
-            if (equipmentSection) equipmentSection.classList.add('hidden');
-            // Ensure report section remains hidden for editor
-            if (reportSection) reportSection.classList.add('hidden');
 
         // --- MODIFIED LECTEUR BLOCK START ---
         } else if (isLecteur) {
@@ -1006,6 +1060,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (exportInvoicePdfButton) exportInvoicePdfButton.disabled = true; // NEW
 
             // All other nav buttons, sections, submits, actions remain hidden/disabled by the default state.
+            updateAllTablesForPermissions(); // Refresh tables to show read-only state
         // --- MODIFIED LECTEUR BLOCK END ---
         }
 
@@ -1021,8 +1076,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const sectionElement = document.getElementById(sectionId);
             if (btn.style.display === 'none' && sectionElement && !sectionElement.classList.contains('hidden')) {
-                // console.log(`Hiding section ${sectionId} because its button is hidden`);
-                sectionElement.classList.add('hidden');
+                 // Find if any *other* button is trying to show *this* section
+                 let shouldBeVisible = false;
+                 allNavButtons.forEach(otherBtn => {
+                     if (otherBtn.style.display !== 'none') {
+                         let otherSectionId;
+                         if (otherBtn.id === 'generate-invoice-button') otherSectionId = 'invoice-generator-section';
+                         else otherSectionId = otherBtn.id.replace('show-', '').replace('-button', '') + '-section';
+                         if (otherSectionId === sectionId) {
+                             shouldBeVisible = true;
+                         }
+                     }
+                 });
+                 if (!shouldBeVisible) {
+                    // console.log(`Hiding section ${sectionId} because its button is hidden`);
+                    sectionElement.classList.add('hidden');
+                 }
             }
         });
     }
@@ -1063,6 +1132,10 @@ document.addEventListener('DOMContentLoaded', function () {
             learnerPermissionsData = getData('learnerPermissionsData');
             adminData = getData('adminData');
             equipmentData = getData('equipmentData'); // NEW
+
+            // Fetch invoice counter separately if needed (or handle if included in main snapshot)
+             // invoiceCounterRef.once('value').then(snap => { localInvoiceCounter = snap.val() || 1; });
+
 
             // If a user is logged in, refresh the UI completely
             if (currentUser) {
@@ -1219,6 +1292,7 @@ document.addEventListener('DOMContentLoaded', function () {
         employeesTable.innerHTML = '';
         // const sortedEmployees = [...employeesData].sort((a, b) => (a.nom || '').localeCompare(b.nom || '')); // Sorting handled externally
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
+        const isEditor = currentUser && currentUser.status === 'Editeur'; // Added for button logic
         dataToDisplay.forEach((employee) => {
             const originalIndex = employeesData.findIndex(emp => emp === employee);
             const row = employeesTable.insertRow();
@@ -1255,7 +1329,43 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
     // END MODIFICATION: Update Table function to accept data source
-    function updateLearnersTable() { if (!learnersTable) return; learnersTable.innerHTML = ''; const sortedLearners = [...learnersData].sort((a, b) => (a.nom || '').localeCompare(b.nom || '')); const isAdmin = currentUser && currentUser.status === 'Administrateur'; sortedLearners.forEach((learner) => { const originalIndex = learnersData.findIndex(l => l === learner); const row = learnersTable.insertRow(); row.dataset.index = originalIndex; row.insertCell().textContent = learner.nom || '-'; row.cells[row.cells.length-1].classList.add('name-col'); row.insertCell().textContent = learner.prenom || '-'; row.cells[row.cells.length-1].classList.add('name-col'); row.insertCell().textContent = learner.age || '-'; row.cells[row.cells.length-1].classList.add('age-col'); row.insertCell().textContent = learner.adresse || '-'; row.insertCell().textContent = learner.lieuResidence || '-'; row.insertCell().textContent = learner.niveauEtudes || '-'; row.insertCell().textContent = learner.situationMatrimoniale || '-'; row.insertCell().textContent = `${learner.pereNom || ''} ${learner.perePrenom || ''}`.trim() || '-'; row.insertCell().textContent = `${learner.mereNom || ''} ${learner.merePrenom || ''}`.trim() || '-'; row.insertCell().textContent = learner.filiere || '-'; row.cells[row.cells.length-1].classList.add('filiere-col'); row.insertCell().textContent = learner.dureeFormation || '-'; let cellDocs = row.insertCell(); cellDocs.textContent = formatAmount(learner.fraisDocuments); cellDocs.classList.add('amount-col'); let cellT1 = row.insertCell(); cellT1.textContent = formatAmount(learner.tranche1); cellT1.classList.add('amount-col'); let cellT2 = row.insertCell(); cellT2.textContent = formatAmount(learner.tranche2); cellT2.classList.add('amount-col'); let cellT3 = row.insertCell(); cellT3.textContent = formatAmount(learner.tranche3); cellT3.classList.add('amount-col'); let cellT4 = row.insertCell(); cellT4.textContent = formatAmount(learner.tranche4); cellT4.classList.add('amount-col'); row.insertCell().textContent = `${learner.garantNom || ''} ${learner.garantPrenom || ''}`.trim() || '-'; row.insertCell().textContent = learner.garantTelephone || '-'; row.insertCell().textContent = learner.garantAdresse || '-'; const actionCell = row.insertCell(); actionCell.classList.add('actions-cell', 'no-print', 'no-export'); actionCell.innerHTML = ` <button class="action-btn edit-btn" aria-label="Modifier Apprenant" title="Modifier" onclick="editLearner(${originalIndex})" ${originalIndex === -1 || !isAdmin ? 'disabled' : ''}>✏️</button> <button class="action-btn pay-btn" aria-label="Enregistrer Paiement Tranche" title="Payer Tranche" onclick="recordTranchePayment(${originalIndex})" ${originalIndex === -1 || !isAdmin ? 'disabled' : ''}>💲</button> <button class="action-btn delete-btn" aria-label="Supprimer Apprenant" title="Supprimer" onclick="deleteLearner(${originalIndex})" ${originalIndex === -1 || !isAdmin ? 'disabled' : ''}>❌</button> `; }); }
+    function updateLearnersTable(dataToDisplay = learnersData) {
+        if (!learnersTable) return;
+        learnersTable.innerHTML = '';
+        // Sorting handled externally
+        const isAdmin = currentUser && currentUser.status === 'Administrateur';
+        const isEditor = currentUser && currentUser.status === 'Editeur'; // Added for button logic
+        dataToDisplay.forEach((learner) => {
+            const originalIndex = learnersData.findIndex(l => l === learner);
+            const row = learnersTable.insertRow();
+            row.dataset.index = originalIndex;
+            row.insertCell().textContent = learner.nom || '-'; row.cells[row.cells.length - 1].classList.add('name-col');
+            row.insertCell().textContent = learner.prenom || '-'; row.cells[row.cells.length - 1].classList.add('name-col');
+            row.insertCell().textContent = learner.age || '-'; row.cells[row.cells.length - 1].classList.add('age-col');
+            row.insertCell().textContent = learner.adresse || '-';
+            row.insertCell().textContent = learner.lieuResidence || '-';
+            row.insertCell().textContent = learner.niveauEtudes || '-';
+            row.insertCell().textContent = learner.situationMatrimoniale || '-';
+            row.insertCell().textContent = `${learner.pereNom || ''} ${learner.perePrenom || ''}`.trim() || '-';
+            row.insertCell().textContent = `${learner.mereNom || ''} ${learner.merePrenom || ''}`.trim() || '-';
+            row.insertCell().textContent = learner.filiere || '-'; row.cells[row.cells.length - 1].classList.add('filiere-col');
+            row.insertCell().textContent = learner.dureeFormation || '-';
+            let cellDocs = row.insertCell(); cellDocs.textContent = formatAmount(learner.fraisDocuments); cellDocs.classList.add('amount-col');
+            let cellT1 = row.insertCell(); cellT1.textContent = formatAmount(learner.tranche1); cellT1.classList.add('amount-col');
+            let cellT2 = row.insertCell(); cellT2.textContent = formatAmount(learner.tranche2); cellT2.classList.add('amount-col');
+            let cellT3 = row.insertCell(); cellT3.textContent = formatAmount(learner.tranche3); cellT3.classList.add('amount-col');
+            let cellT4 = row.insertCell(); cellT4.textContent = formatAmount(learner.tranche4); cellT4.classList.add('amount-col');
+            row.insertCell().textContent = `${learner.garantNom || ''} ${learner.garantPrenom || ''}`.trim() || '-';
+            row.insertCell().textContent = learner.garantTelephone || '-';
+            row.insertCell().textContent = learner.garantAdresse || '-';
+            const actionCell = row.insertCell(); actionCell.classList.add('actions-cell', 'no-print', 'no-export');
+            actionCell.innerHTML = `
+                 <button class="action-btn edit-btn" aria-label="Modifier Apprenant" title="Modifier" onclick="editLearner(${originalIndex})" ${originalIndex === -1 || !isAdmin ? 'disabled' : ''}>✏️</button>
+                 <button class="action-btn pay-btn" aria-label="Enregistrer Paiement Tranche" title="Payer Tranche" onclick="recordTranchePayment(${originalIndex})" ${originalIndex === -1 || !isAdmin ? 'disabled' : ''}>💲</button>
+                 <button class="action-btn delete-btn" aria-label="Supprimer Apprenant" title="Supprimer" onclick="deleteLearner(${originalIndex})" ${originalIndex === -1 || !isAdmin ? 'disabled' : ''}>❌</button>
+             `;
+        });
+    }
     // START MODIFICATION: Update Table function to accept data source
     function updateMobileMoneyTable(dataToDisplay = mobileMoneyData) {
         if (!mobileMoneyTable) return;
@@ -1296,7 +1406,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // END MODIFICATION: Update Table function to accept data source
     function updateMmFournisseursTable() { if (!mmFournisseursTable) return; mmFournisseursTable.innerHTML = ''; const sortedFournisseurs = [...mmFournisseursData].sort((a, b) => { const nc = (a.nom || '').localeCompare(b.nom || ''); return nc !== 0 ? nc : (a.prenom || '').localeCompare(b.prenom || ''); }); const isAdmin = currentUser && currentUser.status === 'Administrateur'; const isEditor = currentUser && currentUser.status === 'Editeur'; sortedFournisseurs.forEach(f => { const row = mmFournisseursTable.insertRow(); const key = `${f.nom}_${f.prenom}`; row.dataset.key = key; const montantFourni = f.montantFourni || 0; const creditVendu = f.creditVendu || 0; const creditRestant = montantFourni - creditVendu; row.insertCell().textContent = f.nom || '-'; row.cells[row.cells.length-1].classList.add('name-col'); row.insertCell().textContent = f.prenom || '-'; row.cells[row.cells.length-1].classList.add('name-col'); row.insertCell().textContent = f.contact || '-'; row.cells[row.cells.length-1].classList.add('contact-col'); let cellMF = row.insertCell(); cellMF.textContent = formatAmount(montantFourni); cellMF.classList.add('amount-col'); let cellI = row.insertCell(); cellI.textContent = (f.interet !== null && f.interet !== undefined) ? `${f.interet}%` : '-'; cellI.classList.add('interest-col'); let cellCV = row.insertCell(); cellCV.textContent = formatAmount(creditVendu); cellCV.classList.add('amount-col'); let cellCR = row.insertCell(); cellCR.textContent = formatAmount(creditRestant); cellCR.classList.add('amount-col'); cellCR.style.fontWeight = 'bold'; row.classList.remove('solde', 'danger'); if (creditRestant <= 0.005) { row.classList.add('solde'); } else { row.classList.add('danger'); } const actionCell = row.insertCell(); actionCell.classList.add('actions-cell', 'no-print', 'no-export'); const safeNom = (f.nom || '').replace(/'/g, "\\'"); const safePrenom = (f.prenom || '').replace(/'/g, "\\'"); actionCell.innerHTML = ` <button class="action-btn edit-btn" aria-label="Modifier Fournisseur MM" title="Modifier" onclick="editMmFournisseur('${safeNom}', '${safePrenom}')" ${!isAdmin ? 'disabled' : ''}>✏️</button> <button class="action-btn delete-btn" aria-label="Supprimer Fournisseur MM" title="Supprimer" onclick="deleteMmFournisseur('${safeNom}', '${safePrenom}')" ${!isAdmin ? 'disabled' : ''}>❌</button> `; }); }
-    function updateClientProfilesTable() { if (!clientProfilesTable) return; clientProfilesTable.innerHTML = ''; const sortedProfiles = [...clientProfilesData].sort((a, b) => { const nc = (a.nom || '').localeCompare(b.nom || ''); return nc !== 0 ? nc : (a.prenom || '').localeCompare(b.prenom || ''); }); const isAdmin = currentUser && currentUser.status === 'Administrateur'; sortedProfiles.forEach(p => { const key = `${p.nom}_${p.prenom}`; const row = clientProfilesTable.insertRow(); row.dataset.key = key; row.insertCell().textContent = p.nom || '-'; row.cells[row.cells.length-1].classList.add('name-col'); row.insertCell().textContent = p.prenom || '-'; row.cells[row.cells.length-1].classList.add('name-col'); row.insertCell().textContent = p.adresse || '-'; row.insertCell().textContent = p.contact || '-'; row.cells[row.cells.length-1].classList.add('contact-col'); row.insertCell().textContent = p.statut || '-'; row.cells[row.cells.length-1].classList.add('status-col'); const actionCell = row.insertCell(); actionCell.classList.add('actions-cell', 'no-print', 'no-export'); const safeNom = (p.nom || '').replace(/'/g, "\\'"); const safePrenom = (p.prenom || '').replace(/'/g, "\\'"); actionCell.innerHTML = ` <button class="action-btn edit-btn" aria-label="Modifier Profil Client" title="Modifier" onclick="editClientProfile('${safeNom}', '${safePrenom}')" ${!isAdmin ? 'disabled' : ''}>✏️</button> <button class="action-btn delete-btn" aria-label="Supprimer Profil Client" title="Supprimer" onclick="deleteClientProfile('${safeNom}', '${safePrenom}')" ${!isAdmin ? 'disabled' : ''}>❌</button> `; }); }
+    function updateClientProfilesTable() { if (!clientProfilesTable) return; clientProfilesTable.innerHTML = ''; const sortedProfiles = [...clientProfilesData].sort((a, b) => { const nc = (a.nom || '').localeCompare(b.nom || ''); return nc !== 0 ? nc : (a.prenom || '').localeCompare(b.prenom || ''); }); const isAdmin = currentUser && currentUser.status === 'Administrateur'; const isEditor = currentUser && currentUser.status === 'Editeur'; // Added for button logic
+     sortedProfiles.forEach(p => { const key = `${p.nom}_${p.prenom}`; const row = clientProfilesTable.insertRow(); row.dataset.key = key; row.insertCell().textContent = p.nom || '-'; row.cells[row.cells.length-1].classList.add('name-col'); row.insertCell().textContent = p.prenom || '-'; row.cells[row.cells.length-1].classList.add('name-col'); row.insertCell().textContent = p.adresse || '-'; row.insertCell().textContent = p.contact || '-'; row.cells[row.cells.length-1].classList.add('contact-col'); row.insertCell().textContent = p.statut || '-'; row.cells[row.cells.length-1].classList.add('status-col'); const actionCell = row.insertCell(); actionCell.classList.add('actions-cell', 'no-print', 'no-export'); const safeNom = (p.nom || '').replace(/'/g, "\\'"); const safePrenom = (p.prenom || '').replace(/'/g, "\\'"); actionCell.innerHTML = ` <button class="action-btn edit-btn" aria-label="Modifier Profil Client" title="Modifier" onclick="editClientProfile('${safeNom}', '${safePrenom}')" ${!isAdmin ? 'disabled' : ''}>✏️</button> <button class="action-btn delete-btn" aria-label="Supprimer Profil Client" title="Supprimer" onclick="deleteClientProfile('${safeNom}', '${safePrenom}')" ${!isAdmin ? 'disabled' : ''}>❌</button> `; }); }
     function populateClientSelect() { if (!creditorNameSelect) return; const previousValue = creditorNameSelect.value; creditorNameSelect.innerHTML = '<option value="">-- Choisir Client --</option>'; const sortedProfiles = [...clientProfilesData].sort((a, b) => { const nameCompare = (a.nom || '').localeCompare(b.nom || ''); return nameCompare !== 0 ? nameCompare : (a.prenom || '').localeCompare(b.prenom || ''); }); sortedProfiles.forEach(profile => { const option = document.createElement('option'); const fullName = `${profile.nom || ''} ${profile.prenom || ''}`.trim(); option.value = fullName; option.textContent = fullName + (profile.contact ? ` (${profile.contact})` : ''); option.dataset.contact = profile.contact || ''; creditorNameSelect.appendChild(option); }); if (Array.from(creditorNameSelect.options).some(opt => opt.value === previousValue)) { creditorNameSelect.value = previousValue; } else { creditorNameSelect.selectedIndex = 0; } creditorNameSelect.dispatchEvent(new Event('change')); }
     // START MODIFICATION: Update Table function to accept data source
     function updateCreditorsTable(dataToDisplay = creditorsData) {
@@ -1304,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', function () {
         creditorsTable.innerHTML = '';
         // Sorting handled externally
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditorOrReader = currentUser && (currentUser.status === 'Editeur' || currentUser.status === 'Lecteur');
+        const isEditor = currentUser && currentUser.status === 'Editeur'; // Use editor status
         dataToDisplay.forEach((creditor) => {
             const originalIndex = creditorsData.findIndex(item => item === creditor);
             const row = creditorsTable.insertRow();
@@ -1332,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isSolde) { row.classList.add('solde'); } else if (amountPaid > 0) { row.classList.add('partiel'); }
             const actionCell = row.insertCell(); actionCell.classList.add('actions-cell', 'no-print', 'no-export');
             // Allow invoice printing for Admin and Editor, deletion only for Admin
-            const canPrintInvoice = isAdmin || (currentUser && currentUser.status === 'Editeur');
+            const canPrintInvoice = isAdmin || isEditor; // Changed this line
             actionCell.innerHTML = `
                 <button class="action-btn invoice-btn" aria-label="Imprimer Relevé Crédit" title="Imprimer Relevé" onclick="printCreditReceipt(${originalIndex})" ${originalIndex === -1 || !canPrintInvoice ? 'disabled' : ''}>🧾</button>
                 <button class="action-btn delete-btn" aria-label="Supprimer Transaction Crédit" title="Supprimer Transaction" onclick="deleteCreditor(${originalIndex})" ${originalIndex === -1 || !isAdmin ? 'disabled' : ''}>❌</button>
@@ -1376,6 +1487,7 @@ document.addEventListener('DOMContentLoaded', function () {
         employeePermissionsTable.innerHTML = '';
         // Sorting handled externally
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
+        const isEditor = currentUser && currentUser.status === 'Editeur'; // Added for button logic
         dataToDisplay.forEach((perm) => {
             const originalIndex = employeePermissionsData.findIndex(p => p === perm);
             const row = employeePermissionsTable.insertRow();
@@ -1405,6 +1517,7 @@ document.addEventListener('DOMContentLoaded', function () {
         learnerPermissionsTable.innerHTML = '';
         // Sorting handled externally
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
+        const isEditor = currentUser && currentUser.status === 'Editeur'; // Added for button logic
         dataToDisplay.forEach((perm) => {
             const originalIndex = learnerPermissionsData.findIndex(p => p === perm);
             const row = learnerPermissionsTable.insertRow();
@@ -1433,6 +1546,7 @@ document.addEventListener('DOMContentLoaded', function () {
         equipmentTable.innerHTML = '';
         // Sorting handled externally
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
+        const isEditor = currentUser && currentUser.status === 'Editeur'; // Added for button logic
         dataToDisplay.forEach((item) => {
             const originalIndex = equipmentData.findIndex(eq => eq === item);
             const row = equipmentTable.insertRow();
@@ -1458,7 +1572,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- Search Filtering Function (Global - Kept as is) ---
     function filterTablesByDesignation() { /* ... Function remains the same ... */ if (!globalSearchInput) return; const searchTerm = globalSearchInput.value.toLowerCase().trim(); const tablesToFilter = [ { tbody: supplyTable, columnClass: 'designation-col' }, { tbody: stockTable, columnClass: 'designation-col' }, { tbody: salesTable, columnClass: 'designation-col' }, { tbody: materielElectriqueTable, columnClass: 'designation-col' }, { tbody: expensesTable, columnClass: 'reason-col' }, { tbody: othersTable, columnClass: 'designation-col' }, { tbody: creditorsTable, columnClass: 'designation-col' }, { tbody: debtTable, columnClass: 'description-col' }, { tbody: equipmentTable, columnClass: 'equipment-name-col' } ]; tablesToFilter.forEach(config => { if (!config.tbody) { return; } const rows = config.tbody.querySelectorAll('tr'); rows.forEach(row => { const cell = row.querySelector(`td.${config.columnClass}`); if (cell) { const cellText = cell.textContent.toLowerCase(); if (searchTerm === '' || cellText.includes(searchTerm)) { row.style.display = ''; } else { row.style.display = 'none'; } } }); }); }
 
-    // --- Form Submit Handlers (WITH PERMISSION CHECKS and Scroll) ---
+    // --- Form Submit Handlers (MODIFIED: Removed scroll, rely on listener update) ---
     if (supplyForm) supplyForm.addEventListener('submit', function (event) {
         event.preventDefault();
         const isEditor = currentUser && currentUser.status === 'Editeur';
@@ -1504,8 +1618,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 updateConnectedUserFields();
                 if (supplyEditIndexInput) supplyEditIndexInput.value = '';
                 supplyForm.querySelector('button[type="submit"]').textContent = 'Ajouter Approvisionnement';
-                // Scroll to form after successful action
-                supplyForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // REMOVED: supplyForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             })
             .catch(error => { /* Error handled by saveDataToFirebase */ });
     });
@@ -1598,8 +1711,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (salesEditIndexInput) salesEditIndexInput.value = '';
                     if (salesEditTypeInput) salesEditTypeInput.value = '';
                     salesForm.querySelector('button[type="submit"]').textContent = 'Ajouter';
-                    // Scroll to form after successful action
-                    salesForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // REMOVED: salesForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 })
                 .catch(error => { /* Error handled by saveDataToFirebase */ });
         } catch (error) {
@@ -1607,13 +1719,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Add similar permission checks and SCROLL logic to ALL other form submit handlers and window.edit/delete/pay/update functions
     if (employeeForm) employeeForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les employés."); return;
+        if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { // Allow Editor to add
+            alert("Accès Refusé: Permissions insuffisantes."); return;
         }
-        const editIndex = employeeEditIndexInput ? parseInt(employeeEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; if (!employeeNomInput) { alert("Erreur interne: Champ nom employé manquant."); return; } const nom = employeeNomInput.value.trim(); if (!nom) { alert("Nom employé requis."); return; } const salaryValue = employeeSalaryInput ? parseFloat(employeeSalaryInput.value) : null; const paidAmountValue = employeePaidAmountInput ? parseFloat(employeePaidAmountInput.value) : 0; if (salaryValue !== null && (isNaN(salaryValue) || salaryValue < 0)) { alert("Le salaire doit être un nombre positif ou vide."); return; } if (isNaN(paidAmountValue) || paidAmountValue < 0) { alert("Montant payé doit être un nombre positif ou zéro."); return; } const employeeDataObj = { nom, prenom: employeePrenomInput?.value.trim() || '', statut: employeeRoleInput?.value.trim() || '', adresse: employeeAdresseInput?.value.trim() || '', telephone: employeeTelephoneInput?.value.trim() || '', lieuResidence: employeeLieuResidenceInput?.value.trim() || '', joursTravail: employeeJoursTravailInput?.value.trim() || '', heureArrivee: employeeHeureArriveeInput?.value || '', heureDepart: employeeHeureDepartInput?.value || '', salary: salaryValue, paidAmount: paidAmountValue, hireDate: employeeHireDateInput?.value || '', contactPersonNom: employeeContactPersonNomInput?.value.trim() || '', contactPersonPrenom: employeeContactPersonPrenomInput?.value.trim() || '', contactPersonAdresse: employeeContactPersonAdresseInput?.value.trim() || '', contactPersonTelephone: employeeContactPersonTelephoneInput?.value.trim() || '', contactPersonLieuResidence: employeeContactPersonLieuResidenceInput?.value.trim() || '' }; let originalDataBackup = null; let tempLocalData = [...employeesData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index employé invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); employeeDataObj.paymentHistory = originalDataBackup.paymentHistory || []; employeeDataObj.recordedBy = originalDataBackup.recordedBy; employeeDataObj.lastModifiedBy = currentUser?.username || 'N/A'; employeeDataObj.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = employeeDataObj; } else { employeeDataObj.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(employeeDataObj); }
+        const editIndex = employeeEditIndexInput ? parseInt(employeeEditIndexInput.value, 10) : -1;
+        const isEditing = editIndex > -1;
+        if (isEditing && currentUser.status !== 'Administrateur') { // Only Admin can edit
+             alert("Accès Refusé: Seuls les administrateurs peuvent modifier."); return;
+        }
+        if (!employeeNomInput) { alert("Erreur interne: Champ nom employé manquant."); return; } const nom = employeeNomInput.value.trim(); if (!nom) { alert("Nom employé requis."); return; } const salaryValue = employeeSalaryInput ? parseFloat(employeeSalaryInput.value) : null; const paidAmountValue = employeePaidAmountInput ? parseFloat(employeePaidAmountInput.value) : 0; if (salaryValue !== null && (isNaN(salaryValue) || salaryValue < 0)) { alert("Le salaire doit être un nombre positif ou vide."); return; } if (isNaN(paidAmountValue) || paidAmountValue < 0) { alert("Montant payé doit être un nombre positif ou zéro."); return; } const employeeDataObj = { nom, prenom: employeePrenomInput?.value.trim() || '', statut: employeeRoleInput?.value.trim() || '', adresse: employeeAdresseInput?.value.trim() || '', telephone: employeeTelephoneInput?.value.trim() || '', lieuResidence: employeeLieuResidenceInput?.value.trim() || '', joursTravail: employeeJoursTravailInput?.value.trim() || '', heureArrivee: employeeHeureArriveeInput?.value || '', heureDepart: employeeHeureDepartInput?.value || '', salary: salaryValue, paidAmount: paidAmountValue, hireDate: employeeHireDateInput?.value || '', contactPersonNom: employeeContactPersonNomInput?.value.trim() || '', contactPersonPrenom: employeeContactPersonPrenomInput?.value.trim() || '', contactPersonAdresse: employeeContactPersonAdresseInput?.value.trim() || '', contactPersonTelephone: employeeContactPersonTelephoneInput?.value.trim() || '', contactPersonLieuResidence: employeeContactPersonLieuResidenceInput?.value.trim() || '' }; let originalDataBackup = null; let tempLocalData = [...employeesData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index employé invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); employeeDataObj.paymentHistory = originalDataBackup.paymentHistory || []; employeeDataObj.recordedBy = originalDataBackup.recordedBy; employeeDataObj.lastModifiedBy = currentUser?.username || 'N/A'; employeeDataObj.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = employeeDataObj; } else { employeeDataObj.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(employeeDataObj); }
         saveDataToFirebase('employeesData', tempLocalData)
             .then(() => {
                 const action = isEditing ? 'mis à jour' : 'ajouté';
@@ -1623,16 +1739,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 updateConnectedUserFields();
                 if (employeeEditIndexInput) employeeEditIndexInput.value = '';
                 employeeForm.querySelector('button[type="submit"]').textContent = 'Ajouter Employé';
-                employeeForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                // REMOVED: employeeForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             })
             .catch(error => { /* Error handled */ });
     });
     if (learnerForm) learnerForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les apprenants."); return;
+        if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { // Allow Editor to add
+            alert("Accès Refusé: Permissions insuffisantes."); return;
         }
-        const editIndex = learnerEditIndexInput ? parseInt(learnerEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; if (!learnerNomInput || !learnerFiliereInput) { alert("Erreur interne: Champs apprenant manquants."); return; } const nom = learnerNomInput.value.trim(); const filiere = learnerFiliereInput.value.trim(); if (!nom || !filiere) { alert("Nom et filière requis."); return; } const ageValue = learnerAgeInput ? parseInt(learnerAgeInput.value) : null; const fraisDocsValue = learnerFraisDocumentsInput ? parseFloat(learnerFraisDocumentsInput.value) : 0; const tranche1Value = learnerTranche1Input ? parseFloat(learnerTranche1Input.value) : 0; const tranche2Value = learnerTranche2Input ? parseFloat(learnerTranche2Input.value) : 0; const tranche3Value = learnerTranche3Input ? parseFloat(learnerTranche3Input.value) : 0; const tranche4Value = learnerTranche4Input ? parseFloat(learnerTranche4Input.value) : 0; if (ageValue !== null && (isNaN(ageValue) || ageValue < 0)) { alert("L'âge doit être un nombre positif."); return; } if (isNaN(fraisDocsValue) || fraisDocsValue < 0 || isNaN(tranche1Value) || tranche1Value < 0 || isNaN(tranche2Value) || tranche2Value < 0 || isNaN(tranche3Value) || tranche3Value < 0 || isNaN(tranche4Value) || tranche4Value < 0) { alert("Frais et montants des tranches doivent être des nombres positifs ou zéro."); return; } const learnerDataObj = { nom, prenom: learnerPrenomInput?.value.trim() || '', age: ageValue, adresse: learnerAdresseInput?.value.trim() || '', lieuResidence: learnerLieuResidenceInput?.value.trim() || '', niveauEtudes: learnerNiveauEtudesInput?.value.trim() || '', situationMatrimoniale: learnerSituationMatrimonialeSelect?.value || '', pereNom: learnerPereNomInput?.value.trim() || '', perePrenom: learnerPerePrenomInput?.value.trim() || '', mereNom: learnerMereNomInput?.value.trim() || '', merePrenom: learnerMerePrenomInput?.value.trim() || '', filiere, dureeFormation: learnerDureeFormationInput?.value.trim() || '', fraisDocuments: fraisDocsValue, tranche1: tranche1Value, tranche2: tranche2Value, tranche3: tranche3Value, tranche4: tranche4Value, garantNom: learnerGarantNomInput?.value.trim() || '', garantPrenom: learnerGarantPrenomInput?.value.trim() || '', garantTelephone: learnerGarantTelephoneInput?.value.trim() || '', garantAdresse: learnerGarantAdresseInput?.value.trim() || '' }; let originalDataBackup = null; let tempLocalData = [...learnersData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index apprenant invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); learnerDataObj.paymentHistory = originalDataBackup.paymentHistory || []; learnerDataObj.recordedBy = originalDataBackup.recordedBy; learnerDataObj.lastModifiedBy = currentUser?.username || 'N/A'; learnerDataObj.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = learnerDataObj; } else { learnerDataObj.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(learnerDataObj); }
+        const editIndex = learnerEditIndexInput ? parseInt(learnerEditIndexInput.value, 10) : -1;
+        const isEditing = editIndex > -1;
+         if (isEditing && currentUser.status !== 'Administrateur') { // Only Admin can edit
+             alert("Accès Refusé: Seuls les administrateurs peuvent modifier."); return;
+         }
+        if (!learnerNomInput || !learnerFiliereInput) { alert("Erreur interne: Champs apprenant manquants."); return; } const nom = learnerNomInput.value.trim(); const filiere = learnerFiliereInput.value.trim(); if (!nom || !filiere) { alert("Nom et filière requis."); return; } const ageValue = learnerAgeInput ? parseInt(learnerAgeInput.value) : null; const fraisDocsValue = learnerFraisDocumentsInput ? parseFloat(learnerFraisDocumentsInput.value) : 0; const tranche1Value = learnerTranche1Input ? parseFloat(learnerTranche1Input.value) : 0; const tranche2Value = learnerTranche2Input ? parseFloat(learnerTranche2Input.value) : 0; const tranche3Value = learnerTranche3Input ? parseFloat(learnerTranche3Input.value) : 0; const tranche4Value = learnerTranche4Input ? parseFloat(learnerTranche4Input.value) : 0; if (ageValue !== null && (isNaN(ageValue) || ageValue < 0)) { alert("L'âge doit être un nombre positif."); return; } if (isNaN(fraisDocsValue) || fraisDocsValue < 0 || isNaN(tranche1Value) || tranche1Value < 0 || isNaN(tranche2Value) || tranche2Value < 0 || isNaN(tranche3Value) || tranche3Value < 0 || isNaN(tranche4Value) || tranche4Value < 0) { alert("Frais et montants des tranches doivent être des nombres positifs ou zéro."); return; } const learnerDataObj = { nom, prenom: learnerPrenomInput?.value.trim() || '', age: ageValue, adresse: learnerAdresseInput?.value.trim() || '', lieuResidence: learnerLieuResidenceInput?.value.trim() || '', niveauEtudes: learnerNiveauEtudesInput?.value.trim() || '', situationMatrimoniale: learnerSituationMatrimonialeSelect?.value || '', pereNom: learnerPereNomInput?.value.trim() || '', perePrenom: learnerPerePrenomInput?.value.trim() || '', mereNom: learnerMereNomInput?.value.trim() || '', merePrenom: learnerMerePrenomInput?.value.trim() || '', filiere, dureeFormation: learnerDureeFormationInput?.value.trim() || '', fraisDocuments: fraisDocsValue, tranche1: tranche1Value, tranche2: tranche2Value, tranche3: tranche3Value, tranche4: tranche4Value, garantNom: learnerGarantNomInput?.value.trim() || '', garantPrenom: learnerGarantPrenomInput?.value.trim() || '', garantTelephone: learnerGarantTelephoneInput?.value.trim() || '', garantAdresse: learnerGarantAdresseInput?.value.trim() || '' }; let originalDataBackup = null; let tempLocalData = [...learnersData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index apprenant invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); learnerDataObj.paymentHistory = originalDataBackup.paymentHistory || []; learnerDataObj.recordedBy = originalDataBackup.recordedBy; learnerDataObj.lastModifiedBy = currentUser?.username || 'N/A'; learnerDataObj.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = learnerDataObj; } else { learnerDataObj.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(learnerDataObj); }
         saveDataToFirebase('learnersData', tempLocalData)
             .then(() => {
                 const action = isEditing ? 'mis à jour' : 'ajouté';
@@ -1642,7 +1763,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTodaysDate();
                 if (learnerEditIndexInput) learnerEditIndexInput.value = '';
                 learnerForm.querySelector('button[type="submit"]').textContent = 'Ajouter Apprenant';
-                learnerForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                // REMOVED: learnerForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             })
             .catch(error => { /* Error handled */ });
     });
@@ -1661,7 +1782,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 updateConnectedUserFields();
                 if (mobileMoneyEditIndexInput) mobileMoneyEditIndexInput.value = '';
                 mobileMoneyForm.querySelector('button[type="submit"]').textContent = 'Ajouter Point Journalier';
-                mobileMoneyForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                // REMOVED: mobileMoneyForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             })
             .catch(error => { /* Error handled */ });
     });
@@ -1680,16 +1801,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTodaysDate();
                 if (mmFournisseurEditKeyInput) mmFournisseurEditKeyInput.value = '';
                 mmFournisseurForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Fournisseur';
-                mmFournisseurForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                // REMOVED: mmFournisseurForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             })
             .catch(error => { /* Error handled */ });
     });
     if (clientProfileForm) clientProfileForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les profils client."); return;
+        if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { // Allow Editor to add
+            alert("Accès Refusé: Permissions insuffisantes."); return;
         }
-        const editKey = clientProfileEditKeyInput?.value || ''; const isEditing = !!editKey; const nom = clientProfileNomInput?.value.trim(); const prenom = clientProfilePrenomInput?.value.trim(); const adresse = clientProfileAdresseInput?.value.trim(); const contact = clientProfileContactInput?.value.trim(); const statut = clientProfileStatutInput?.value.trim(); if (!nom) { alert("Nom client requis pour profil."); return; } const profileDataObj = { nom, prenom, adresse, contact, statut }; const newFullName = `${nom} ${prenom}`.trim(); let existingIndex = -1; let isNameChangeDuringEdit = false; let originalFullName = ''; let originalProfileBackup = null; let tempProfilesData = [...clientProfilesData]; let tempCreditorsData = [...creditorsData]; let creditorsNeedUpdate = false; if (isEditing) { const [editNom, editPrenom] = editKey.split('_'); originalFullName = `${editNom} ${editPrenom}`.trim(); existingIndex = tempProfilesData.findIndex(p => p.nom === editNom && p.prenom === editPrenom); if (existingIndex > -1) { originalProfileBackup = JSON.parse(JSON.stringify(tempProfilesData[existingIndex])); if (newFullName !== originalFullName) { isNameChangeDuringEdit = true; } profileDataObj.recordedBy = originalProfileBackup.recordedBy; profileDataObj.lastModifiedBy = currentUser?.username || 'N/A'; profileDataObj.lastModifiedDate = new Date().toISOString(); } else { alert("Erreur: Profil à modifier non trouvé."); return; } } else { existingIndex = tempProfilesData.findIndex(p => p.nom === nom && p.prenom === prenom); if (existingIndex > -1) { alert(`Profil ${nom} ${prenom} existe déjà. Modifiez via le tableau.`); return; } profileDataObj.recordedBy = currentUser?.username || 'N/A'; } if (isNameChangeDuringEdit) { const duplicateCheck = tempProfilesData.findIndex(p => p.nom === nom && p.prenom === prenom); if (duplicateCheck > -1) { alert(`Impossible de renommer : le profil ${nom} ${prenom} existe déjà.`); const [origN, origP] = editKey.split('_'); clientProfileNomInput.value = origN; clientProfilePrenomInput.value = origP; return; } tempCreditorsData.forEach((cred, index) => { if (cred.name === originalFullName) { tempCreditorsData[index].name = newFullName; creditorsNeedUpdate = true; } }); tempProfilesData.splice(existingIndex, 1); tempProfilesData.push(profileDataObj); } else if (isEditing) { tempProfilesData[existingIndex] = profileDataObj; } else { tempProfilesData.push(profileDataObj); } const savePromises = [saveDataToFirebase('clientProfilesData', tempProfilesData)]; if (creditorsNeedUpdate) { savePromises.push(saveDataToFirebase('creditorsData', tempCreditorsData)); }
+        const editKey = clientProfileEditKeyInput?.value || '';
+        const isEditing = !!editKey;
+         if (isEditing && currentUser.status !== 'Administrateur') { // Only Admin can edit
+             alert("Accès Refusé: Seuls les administrateurs peuvent modifier."); return;
+         }
+        const nom = clientProfileNomInput?.value.trim(); const prenom = clientProfilePrenomInput?.value.trim(); const adresse = clientProfileAdresseInput?.value.trim(); const contact = clientProfileContactInput?.value.trim(); const statut = clientProfileStatutInput?.value.trim(); if (!nom) { alert("Nom client requis pour profil."); return; } const profileDataObj = { nom, prenom, adresse, contact, statut }; const newFullName = `${nom} ${prenom}`.trim(); let existingIndex = -1; let isNameChangeDuringEdit = false; let originalFullName = ''; let originalProfileBackup = null; let tempProfilesData = [...clientProfilesData]; let tempCreditorsData = [...creditorsData]; let creditorsNeedUpdate = false; if (isEditing) { const [editNom, editPrenom] = editKey.split('_'); originalFullName = `${editNom} ${editPrenom}`.trim(); existingIndex = tempProfilesData.findIndex(p => p.nom === editNom && p.prenom === editPrenom); if (existingIndex > -1) { originalProfileBackup = JSON.parse(JSON.stringify(tempProfilesData[existingIndex])); if (newFullName !== originalFullName) { isNameChangeDuringEdit = true; } profileDataObj.recordedBy = originalProfileBackup.recordedBy; profileDataObj.lastModifiedBy = currentUser?.username || 'N/A'; profileDataObj.lastModifiedDate = new Date().toISOString(); } else { alert("Erreur: Profil à modifier non trouvé."); return; } } else { existingIndex = tempProfilesData.findIndex(p => p.nom === nom && p.prenom === prenom); if (existingIndex > -1) { alert(`Profil ${nom} ${prenom} existe déjà. Modifiez via le tableau.`); return; } profileDataObj.recordedBy = currentUser?.username || 'N/A'; } if (isNameChangeDuringEdit) { const duplicateCheck = tempProfilesData.findIndex(p => p.nom === nom && p.prenom === prenom); if (duplicateCheck > -1) { alert(`Impossible de renommer : le profil ${nom} ${prenom} existe déjà.`); const [origN, origP] = editKey.split('_'); clientProfileNomInput.value = origN; clientProfilePrenomInput.value = origP; return; } tempCreditorsData.forEach((cred, index) => { if (cred.name === originalFullName) { tempCreditorsData[index].name = newFullName; creditorsNeedUpdate = true; } }); tempProfilesData.splice(existingIndex, 1); tempProfilesData.push(profileDataObj); } else if (isEditing) { tempProfilesData[existingIndex] = profileDataObj; } else { tempProfilesData.push(profileDataObj); } const savePromises = [saveDataToFirebase('clientProfilesData', tempProfilesData)]; if (creditorsNeedUpdate) { savePromises.push(saveDataToFirebase('creditorsData', tempCreditorsData)); }
         Promise.all(savePromises)
             .then(() => {
                 const action = isEditing ? (isNameChangeDuringEdit ? 'renommé' : 'mis à jour') : 'ajouté';
@@ -1699,15 +1825,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTodaysDate();
                 if (clientProfileEditKeyInput) clientProfileEditKeyInput.value = '';
                 clientProfileForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Profil';
-                clientProfileForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                // REMOVED: clientProfileForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             })
             .catch(error => { /* Error handled */ });
     });
     if (creditorForm) creditorForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les crédits client."); return;
+         if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { // Allow Editor to add
+            alert("Accès Refusé: Permissions insuffisantes."); return;
         }
+        // Modification is not directly supported via this form, only adding payments or new credits. Deletion is separate.
         if (!creditorDateInput || !creditorNameSelect || !creditorDesignationInput || !creditorAmountPaidInput) { alert("Erreur interne: Champs Transaction Crédit manquants."); return; } const date = creditorDateInput.value; const name = creditorNameSelect.value; const designation = creditorDesignationInput.value.trim(); const quantity = creditorQuantityInput?.value ? (parseFloat(creditorQuantityInput.value) || null) : null; const unitPrice = creditorUnitPriceInput?.value ? (parseFloat(creditorUnitPriceInput.value) || null) : null; const totalAmountDueEntered = parseFloat(creditorTotalAmountDueInput.value); const amountPaidNow = parseFloat(creditorAmountPaidInput.value); const dueDate = creditorDueDateInput?.value || ''; const recordedBy = currentUser?.username || 'N/A'; if (!date || !name || !designation) { alert("Date, Client et Désignation requis."); return; } if (isNaN(amountPaidNow) || amountPaidNow < 0) { alert("Montant Payé doit être un nombre positif ou zéro."); return; } let tempLocalData = [...creditorsData]; let dataChanged = false; try { const existingCreditorIndex = creditorsData.findIndex(c => c.name === name && c.designation === designation && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005) ); if (existingCreditorIndex > -1) { const existingCreditorInCopy = tempLocalData[existingCreditorIndex]; if (!existingCreditorInCopy) throw new Error("Incohérence interne: crédit non trouvé dans la copie locale."); const currentRemaining = (existingCreditorInCopy.totalAmountDue || 0) - (existingCreditorInCopy.amountPaidTotal || 0); if (!isNaN(totalAmountDueEntered) && totalAmountDueEntered > 0 && Math.abs(totalAmountDueEntered - existingCreditorInCopy.totalAmountDue) > 0.01) { console.warn(`Montant Total Dû entré (${formatAmount(totalAmountDueEntered)}) ignoré pour paiement.`); } if (amountPaidNow > currentRemaining + 0.005) { throw new Error(`Paiement (${formatAmount(amountPaidNow)}) dépasse le solde restant (${formatAmount(currentRemaining)}).`); } existingCreditorInCopy.amountPaidTotal = (existingCreditorInCopy.amountPaidTotal || 0) + amountPaidNow; existingCreditorInCopy.lastPaymentDate = date; existingCreditorInCopy.lastPaymentBy = recordedBy; if (dueDate && dueDate !== existingCreditorInCopy.dueDate) existingCreditorInCopy.dueDate = dueDate; if (!existingCreditorInCopy.paymentHistory) existingCreditorInCopy.paymentHistory = []; existingCreditorInCopy.paymentHistory.push({ date, amount: amountPaidNow, recordedBy }); alert(`Paiement de ${formatAmount(amountPaidNow)} enregistré (préparation sauvegarde) pour ${name} - ${designation}.\nNouveau solde: ${formatAmount(existingCreditorInCopy.totalAmountDue - existingCreditorInCopy.amountPaidTotal)}`); dataChanged = true; } else { let finalTotalDue; if ((isNaN(totalAmountDueEntered) || totalAmountDueEntered <= 0) && quantity !== null && unitPrice !== null && quantity > 0 && unitPrice >= 0) { finalTotalDue = quantity * unitPrice; if (finalTotalDue <= 0) throw new Error("Montant Total Dû calculé doit être > 0."); creditorTotalAmountDueInput.value = formatAmount(finalTotalDue); } else if (!isNaN(totalAmountDueEntered) && totalAmountDueEntered > 0) { finalTotalDue = totalAmountDueEntered; if (quantity !== null && unitPrice !== null && quantity > 0 && unitPrice >= 0) { const calculatedTotal = quantity * unitPrice; if (Math.abs(calculatedTotal - finalTotalDue) > 0.01) { if (!confirm(`Total Dû entré (${formatAmount(finalTotalDue)}) est différent du calcul Qté*PU (${formatAmount(calculatedTotal)}). Continuer avec ${formatAmount(finalTotalDue)} ?`)) return; } } } else { throw new Error("Montant Total Dû > 0 requis (entré directement ou via Qté*PU) pour nouvelle transaction."); } if (amountPaidNow > finalTotalDue + 0.005) { throw new Error(`Montant Payé (${formatAmount(amountPaidNow)}) dépasse le Total Dû (${formatAmount(finalTotalDue)}).`); } const similarSoldCreditorExists = creditorsData.some(c => c.name === name && c.designation === designation && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) <= 0.005) ); if (similarSoldCreditorExists) { if (!confirm(`Un crédit similaire déjà soldé existe pour ${name} - "${designation}". Voulez-vous créer une NOUVELLE transaction de crédit ?`)) { return; } } const newCreditor = { date, name, designation, quantity, unitPrice, totalAmountDue: finalTotalDue, amountPaidTotal: amountPaidNow, lastPaymentDate: date, dueDate: dueDate || null, recordedBy: recordedBy, paymentHistory: [{ date, amount: amountPaidNow, recordedBy }] }; tempLocalData.push(newCreditor); alert(`Nouveau crédit créé (préparation sauvegarde) pour ${name} - "${designation}".\nDû: ${formatAmount(finalTotalDue)}, Payé: ${formatAmount(amountPaidNow)}, Restant: ${formatAmount(finalTotalDue - amountPaidNow)}`); dataChanged = true; } if (dataChanged) {
             saveDataToFirebase('creditorsData', tempLocalData)
                 .then(() => {
@@ -1716,7 +1843,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     populateClientSelect();
                     setTodaysDate();
                     updateConnectedUserFields();
-                    creditorForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                    // REMOVED: creditorForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 })
                 .catch(error => { /* Error handled */ });
         } } catch (error) { alert(`Erreur Gestion Crédit Client : ${error.message}`); }
@@ -1736,15 +1863,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 updateConnectedUserFields();
                 if (debtEditIndexInput) debtEditIndexInput.value = '';
                 debtForm.querySelector('button[type="submit"]').textContent = 'Ajouter Dette/Prêt';
-                debtForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                // REMOVED: debtForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             })
             .catch(error => { /* Error handled */ });
     });
     if (permissionEmployeeForm) permissionEmployeeForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les permissions."); return;
+         if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { // Allow Editor to add
+            alert("Accès Refusé: Permissions insuffisantes."); return;
         }
+        // Editing is not done via form, only status update via table buttons (Admin only)
         const requestDate = permEmpReqDateInput?.value; const name = permEmpNameSelect?.value; const permissionDateOrPeriod = permEmpDateInput?.value.trim(); const reason = permEmpReasonTextarea?.value.trim(); if (!requestDate || !name || !permissionDateOrPeriod || !reason) { alert("Veuillez remplir tous les champs pour la demande de permission."); return; } const newPermission = { requestDate, name, permissionDateOrPeriod, reason, status: 'En attente', recordedBy: currentUser?.username || 'N/A' }; let tempLocalData = [...employeePermissionsData]; tempLocalData.push(newPermission);
         saveDataToFirebase('employeePermissionsData', tempLocalData)
             .then(() => {
@@ -1752,15 +1880,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 permissionEmployeeForm.reset();
                 setTodaysDate();
                 updateConnectedUserFields();
-                permissionEmployeeForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                // REMOVED: permissionEmployeeForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             })
             .catch(error => { /* Error handled */ });
     });
     if (permissionLearnerForm) permissionLearnerForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les permissions."); return;
+         if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { // Allow Editor to add
+            alert("Accès Refusé: Permissions insuffisantes."); return;
         }
+        // Editing is not done via form, only status update via table buttons (Admin only)
         const requestDate = permLrnReqDateInput?.value; const name = permLrnNameSelect?.value; const permissionDateOrPeriod = permLrnDateInput?.value.trim(); const reason = permLrnReasonTextarea?.value.trim(); if (!requestDate || !name || !permissionDateOrPeriod || !reason) { alert("Veuillez remplir tous les champs pour la demande de permission."); return; } const newPermission = { requestDate, name, permissionDateOrPeriod, reason, status: 'En attente', recordedBy: currentUser?.username || 'N/A' }; let tempLocalData = [...learnerPermissionsData]; tempLocalData.push(newPermission);
         saveDataToFirebase('learnerPermissionsData', tempLocalData)
             .then(() => {
@@ -1768,7 +1897,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 permissionLearnerForm.reset();
                 setTodaysDate();
                 updateConnectedUserFields();
-                permissionLearnerForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                // REMOVED: permissionLearnerForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             })
             .catch(error => { /* Error handled */ });
     });
@@ -1787,16 +1916,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (adminEditKeyInput) adminEditKeyInput.value = '';
                 adminPasswordInput.placeholder = "Entrer pour définir/modifier";
                 adminForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Utilisateur';
-                adminForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                // REMOVED: adminForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             })
             .catch(error => { /* Error handled */ });
     });
     if (equipmentForm) equipmentForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Seuls les administrateurs peuvent gérer les appareils confiés."); return;
+         if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { // Allow Editor to add
+            alert("Accès Refusé: Permissions insuffisantes."); return;
         }
-        const editIndex = equipmentEditIndexInput ? parseInt(equipmentEditIndexInput.value, 10) : -1; const isEditing = editIndex > -1; const name = equipmentNameInput?.value.trim(); const quantity = parseInt(equipmentQuantityInput?.value); const assignedDate = equipmentAssignedDateInput?.value; const accessories = equipmentAccessoriesInput?.value.trim(); const employeeName = equipmentEmployeeNameSelect?.value; const otherInfo = equipmentOtherInfoTextarea?.value.trim(); if (!name || !quantity || quantity < 1 || !assignedDate || !employeeName) { alert("Veuillez remplir correctement tous les champs requis (Nom Appareil, Nombre > 0, Date Attribution, Employé)."); return; } const equipmentItemData = { name, quantity, assignedDate, accessories: accessories || '', employeeName, otherInfo: otherInfo || '' }; let originalDataBackup = null; let tempLocalData = [...equipmentData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index appareil invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); equipmentItemData.recordedBy = originalDataBackup.recordedBy; equipmentItemData.lastModifiedBy = currentUser?.username || 'N/A'; equipmentItemData.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = equipmentItemData; } else { equipmentItemData.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(equipmentItemData); }
+        const editIndex = equipmentEditIndexInput ? parseInt(equipmentEditIndexInput.value, 10) : -1;
+        const isEditing = editIndex > -1;
+        if (isEditing && currentUser.status !== 'Administrateur') { // Only Admin can edit
+             alert("Accès Refusé: Seuls les administrateurs peuvent modifier."); return;
+         }
+        const name = equipmentNameInput?.value.trim(); const quantity = parseInt(equipmentQuantityInput?.value); const assignedDate = equipmentAssignedDateInput?.value; const accessories = equipmentAccessoriesInput?.value.trim(); const employeeName = equipmentEmployeeNameSelect?.value; const otherInfo = equipmentOtherInfoTextarea?.value.trim(); if (!name || !quantity || quantity < 1 || !assignedDate || !employeeName) { alert("Veuillez remplir correctement tous les champs requis (Nom Appareil, Nombre > 0, Date Attribution, Employé)."); return; } const equipmentItemData = { name, quantity, assignedDate, accessories: accessories || '', employeeName, otherInfo: otherInfo || '' }; let originalDataBackup = null; let tempLocalData = [...equipmentData]; if (isEditing) { if (editIndex >= tempLocalData.length) { alert("Erreur: Index appareil invalide."); return; } originalDataBackup = JSON.parse(JSON.stringify(tempLocalData[editIndex])); equipmentItemData.recordedBy = originalDataBackup.recordedBy; equipmentItemData.lastModifiedBy = currentUser?.username || 'N/A'; equipmentItemData.lastModifiedDate = new Date().toISOString(); tempLocalData[editIndex] = equipmentItemData; } else { equipmentItemData.recordedBy = currentUser?.username || 'N/A'; tempLocalData.push(equipmentItemData); }
         saveDataToFirebase('equipmentData', tempLocalData)
             .then(() => {
                 const action = isEditing ? 'mis à jour' : 'ajouté';
@@ -1807,7 +1941,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 populateEmployeeSelect(equipmentEmployeeNameSelect);
                 if (equipmentEditIndexInput) equipmentEditIndexInput.value = '';
                 equipmentForm.querySelector('button[type="submit"]').textContent = 'Ajouter Appareil Confié';
-                equipmentForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
+                // REMOVED: equipmentForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             })
             .catch(error => { /* Error handled */ });
     });
@@ -1835,7 +1969,23 @@ document.addEventListener('DOMContentLoaded', function () {
     function addInvoiceItemRow() { /* ... Function remains the same ... */ if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) return; if (!invoiceItemsContainer) return; const newRow = document.createElement('div'); newRow.classList.add('form-row', 'invoice-item-row'); const currentIndex = invoiceItemIndex++; newRow.innerHTML = ` <div style="flex-basis: 40%;"> <label for="invoice-gen-designation-${currentIndex}">Désignation:</label> <input type="text" id="invoice-gen-designation-${currentIndex}" class="item-designation" required> </div> <div> <label for="invoice-gen-quantity-${currentIndex}">Quantité:</label> <input type="number" id="invoice-gen-quantity-${currentIndex}" class="item-quantity" min="0" step="any" required> </div> <div> <label for="invoice-gen-unit-price-${currentIndex}">Prix Unitaire:</label> <input type="number" id="invoice-gen-unit-price-${currentIndex}" class="item-unit-price" min="0" step="any" required> </div> <div style="display: flex; align-items: flex-end;"> <button type="button" class="action-btn delete-btn remove-invoice-item-btn" title="Supprimer Ligne" style="margin-bottom: 2px;">❌</button> </div>`; invoiceItemsContainer.appendChild(newRow); const addedInputs = newRow.querySelectorAll('.item-quantity, .item-unit-price'); addedInputs.forEach(input => input.addEventListener('input', calculateInvoiceTotal)); calculateInvoiceTotal(); newRow.querySelector('.item-designation')?.focus(); const removeBtn = newRow.querySelector('.remove-invoice-item-btn'); if (removeBtn && currentUser && (currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { removeBtn.disabled = false; } }
     if (addInvoiceItemButton && !addInvoiceItemButton._hasClickListener) { addInvoiceItemButton.addEventListener('click', addInvoiceItemRow); addInvoiceItemButton._hasClickListener = true; }
     if (invoiceItemsContainer && !invoiceItemsContainer._hasClickListener) { invoiceItemsContainer.addEventListener('click', function(event) { if (event.target.classList.contains('remove-invoice-item-btn')) { if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) return; const rowToRemove = event.target.closest('.invoice-item-row'); if (invoiceItemsContainer.querySelectorAll('.invoice-item-row').length <= 1) { alert("Vous devez avoir au moins une ligne d'article."); return; } if (rowToRemove) { rowToRemove.remove(); calculateInvoiceTotal(); } } }); invoiceItemsContainer.addEventListener('input', function(event) { if (event.target.classList.contains('item-quantity') || event.target.classList.contains('item-unit-price')) { calculateInvoiceTotal(); } }); invoiceItemsContainer._hasClickListener = true; }
-    function initializeInvoiceForm() { if (invoiceItemsContainer) { invoiceItemsContainer.innerHTML = ''; addInvoiceItemRow(); } else { console.error("Invoice items container not found."); return; } if(invoiceGenDateInput && !invoiceGenDateInput.value) invoiceGenDateInput.value = new Date().toISOString().split('T')[0]; if(invoiceGenNumberInput) invoiceGenNumberInput.value = generateInvoiceNumber(); calculateInvoiceTotal(); }
+    // --- MODIFIED: initializeInvoiceForm uses the fetched/current counter ---
+    function initializeInvoiceForm() {
+        if (invoiceItemsContainer) {
+            invoiceItemsContainer.innerHTML = '';
+            addInvoiceItemRow(); // Add the first row
+        } else {
+            console.error("Invoice items container not found.");
+            return;
+        }
+        if(invoiceGenDateInput && !invoiceGenDateInput.value) {
+            invoiceGenDateInput.value = new Date().toISOString().split('T')[0];
+        }
+        if(invoiceGenNumberInput) {
+            invoiceGenNumberInput.value = generateInvoiceNumber(); // Generate number using current counter
+        }
+        calculateInvoiceTotal();
+    }
 
     // --- Event Listeners for Print/Export ---
     const addPrintListener = (button, containerId) => { if (button && !button._hasPrintListener) { button.addEventListener('click', () => printSpecificTable(containerId)); button._hasPrintListener = true; } };
@@ -1880,464 +2030,62 @@ document.addEventListener('DOMContentLoaded', function () {
     /** Helper Function to Save Data to Firebase */
     async function saveDataToFirebase(key, data) { /* ... Function remains the same ... */ try { const dataToSave = data === undefined || data === null ? [] : data; await dataRef.child(key).set(dataToSave); return Promise.resolve(); } catch (error) { console.error(`Firebase save error for key [${key}]:`, error); alert(`Erreur critique lors de la sauvegarde des données (${key}). Vos dernières modifications pourraient être perdues. Vérifiez votre connexion et réessayez.`); throw error; } }
 
-    // --- Delete Functions (Add permission checks and Scroll) ---
-    window.deleteSupply = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= supplyData.length) return; const item = supplyData[index]; if (confirm(`Supprimer appro ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...supplyData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('supplyData', tempLocalData); alert('Approvisionnement supprimé.'); supplyForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteSale = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= salesData.length) return; const item = salesData[index]; if (confirm(`Supprimer vente Papeterie ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...salesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('salesData', tempLocalData); alert('Vente Papeterie supprimée.'); salesForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteMaterielElectriqueSale = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= materielElectriqueData.length) return; const item = materielElectriqueData[index]; if (confirm(`Supprimer vente Mat. Elec. ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...materielElectriqueData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('materielElectriqueData', tempLocalData); alert('Vente Mat. Elec. supprimée.'); salesForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteExpense = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= expensesData.length) return; const item = expensesData[index]; if (confirm(`Supprimer dépense du ${item.date || '?'} ("${item.reason || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...expensesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('expensesData', tempLocalData); alert('Dépense supprimée.'); salesForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteOther = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= othersData.length) return; const item = othersData[index]; if (confirm(`Supprimer op. diverse du ${item.date || '?'} ("${item.designation || '?'}", Montant: ${formatAmount(item.totalAmount)}) ?`)) { let tempLocalData = [...othersData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('othersData', tempLocalData); alert('Opération diverse supprimée.'); salesForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteEmployee = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= employeesData.length) return; const item = employeesData[index]; if (confirm(`Supprimer l'employé: ${item.nom || '?'} ${item.prenom || ''} ? Définitif.`)) { let tempLocalData = [...employeesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('employeesData', tempLocalData); alert('Employé supprimé.'); employeeForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteLearner = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= learnersData.length) return; const item = learnersData[index]; if (confirm(`Supprimer l'apprenant: ${item.nom || '?'} ${item.prenom || ''} (Filière: ${item.filiere || 'N/A'}) ? Définitif.`)) { let tempLocalData = [...learnersData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('learnersData', tempLocalData); alert('Apprenant supprimé.'); learnerForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteMobileMoney = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= mobileMoneyData.length) { alert("Index invalide."); return; } const item = mobileMoneyData[originalIndex]; if (confirm(`Supprimer Point MM du ${item.date || '?'} (Agent: ${item.agent || '?'}) ?`)) { let tempLocalData = [...mobileMoneyData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('mobileMoneyData', tempLocalData); alert('Point Mobile Money supprimé.'); mobileMoneyForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteMmFournisseur = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const fournisseurFullName = `${sN} ${sP}`.trim(); const initialLength = mmFournisseursData.length; let tempLocalData = mmFournisseursData.filter(f => !(f.nom === sN && f.prenom === sP)); if (tempLocalData.length < initialLength) { if (confirm(`Supprimer fournisseur MM : ${fournisseurFullName} ?`)) { try { await saveDataToFirebase('mmFournisseursData', tempLocalData); alert(`Fournisseur ${fournisseurFullName} supprimé.`); mmFournisseurForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } } else { alert(`Erreur : Fournisseur ${fournisseurFullName} non trouvé.`); } };
-    window.deleteClientProfile = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const clientFullName = `${sN} ${sP}`.trim(); const hasActiveCredit = creditorsData.some(c => c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005) ); if (hasActiveCredit) { alert(`Impossible supprimer profil ${clientFullName}, crédits non soldés associés.`); return; } const profileIndex = clientProfilesData.findIndex(p => p.nom === sN && p.prenom === sP); if (profileIndex === -1) { alert(`Erreur : Profil ${clientFullName} non trouvé.`); return; } if (confirm(`Supprimer profil client : ${clientFullName} ?\nATTENTION : Ceci supprimera aussi crédits SOLDÉS associés.`)) { let tempProfilesData = [...clientProfilesData]; let tempCreditorsData = [...creditorsData]; let credRemovedCount = 0; tempProfilesData.splice(profileIndex, 1); const initialCreditorLength = tempCreditorsData.length; tempCreditorsData = tempCreditorsData.filter(c => !( c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) <= 0.005) )); credRemovedCount = initialCreditorLength - tempCreditorsData.length; try { const savePromises = [saveDataToFirebase('clientProfilesData', tempProfilesData)]; if (credRemovedCount > 0) { savePromises.push(saveDataToFirebase('creditorsData', tempCreditorsData)); } await Promise.all(savePromises); alert(`Profil ${clientFullName} supprimé.` + (credRemovedCount > 0 ? ` ${credRemovedCount} crédit(s) soldé(s) associé(s) supprimé(s).` : '')); if(clientProfileEditKeyInput?.value === `${sN}_${sP}`) { clientProfileForm.reset(); clientProfileEditKeyInput.value = ''; clientProfileForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Profil'; updateConnectedUserFields(); } clientProfileForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteCreditor = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= creditorsData.length) { alert("Index invalide."); return; } const item = creditorsData[originalIndex]; const remaining = (item.totalAmountDue || 0) - (item.amountPaidTotal || 0); if (confirm(`Supprimer TOUTE la transaction crédit pour ${item.name || '?'} ("${item.designation || '?'}")?\nSolde: ${formatAmount(remaining)}. IRREVERSIBLE.`)) { let tempLocalData = [...creditorsData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('creditorsData', tempLocalData); alert('Transaction crédit supprimée.'); creditorForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteDebt = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= debtData.length) { alert("Index invalide."); return; } const item = debtData[originalIndex]; if (confirm(`Supprimer ${item.type || 'entrée'} : ${item.name || '?'} ("${item.description || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...debtData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('debtData', tempLocalData); alert(`${item.type || 'Entrée'} supprimé(e).`); debtForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deletePermission = async (type, index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } let dataArray, storageKey, itemType, targetForm; if (type === 'employee') { dataArray = employeePermissionsData; storageKey = 'employeePermissionsData'; itemType = 'employé'; targetForm = permissionEmployeeForm; } else if (type === 'learner') { dataArray = learnerPermissionsData; storageKey = 'learnerPermissionsData'; itemType = 'apprenant'; targetForm = permissionLearnerForm; } else { return; } if (index < 0 || index >= dataArray.length) { alert("Index invalide."); return; } const perm = dataArray[index]; if (confirm(`Supprimer demande permission pour ${perm.name || '?'} (${itemType}) du ${perm.requestDate || '?'} ?`)) { let tempLocalData = [...dataArray]; tempLocalData.splice(index, 1); try { await saveDataToFirebase(storageKey, tempLocalData); alert('Demande permission supprimée.'); targetForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteAdminUser = async (username) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const safeUsername = String(username || '').replace(/\\'/g, "'"); const userIndex = adminData.findIndex(u => u.username === safeUsername); if (userIndex === -1) { alert(`Utilisateur '${safeUsername}' non trouvé.`); return; } const userToDelete = adminData[userIndex]; if(currentUser && currentUser.username === safeUsername) { alert("Impossible supprimer votre propre compte."); return; } const adminCount = adminData.filter(u => u.status === 'Administrateur').length; if(userToDelete.status === 'Administrateur' && adminCount <= 1) { alert("Impossible supprimer le dernier administrateur."); return; } if (confirm(`Supprimer utilisateur '${safeUsername}' (${userToDelete.status || ''}) ? IRREVERSIBLE.`)) { let tempLocalData = [...adminData]; tempLocalData.splice(userIndex, 1); try { await saveDataToFirebase('adminData', tempLocalData); alert(`Utilisateur '${safeUsername}' supprimé.`); if (adminEditKeyInput?.value === safeUsername) { adminForm.reset(); updateConnectedUserFields(); adminEditKeyInput.value = ''; adminPasswordInput.placeholder = "Entrer pour définir/modifier"; adminForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Utilisateur'; } adminForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteEquipment = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= equipmentData.length) { alert("Index invalide."); return; } const item = equipmentData[index]; if (confirm(`Supprimer l'attribution de "${item.name || '?'}" (Qté: ${item.quantity || '?'}) à ${item.employeeName || '?'} du ${item.assignedDate || '?'} ?`)) { let tempLocalData = [...equipmentData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('equipmentData', tempLocalData); alert('Attribution appareil/outil supprimée.'); if (equipmentEditIndexInput?.value === String(index)) { equipmentForm.reset(); equipmentEditIndexInput.value = ''; equipmentForm.querySelector('button[type="submit"]').textContent = 'Ajouter Appareil Confié'; updateConnectedUserFields(); populateEmployeeSelect(equipmentEmployeeNameSelect); } equipmentForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+    // --- Delete Functions (MODIFIED: Removed scroll) ---
+    window.deleteSupply = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= supplyData.length) return; const item = supplyData[index]; if (confirm(`Supprimer appro ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...supplyData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('supplyData', tempLocalData); alert('Approvisionnement supprimé.'); /* REMOVED: supplyForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteSale = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= salesData.length) return; const item = salesData[index]; if (confirm(`Supprimer vente Papeterie ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...salesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('salesData', tempLocalData); alert('Vente Papeterie supprimée.'); /* REMOVED: salesForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteMaterielElectriqueSale = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= materielElectriqueData.length) return; const item = materielElectriqueData[index]; if (confirm(`Supprimer vente Mat. Elec. ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...materielElectriqueData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('materielElectriqueData', tempLocalData); alert('Vente Mat. Elec. supprimée.'); /* REMOVED: salesForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteExpense = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= expensesData.length) return; const item = expensesData[index]; if (confirm(`Supprimer dépense du ${item.date || '?'} ("${item.reason || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...expensesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('expensesData', tempLocalData); alert('Dépense supprimée.'); /* REMOVED: salesForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteOther = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= othersData.length) return; const item = othersData[index]; if (confirm(`Supprimer op. diverse du ${item.date || '?'} ("${item.designation || '?'}", Montant: ${formatAmount(item.totalAmount)}) ?`)) { let tempLocalData = [...othersData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('othersData', tempLocalData); alert('Opération diverse supprimée.'); /* REMOVED: salesForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteEmployee = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= employeesData.length) return; const item = employeesData[index]; if (confirm(`Supprimer l'employé: ${item.nom || '?'} ${item.prenom || ''} ? Définitif.`)) { let tempLocalData = [...employeesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('employeesData', tempLocalData); alert('Employé supprimé.'); /* REMOVED: employeeForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteLearner = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= learnersData.length) return; const item = learnersData[index]; if (confirm(`Supprimer l'apprenant: ${item.nom || '?'} ${item.prenom || ''} (Filière: ${item.filiere || 'N/A'}) ? Définitif.`)) { let tempLocalData = [...learnersData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('learnersData', tempLocalData); alert('Apprenant supprimé.'); /* REMOVED: learnerForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteMobileMoney = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= mobileMoneyData.length) { alert("Index invalide."); return; } const item = mobileMoneyData[originalIndex]; if (confirm(`Supprimer Point MM du ${item.date || '?'} (Agent: ${item.agent || '?'}) ?`)) { let tempLocalData = [...mobileMoneyData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('mobileMoneyData', tempLocalData); alert('Point Mobile Money supprimé.'); /* REMOVED: mobileMoneyForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteMmFournisseur = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const fournisseurFullName = `${sN} ${sP}`.trim(); const initialLength = mmFournisseursData.length; let tempLocalData = mmFournisseursData.filter(f => !(f.nom === sN && f.prenom === sP)); if (tempLocalData.length < initialLength) { if (confirm(`Supprimer fournisseur MM : ${fournisseurFullName} ?`)) { try { await saveDataToFirebase('mmFournisseursData', tempLocalData); alert(`Fournisseur ${fournisseurFullName} supprimé.`); /* REMOVED: mmFournisseurForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } } else { alert(`Erreur : Fournisseur ${fournisseurFullName} non trouvé.`); } };
+    window.deleteClientProfile = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const clientFullName = `${sN} ${sP}`.trim(); const hasActiveCredit = creditorsData.some(c => c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005) ); if (hasActiveCredit) { alert(`Impossible supprimer profil ${clientFullName}, crédits non soldés associés.`); return; } const profileIndex = clientProfilesData.findIndex(p => p.nom === sN && p.prenom === sP); if (profileIndex === -1) { alert(`Erreur : Profil ${clientFullName} non trouvé.`); return; } if (confirm(`Supprimer profil client : ${clientFullName} ?\nATTENTION : Ceci supprimera aussi crédits SOLDÉS associés.`)) { let tempProfilesData = [...clientProfilesData]; let tempCreditorsData = [...creditorsData]; let credRemovedCount = 0; tempProfilesData.splice(profileIndex, 1); const initialCreditorLength = tempCreditorsData.length; tempCreditorsData = tempCreditorsData.filter(c => !( c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) <= 0.005) )); credRemovedCount = initialCreditorLength - tempCreditorsData.length; try { const savePromises = [saveDataToFirebase('clientProfilesData', tempProfilesData)]; if (credRemovedCount > 0) { savePromises.push(saveDataToFirebase('creditorsData', tempCreditorsData)); } await Promise.all(savePromises); alert(`Profil ${clientFullName} supprimé.` + (credRemovedCount > 0 ? ` ${credRemovedCount} crédit(s) soldé(s) associé(s) supprimé(s).` : '')); if(clientProfileEditKeyInput?.value === `${sN}_${sP}`) { clientProfileForm.reset(); clientProfileEditKeyInput.value = ''; clientProfileForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Profil'; updateConnectedUserFields(); } /* REMOVED: clientProfileForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteCreditor = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= creditorsData.length) { alert("Index invalide."); return; } const item = creditorsData[originalIndex]; const remaining = (item.totalAmountDue || 0) - (item.amountPaidTotal || 0); if (confirm(`Supprimer TOUTE la transaction crédit pour ${item.name || '?'} ("${item.designation || '?'}")?\nSolde: ${formatAmount(remaining)}. IRREVERSIBLE.`)) { let tempLocalData = [...creditorsData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('creditorsData', tempLocalData); alert('Transaction crédit supprimée.'); /* REMOVED: creditorForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteDebt = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= debtData.length) { alert("Index invalide."); return; } const item = debtData[originalIndex]; if (confirm(`Supprimer ${item.type || 'entrée'} : ${item.name || '?'} ("${item.description || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...debtData]; tempLocalData.splice(originalIndex, 1); // Corrected variable name from index to originalIndex
+    try { await saveDataToFirebase('debtData', tempLocalData); alert(`${item.type || 'Entrée'} supprimé(e).`); /* REMOVED: debtForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deletePermission = async (type, index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } let dataArray, storageKey, itemType, targetForm; if (type === 'employee') { dataArray = employeePermissionsData; storageKey = 'employeePermissionsData'; itemType = 'employé'; targetForm = permissionEmployeeForm; } else if (type === 'learner') { dataArray = learnerPermissionsData; storageKey = 'learnerPermissionsData'; itemType = 'apprenant'; targetForm = permissionLearnerForm; } else { return; } if (index < 0 || index >= dataArray.length) { alert("Index invalide."); return; } const perm = dataArray[index]; if (confirm(`Supprimer demande permission pour ${perm.name || '?'} (${itemType}) du ${perm.requestDate || '?'} ?`)) { let tempLocalData = [...dataArray]; tempLocalData.splice(index, 1); try { await saveDataToFirebase(storageKey, tempLocalData); alert('Demande permission supprimée.'); /* REMOVED: targetForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteAdminUser = async (username) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const safeUsername = String(username || '').replace(/\\'/g, "'"); const userIndex = adminData.findIndex(u => u.username === safeUsername); if (userIndex === -1) { alert(`Utilisateur '${safeUsername}' non trouvé.`); return; } const userToDelete = adminData[userIndex]; if(currentUser && currentUser.username === safeUsername) { alert("Impossible supprimer votre propre compte."); return; } const adminCount = adminData.filter(u => u.status === 'Administrateur').length; if(userToDelete.status === 'Administrateur' && adminCount <= 1) { alert("Impossible supprimer le dernier administrateur."); return; } if (confirm(`Supprimer utilisateur '${safeUsername}' (${userToDelete.status || ''}) ? IRREVERSIBLE.`)) { let tempLocalData = [...adminData]; tempLocalData.splice(userIndex, 1); try { await saveDataToFirebase('adminData', tempLocalData); alert(`Utilisateur '${safeUsername}' supprimé.`); if (adminEditKeyInput?.value === safeUsername) { adminForm.reset(); updateConnectedUserFields(); adminEditKeyInput.value = ''; adminPasswordInput.placeholder = "Entrer pour définir/modifier"; adminForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Utilisateur'; } /* REMOVED: adminForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
+    window.deleteEquipment = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= equipmentData.length) { alert("Index invalide."); return; } const item = equipmentData[index]; if (confirm(`Supprimer l'attribution de "${item.name || '?'}" (Qté: ${item.quantity || '?'}) à ${item.employeeName || '?'} du ${item.assignedDate || '?'} ?`)) { let tempLocalData = [...equipmentData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('equipmentData', tempLocalData); alert('Attribution appareil/outil supprimée.'); if (equipmentEditIndexInput?.value === String(index)) { equipmentForm.reset(); equipmentEditIndexInput.value = ''; equipmentForm.querySelector('button[type="submit"]').textContent = 'Ajouter Appareil Confié'; updateConnectedUserFields(); populateEmployeeSelect(equipmentEmployeeNameSelect); } /* REMOVED: equipmentForm?.scrollIntoView(...) */ } catch (e) { /* Error handled */ } } };
 
-    // START ADDITION: Table Sorting Logic
-
-    // Map table IDs to their data source and update function
-    const tableConfigMap = {
-        'supply-table': { data: () => supplyData, updateFn: updateSupplyTable, dateProp: 'date' },
-        'sales-table': { data: () => salesData, updateFn: updateSalesTable, dateProp: 'date' },
-        'materiel-electrique-table': { data: () => materielElectriqueData, updateFn: updateMaterielElectriqueTable, dateProp: 'date' },
-        'expenses-table': { data: () => expensesData, updateFn: updateExpensesTable, dateProp: 'date' },
-        'others-table': { data: () => othersData, updateFn: updateOthersTable, dateProp: 'date' },
-        'employees-table': { data: () => employeesData, updateFn: updateEmployeesTable, dateProp: 'hireDate' }, // Use hireDate for employees
-        'mobile-money-table': { data: () => mobileMoneyData, updateFn: updateMobileMoneyTable, dateProp: 'date' },
-        // Assuming 'lastPaymentDate' or 'date' is the relevant sort date for creditors
-        'creditors-table': { data: () => creditorsData, updateFn: updateCreditorsTable, dateProp: 'lastPaymentDate' }, // Sort by last operation date
-        // Assuming 'date' is registration date, 'dueDate' is also there. Let's sort by registration date.
-        'debt-table': { data: () => debtData, updateFn: updateDebtTable, dateProp: 'date' }, // Can add logic to sort by 'dueDate' if needed
-        'employee-permissions-table': { data: () => employeePermissionsData, updateFn: updateEmployeePermissionsTable, dateProp: 'requestDate' },
-        'learner-permissions-table': { data: () => learnerPermissionsData, updateFn: updateLearnerPermissionsTable, dateProp: 'requestDate' },
-        'equipment-table': { data: () => equipmentData, updateFn: updateEquipmentTable, dateProp: 'assignedDate' },
-        // Stock table date is 'date' (last modification) - might be less useful to sort by
-        // Admin table has no date
-        // MM Fournisseurs has no date
-        // Client Profiles has no date
-        // Learners table has no single date column for registration
-        // Report table is generated dynamically, sorting doesn't apply here
-    };
-
-    function sortTableByDateColumn(event) {
-        const th = event.currentTarget;
-        const table = th.closest('table');
-        const tableId = table?.id;
-
-        if (!tableId || !tableConfigMap[tableId]) {
-            console.warn("Sort clicked on unconfigured table:", tableId);
-            return;
-        }
-
-        const config = tableConfigMap[tableId];
-        const originalDataArray = config.data(); // Call function to get current data
-        const updateFunction = config.updateFn;
-        const dateProperty = config.dateProp;
-
-        if (!dateProperty) {
-            console.warn(`Date property not defined for sorting table ${tableId}`);
-            return;
-        }
-
-        const currentDirection = th.classList.contains('sort-asc') ? 'asc' : (th.classList.contains('sort-desc') ? 'desc' : 'none');
-        const newDirection = currentDirection === 'asc' ? 'desc' : 'asc'; // Toggle asc/desc, default to asc
-
-        // Remove sort classes from other headers in the same table
-        th.parentNode.querySelectorAll('th.sortable-header').forEach(header => {
-            header.classList.remove('sort-asc', 'sort-desc');
-        });
-
-        // Add new sort class to the clicked header
-        th.classList.add(newDirection === 'asc' ? 'sort-asc' : 'sort-desc');
-
-        // Sort a copy of the data
-        const dataToSort = [...originalDataArray];
-        dataToSort.sort((a, b) => {
-            const dateAStr = a[dateProperty] || '';
-            const dateBStr = b[dateProperty] || '';
-
-            // Handle potentially null/empty dates
-            if (!dateAStr && !dateBStr) return 0;
-            if (!dateAStr) return 1; // Put empty dates last
-            if (!dateBStr) return -1; // Put empty dates last
-
-            try {
-                 // Attempt to parse as date objects for reliable comparison
-                 const dateA = new Date(dateAStr);
-                 const dateB = new Date(dateBStr);
-                 const timeA = dateA.getTime();
-                 const timeB = dateB.getTime();
-
-                 // Check if parsing was successful
-                 const aValid = !isNaN(timeA);
-                 const bValid = !isNaN(timeB);
-
-                 if (!aValid && !bValid) return dateAStr.localeCompare(dateBStr); // Fallback to string compare if both invalid
-                 if (!aValid) return 1; // Invalid dates go last
-                 if (!bValid) return -1; // Invalid dates go last
-
-                 // Both valid, compare numerically
-                 return newDirection === 'asc' ? timeA - timeB : timeB - timeA;
-            } catch (e) {
-                 // Fallback to string comparison if Date parsing fails
-                 console.warn(`Date parsing error during sort for ${dateAStr} or ${dateBStr}, falling back to string compare.`);
-                 return dateAStr.localeCompare(dateBStr) * (newDirection === 'asc' ? 1 : -1);
-            }
-        });
-
-        // Update the table display with the sorted data
-        updateFunction(dataToSort);
-        // Re-apply local search filter after sorting
-        const searchInput = document.querySelector(`.table-search-container input[data-table-id="${tableId}"]`);
-        if (searchInput) {
-            filterSpecificTable(searchInput);
-        }
-    }
-
-    function addDateSortListeners() {
-        // Find all date headers that should be sortable
-        const dateHeaders = document.querySelectorAll('th.date-col.sortable-header');
-        dateHeaders.forEach(header => {
-            // Remove any existing listener to prevent duplicates if initializeAppUI is called multiple times
-            header.removeEventListener('click', sortTableByDateColumn);
-            // Add the listener
-            header.addEventListener('click', sortTableByDateColumn);
-        });
-    }
-
+    // START ADDITION: Table Sorting Logic (Unchanged from previous version)
+    const tableConfigMap = { /* ... Map remains the same ... */ 'supply-table': { data: () => supplyData, updateFn: updateSupplyTable, dateProp: 'date' }, 'sales-table': { data: () => salesData, updateFn: updateSalesTable, dateProp: 'date' }, 'materiel-electrique-table': { data: () => materielElectriqueData, updateFn: updateMaterielElectriqueTable, dateProp: 'date' }, 'expenses-table': { data: () => expensesData, updateFn: updateExpensesTable, dateProp: 'date' }, 'others-table': { data: () => othersData, updateFn: updateOthersTable, dateProp: 'date' }, 'employees-table': { data: () => employeesData, updateFn: updateEmployeesTable, dateProp: 'hireDate' }, 'mobile-money-table': { data: () => mobileMoneyData, updateFn: updateMobileMoneyTable, dateProp: 'date' }, 'creditors-table': { data: () => creditorsData, updateFn: updateCreditorsTable, dateProp: 'lastPaymentDate' }, 'debt-table': { data: () => debtData, updateFn: updateDebtTable, dateProp: 'date' }, 'employee-permissions-table': { data: () => employeePermissionsData, updateFn: updateEmployeePermissionsTable, dateProp: 'requestDate' }, 'learner-permissions-table': { data: () => learnerPermissionsData, updateFn: updateLearnerPermissionsTable, dateProp: 'requestDate' }, 'equipment-table': { data: () => equipmentData, updateFn: updateEquipmentTable, dateProp: 'assignedDate' }, };
+    function sortTableByDateColumn(event) { /* ... Function remains the same ... */ const th = event.currentTarget; const table = th.closest('table'); const tableId = table?.id; if (!tableId || !tableConfigMap[tableId]) { console.warn("Sort clicked on unconfigured table:", tableId); return; } const config = tableConfigMap[tableId]; const originalDataArray = config.data(); const updateFunction = config.updateFn; const dateProperty = config.dateProp; if (!dateProperty) { console.warn(`Date property not defined for sorting table ${tableId}`); return; } const currentDirection = th.classList.contains('sort-asc') ? 'asc' : (th.classList.contains('sort-desc') ? 'desc' : 'none'); const newDirection = currentDirection === 'asc' ? 'desc' : 'asc'; th.parentNode.querySelectorAll('th.sortable-header').forEach(header => { header.classList.remove('sort-asc', 'sort-desc'); }); th.classList.add(newDirection === 'asc' ? 'sort-asc' : 'sort-desc'); const dataToSort = [...originalDataArray]; dataToSort.sort((a, b) => { const dateAStr = a[dateProperty] || ''; const dateBStr = b[dateProperty] || ''; if (!dateAStr && !dateBStr) return 0; if (!dateAStr) return 1; if (!dateBStr) return -1; try { const dateA = new Date(dateAStr); const dateB = new Date(dateBStr); const timeA = dateA.getTime(); const timeB = dateB.getTime(); const aValid = !isNaN(timeA); const bValid = !isNaN(timeB); if (!aValid && !bValid) return dateAStr.localeCompare(dateBStr); if (!aValid) return 1; if (!bValid) return -1; return newDirection === 'asc' ? timeA - timeB : timeB - timeA; } catch (e) { console.warn(`Date parsing error during sort for ${dateAStr} or ${dateBStr}, falling back to string compare.`); return dateAStr.localeCompare(dateBStr) * (newDirection === 'asc' ? 1 : -1); } }); updateFunction(dataToSort); const searchInput = document.querySelector(`.table-search-container input[data-table-id="${tableId}"]`); if (searchInput) { filterSpecificTable(searchInput); } }
+    function addDateSortListeners() { /* ... Function remains the same ... */ const dateHeaders = document.querySelectorAll('th.date-col.sortable-header'); dateHeaders.forEach(header => { header.removeEventListener('click', sortTableByDateColumn); header.addEventListener('click', sortTableByDateColumn); }); }
     // END ADDITION: Table Sorting Logic
 
-    // --- Edit Functions (Add permission checks) ---
-    window.editSupply = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editSupply ... */ if (index < 0 || index >= supplyData.length) return; const item = supplyData[index]; if (!supplyForm || !supplyEditIndexInput || !supplyDateInput || !supplyTypeSelect || !supplyDesignationInput || !supplyQuantityInput || !supplyUnitPriceInput || !supplyTotalAmountInput || !supplyUserConnectedInput) { alert("Erreur interne: Formulaire approvisionnement incomplet."); return; } supplyForm.reset(); supplyDateInput.value = item.date || ''; supplyTypeSelect.value = item.type || ''; supplyDesignationInput.value = item.designation || ''; supplyQuantityInput.value = item.quantity || ''; supplyUnitPriceInput.value = item.unitPrice !== null ? item.unitPrice : ''; calculateTotalAmount(supplyQuantityInput, supplyUnitPriceInput, supplyTotalAmountInput); updateConnectedUserFields(); supplyEditIndexInput.value = index; supplyForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Approvisionnement'; supplySection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editSaleMisc = (typeKey, originalIndex) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement.");
-            return;
-        }
-        /* ... rest of editSaleMisc ... */
-        let dataArray, item, formToReset = salesForm, operationTypeValue = '';
-        try {
-            if (typeKey === 'Papeterie') { dataArray = salesData; operationTypeValue = 'Papeterie'; }
-            else if (typeKey === 'MatElec') { dataArray = materielElectriqueData; operationTypeValue = 'Matériels électrique'; }
-            else if (typeKey === 'Depenses') { dataArray = expensesData; operationTypeValue = 'Dépenses'; }
-            else if (typeKey === 'Divers') { dataArray = othersData; operationTypeValue = 'Divers'; }
-            else throw new Error("Type invalide pour modif.");
-
-            if (originalIndex < 0 || originalIndex >= dataArray.length) throw new Error("Index invalide.");
-            item = dataArray[originalIndex];
-        } catch (error) {
-            alert(`Erreur prépa modif : ${error.message}`);
-            return;
-        }
-
-        if (!item) {
-            alert("Erreur: Enregistrement introuvable.");
-            return;
-        }
-
-        formToReset.reset();
-        if(saleDateInput) saleDateInput.value = item.date || '';
-        if (operationTypeSelect) {
-             operationTypeSelect.value = operationTypeValue;
-             handleOperationTypeChange(); // Trigger change to show/hide correct sub-form fields
-        } else {
-             alert("Erreur interne: Sélecteur type op. introuvable."); return;
-        }
-
-        // Populate fields based on type
-        if (typeKey === 'Papeterie' && papeterieDetailsForm) {
-            if(saleDesignationSelect) {
-                updateProductDesignationsForCategory('Papeterie'); // Ensure dropdown is up-to-date
-                // If the designation being edited isn't in stock anymore, add it temporarily
-                const exists = Array.from(saleDesignationSelect.options).some(opt => opt.value === item.designation);
-                if (!exists && item.designation) {
-                    saleDesignationSelect.add(new Option(item.designation, item.designation, true, true));
-                }
-                saleDesignationSelect.value = item.designation || '';
-            }
-            if(saleQuantityInput) saleQuantityInput.value = item.quantity || '';
-            if(saleUnitPriceInput) saleUnitPriceInput.value = item.unitPrice ?? '';
-            calculateTotalAmount(saleQuantityInput, saleUnitPriceInput, saleTotalAmountInput);
-        } else if (typeKey === 'MatElec' && materielElectriqueDetailsForm) {
-             if(meDesignationSelect) {
-                 updateProductDesignationsForCategory('Matériels électrique');
-                 const exists = Array.from(meDesignationSelect.options).some(opt => opt.value === item.designation);
-                 if (!exists && item.designation) {
-                     meDesignationSelect.add(new Option(item.designation, item.designation, true, true));
-                 }
-                 meDesignationSelect.value = item.designation || '';
-             }
-             if(meQuantityInput) meQuantityInput.value = item.quantity || '';
-             if(meUnitPriceInput) meUnitPriceInput.value = item.unitPrice ?? '';
-             calculateTotalAmount(meQuantityInput, meUnitPriceInput, meTotalAmountInput);
-        } else if (typeKey === 'Depenses' && depensesDetailsForm) {
-             if(expenseReasonInput) expenseReasonInput.value = item.reason || '';
-             if(expenseQuantityInput) expenseQuantityInput.value = item.quantity ?? '';
-             if(expenseAmountInput) expenseAmountInput.value = item.amount || '';
-        } else if (typeKey === 'Divers' && diversDetailsForm) {
-            if(otherDesignationInput) otherDesignationInput.value = item.designation || '';
-            if(otherQuantityInput) otherQuantityInput.value = item.quantity ?? '';
-            if(otherTotalAmountInput) otherTotalAmountInput.value = item.totalAmount || '';
-        } else {
-            console.warn(`Modif type '${typeKey}' mais form non trouvé.`);
-        }
-
-        updateConnectedUserFields(); // Update user field
-        if (salesEditIndexInput) salesEditIndexInput.value = originalIndex;
-        if (salesEditTypeInput) salesEditTypeInput.value = operationTypeValue;
-        const submitButton = formToReset.querySelector('button[type="submit"]');
-        if (submitButton) submitButton.textContent = 'Mettre à Jour Opération';
-        salesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-    window.editEmployee = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editEmployee ... */ if (index < 0 || index >= employeesData.length) return; const emp = employeesData[index]; if (!employeeForm || !employeeEditIndexInput || !employeeUserConnectedInput) { alert("Erreur: Formulaire employé introuvable."); return; } employeeForm.reset(); if(employeeNomInput) employeeNomInput.value = emp.nom || ''; if(employeePrenomInput) employeePrenomInput.value = emp.prenom || ''; if(employeeRoleInput) employeeRoleInput.value = emp.statut || ''; if(employeeAdresseInput) employeeAdresseInput.value = emp.adresse || ''; if(employeeTelephoneInput) employeeTelephoneInput.value = emp.telephone || ''; if(employeeLieuResidenceInput) employeeLieuResidenceInput.value = emp.lieuResidence || ''; if(employeeJoursTravailInput) employeeJoursTravailInput.value = emp.joursTravail || ''; if(employeeHeureArriveeInput) employeeHeureArriveeInput.value = emp.heureArrivee || ''; if(employeeHeureDepartInput) employeeHeureDepartInput.value = emp.heureDepart || ''; if(employeeSalaryInput) employeeSalaryInput.value = emp.salary ?? ''; if(employeePaidAmountInput) employeePaidAmountInput.value = emp.paidAmount || ''; if(employeeHireDateInput) employeeHireDateInput.value = emp.hireDate || ''; if(employeeContactPersonNomInput) employeeContactPersonNomInput.value = emp.contactPersonNom || ''; if(employeeContactPersonPrenomInput) employeeContactPersonPrenomInput.value = emp.contactPersonPrenom || ''; if(employeeContactPersonAdresseInput) employeeContactPersonAdresseInput.value = emp.contactPersonAdresse || ''; if(employeeContactPersonTelephoneInput) employeeContactPersonTelephoneInput.value = emp.contactPersonTelephone || ''; if(employeeContactPersonLieuResidenceInput) employeeContactPersonLieuResidenceInput.value = emp.contactPersonLieuResidence || ''; updateConnectedUserFields(); employeeEditIndexInput.value = index; employeeForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Employé'; employeesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editLearner = (index) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        /* ... rest of editLearner ... */
-        if (index < 0 || index >= learnersData.length) return;
-        const lrn = learnersData[index];
-        if (!learnerForm || !learnerEditIndexInput || !learnerUserConnectedInput) {
-            alert("Erreur: Formulaire apprenant introuvable."); return;
-        }
-        learnerForm.reset();
-        if(learnerNomInput) learnerNomInput.value = lrn.nom || '';
-        if(learnerPrenomInput) learnerPrenomInput.value = lrn.prenom || '';
-        if(learnerAgeInput) learnerAgeInput.value = lrn.age ?? '';
-        if(learnerAdresseInput) learnerAdresseInput.value = lrn.adresse || '';
-        if(learnerLieuResidenceInput) learnerLieuResidenceInput.value = lrn.lieuResidence || '';
-        if(learnerNiveauEtudesInput) learnerNiveauEtudesInput.value = lrn.niveauEtudes || '';
-        if(learnerSituationMatrimonialeSelect) learnerSituationMatrimonialeSelect.value = lrn.situationMatrimoniale || '';
-        if(learnerPereNomInput) learnerPereNomInput.value = lrn.pereNom || '';
-        if(learnerPerePrenomInput) learnerPerePrenomInput.value = lrn.perePrenom || '';
-        if(learnerMereNomInput) learnerMereNomInput.value = lrn.mereNom || '';
-        if(learnerMerePrenomInput) learnerMerePrenomInput.value = lrn.merePrenom || '';
-        if(learnerFiliereInput) learnerFiliereInput.value = lrn.filiere || '';
-        if(learnerDureeFormationInput) learnerDureeFormationInput.value = lrn.dureeFormation || '';
-        if(learnerFraisDocumentsInput) learnerFraisDocumentsInput.value = lrn.fraisDocuments || '';
-        if(learnerTranche1Input) learnerTranche1Input.value = lrn.tranche1 || '';
-        if(learnerTranche2Input) learnerTranche2Input.value = lrn.tranche2 || '';
-        if(learnerTranche3Input) learnerTranche3Input.value = lrn.tranche3 || '';
-        if(learnerTranche4Input) learnerTranche4Input.value = lrn.tranche4 || '';
-        if(learnerGarantNomInput) learnerGarantNomInput.value = lrn.garantNom || '';
-        if(learnerGarantPrenomInput) learnerGarantPrenomInput.value = lrn.garantPrenom || '';
-        if(learnerGarantTelephoneInput) learnerGarantTelephoneInput.value = lrn.garantTelephone || '';
-        if(learnerGarantAdresseInput) learnerGarantAdresseInput.value = lrn.garantAdresse || '';
-        updateConnectedUserFields();
-        learnerEditIndexInput.value = index;
-        learnerForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Apprenant';
-        learnersSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    window.editMobileMoney = (originalIndex) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        /* ... rest of editMobileMoney ... */
-        if (originalIndex < 0 || originalIndex >= mobileMoneyData.length) {
-            alert("Index invalide."); return;
-        }
-        const item = mobileMoneyData[originalIndex];
-        if (!mobileMoneyForm || !mobileMoneyEditIndexInput || !mmPointUserConnectedInput) {
-            alert("Erreur: Formulaire MM introuvable."); return;
-        }
-        mobileMoneyForm.reset();
-        if(mmDateInput) mmDateInput.value = item.date || '';
-        if(mmAgentInput) mmAgentInput.value = item.agent || '';
-        if(mmBalanceMoovInput) mmBalanceMoovInput.value = item.balanceMoov || '';
-        if(mmBalanceMtnInput) mmBalanceMtnInput.value = item.balanceMTN || '';
-        if(mmBalanceCelttisInput) mmBalanceCelttisInput.value = item.balanceCelttis || '';
-        if(mmBalanceCashInput) mmBalanceCashInput.value = item.balanceCash || '';
-        if(mmCreditMoovInput) mmCreditMoovInput.value = item.creditMoov || '';
-        if(mmCreditMtnInput) mmCreditMtnInput.value = item.creditMTN || '';
-        if(mmCreditCelttisInput) mmCreditCelttisInput.value = item.creditCelttis || '';
-        if(mmPerteTransfertInput) mmPerteTransfertInput.value = item.perteTransfert || '';
-        if(mmPerteCreditInput) mmPerteCreditInput.value = item.perteCredit || '';
-        updateConnectedUserFields();
-        mobileMoneyEditIndexInput.value = originalIndex;
-        mobileMoneyForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Point MM';
-        mobileMoneySection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    window.editMmFournisseur = (nom, prenom) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        /* ... rest of editMmFournisseur ... */
-        const sN = String(nom || '').replace(/\\'/g, "'");
-        const sP = String(prenom || '').replace(/\\'/g, "'");
-        const key = `${sN}_${sP}`;
-        const f = mmFournisseursData.find(f => f.nom === sN && f.prenom === sP);
-        if (f && mmFournisseurForm && mmFournisseurEditKeyInput && mmFournisseurUserConnectedInput) {
-            mmFournisseurForm.reset();
-            if(mmFournisseurNomInput) mmFournisseurNomInput.value = f.nom || '';
-            if(mmFournisseurPrenomInput) mmFournisseurPrenomInput.value = f.prenom || '';
-            if(mmFournisseurContactInput) mmFournisseurContactInput.value = f.contact || '';
-            if(mmFournisseurMontantInput) mmFournisseurMontantInput.value = f.montantFourni || '';
-            if(mmFournisseurInteretInput) mmFournisseurInteretInput.value = f.interet ?? '';
-            if(mmFournisseurVenduInput) mmFournisseurVenduInput.value = f.creditVendu || '';
-            updateConnectedUserFields();
-            mmFournisseurEditKeyInput.value = key;
-            mmFournisseurForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Fournisseur';
-            mmFournisseurForm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
-            alert(`Fournisseur ${sN} ${sP} non trouvé ou form incomplet.`);
-            if(mmFournisseurEditKeyInput) mmFournisseurEditKeyInput.value = '';
-        }
-    };
-
-    window.editClientProfile = (nom, prenom) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        /* ... rest of editClientProfile ... */
-        const sN = String(nom || '').replace(/\\'/g, "'");
-        const sP = String(prenom || '').replace(/\\'/g, "'");
-        const key = `${sN}_${sP}`;
-        const p = clientProfilesData.find(p => p.nom === sN && p.prenom === sP);
-        if (p && clientProfileForm && clientProfileEditKeyInput && clientUserConnectedInput) {
-            clientProfileForm.reset();
-            if(clientProfileNomInput) clientProfileNomInput.value = p.nom || '';
-            if(clientProfilePrenomInput) clientProfilePrenomInput.value = p.prenom || '';
-            if(clientProfileAdresseInput) clientProfileAdresseInput.value = p.adresse || '';
-            if(clientProfileContactInput) clientProfileContactInput.value = p.contact || '';
-            if(clientProfileStatutInput) clientProfileStatutInput.value = p.statut || '';
-            updateConnectedUserFields();
-            clientProfileEditKeyInput.value = key;
-            clientProfileForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Profil';
-            clientProfileForm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
-            alert(`Profil ${sN} ${sP} non trouvé ou form incomplet.`);
-            if(clientProfileEditKeyInput) clientProfileEditKeyInput.value = '';
-        }
-    };
-
-    window.editDebt = (originalIndex) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        /* ... rest of editDebt ... */
-        if (originalIndex < 0 || originalIndex >= debtData.length) {
-            alert("Index invalide."); return;
-        }
-        const item = debtData[originalIndex];
-        if (!debtForm || !debtEditIndexInput || !debtUserConnectedInput) {
-            alert("Erreur: Formulaire Dette/Prêt introuvable."); return;
-        }
-        debtForm.reset();
-        if(debtDateInput) debtDateInput.value = item.date || '';
-        if(debtTypeSelect) debtTypeSelect.value = item.type || '';
-        if(debtNameInput) debtNameInput.value = item.name || '';
-        if(debtDescriptionInput) debtDescriptionInput.value = item.description || '';
-        if(debtAmountInput) debtAmountInput.value = item.amount || '';
-        if(debtDueDateInput) debtDueDateInput.value = item.dueDate || '';
-        if(debtStatusSelect) debtStatusSelect.value = item.status || '';
-        updateConnectedUserFields();
-        debtEditIndexInput.value = originalIndex;
-        debtForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Dette/Prêt';
-        debtSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    window.editAdminUser = (username) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        /* ... rest of editAdminUser ... */
-        const safeUsername = String(username || '').replace(/\\'/g, "'");
-        const user = adminData.find(u => u.username === safeUsername);
-        if (!user) {
-            alert(`Utilisateur '${safeUsername}' non trouvé.`); return;
-        }
-        if (!adminForm || !adminEditKeyInput || !adminUsernameInput || !adminPostInput || !adminPasswordInput || !adminStatusSelect || !adminOpUserConnectedInput) {
-            alert("Erreur interne: Form Admin incomplet."); return;
-        }
-        if(currentUser && currentUser.username === safeUsername) {
-            alert("Modif impossible : propre compte."); return;
-        }
-        adminForm.reset();
-        adminUsernameInput.value = user.username || '';
-        adminPostInput.value = user.post || '';
-        adminStatusSelect.value = user.status || 'Lecteur';
-        adminPasswordInput.value = '';
-        adminPasswordInput.placeholder = "Laisser vide si inchangé";
-        updateConnectedUserFields();
-        adminEditKeyInput.value = user.username;
-        adminForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Utilisateur';
-        adminSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    window.editEquipment = (index) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        /* ... rest of editEquipment ... */
-        if (index < 0 || index >= equipmentData.length) {
-            alert("Index invalide."); return;
-        }
-        const item = equipmentData[index];
-        if (!equipmentForm || !equipmentEditIndexInput || !equipmentUserConnectedInput) {
-            alert("Erreur: Formulaire équipement introuvable."); return;
-        }
-        equipmentForm.reset();
-        if (equipmentNameInput) equipmentNameInput.value = item.name || '';
-        if (equipmentQuantityInput) equipmentQuantityInput.value = item.quantity || '';
-        if (equipmentAssignedDateInput) equipmentAssignedDateInput.value = item.assignedDate || '';
-        if (equipmentAccessoriesInput) equipmentAccessoriesInput.value = item.accessories || '';
-        if (equipmentEmployeeNameSelect) {
-            populateEmployeeSelect(equipmentEmployeeNameSelect); // Ensure select is populated
-            equipmentEmployeeNameSelect.value = item.employeeName || '';
-        }
-        if (equipmentOtherInfoTextarea) equipmentOtherInfoTextarea.value = item.otherInfo || '';
-        updateConnectedUserFields();
-        equipmentEditIndexInput.value = index;
-        equipmentForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Appareil';
-        equipmentSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
+    // --- Edit Functions (MODIFIED: Removed scroll) ---
+    window.editSupply = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editSupply ... */ if (index < 0 || index >= supplyData.length) return; const item = supplyData[index]; if (!supplyForm || !supplyEditIndexInput || !supplyDateInput || !supplyTypeSelect || !supplyDesignationInput || !supplyQuantityInput || !supplyUnitPriceInput || !supplyTotalAmountInput || !supplyUserConnectedInput) { alert("Erreur interne: Formulaire approvisionnement incomplet."); return; } supplyForm.reset(); supplyDateInput.value = item.date || ''; supplyTypeSelect.value = item.type || ''; supplyDesignationInput.value = item.designation || ''; supplyQuantityInput.value = item.quantity || ''; supplyUnitPriceInput.value = item.unitPrice !== null ? item.unitPrice : ''; calculateTotalAmount(supplyQuantityInput, supplyUnitPriceInput, supplyTotalAmountInput); updateConnectedUserFields(); supplyEditIndexInput.value = index; supplyForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Approvisionnement'; /* REMOVED: supplySection?.scrollIntoView(...) */ };
+    window.editSaleMisc = (typeKey, originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editSaleMisc ... */ let dataArray, item, formToReset = salesForm, operationTypeValue = ''; try { if (typeKey === 'Papeterie') { dataArray = salesData; operationTypeValue = 'Papeterie'; } else if (typeKey === 'MatElec') { dataArray = materielElectriqueData; operationTypeValue = 'Matériels électrique'; } else if (typeKey === 'Depenses') { dataArray = expensesData; operationTypeValue = 'Dépenses'; } else if (typeKey === 'Divers') { dataArray = othersData; operationTypeValue = 'Divers'; } else throw new Error("Type invalide pour modif."); if (originalIndex < 0 || originalIndex >= dataArray.length) throw new Error("Index invalide."); item = dataArray[originalIndex]; } catch (error) { alert(`Erreur prépa modif : ${error.message}`); return; } if (!item) { alert("Erreur: Enregistrement introuvable."); return; } formToReset.reset(); if(saleDateInput) saleDateInput.value = item.date || ''; if (operationTypeSelect) { operationTypeSelect.value = operationTypeValue; handleOperationTypeChange(); } else { alert("Erreur interne: Sélecteur type op. introuvable."); return; } if (typeKey === 'Papeterie' && papeterieDetailsForm) { if(saleDesignationSelect) { updateProductDesignationsForCategory('Papeterie'); const exists = Array.from(saleDesignationSelect.options).some(opt => opt.value === item.designation); if (!exists && item.designation) { saleDesignationSelect.add(new Option(item.designation, item.designation, true, true)); } saleDesignationSelect.value = item.designation || ''; } if(saleQuantityInput) saleQuantityInput.value = item.quantity || ''; if(saleUnitPriceInput) saleUnitPriceInput.value = item.unitPrice ?? ''; calculateTotalAmount(saleQuantityInput, saleUnitPriceInput, saleTotalAmountInput); } else if (typeKey === 'MatElec' && materielElectriqueDetailsForm) { if(meDesignationSelect) { updateProductDesignationsForCategory('Matériels électrique'); const exists = Array.from(meDesignationSelect.options).some(opt => opt.value === item.designation); if (!exists && item.designation) { meDesignationSelect.add(new Option(item.designation, item.designation, true, true)); } meDesignationSelect.value = item.designation || ''; } if(meQuantityInput) meQuantityInput.value = item.quantity || ''; if(meUnitPriceInput) meUnitPriceInput.value = item.unitPrice ?? ''; calculateTotalAmount(meQuantityInput, meUnitPriceInput, meTotalAmountInput); } else if (typeKey === 'Depenses' && depensesDetailsForm) { if(expenseReasonInput) expenseReasonInput.value = item.reason || ''; if(expenseQuantityInput) expenseQuantityInput.value = item.quantity ?? ''; if(expenseAmountInput) expenseAmountInput.value = item.amount || ''; } else if (typeKey === 'Divers' && diversDetailsForm) { if(otherDesignationInput) otherDesignationInput.value = item.designation || ''; if(otherQuantityInput) otherQuantityInput.value = item.quantity ?? ''; if(otherTotalAmountInput) otherTotalAmountInput.value = item.totalAmount || ''; } else { console.warn(`Modif type '${typeKey}' mais form non trouvé.`); } updateConnectedUserFields(); if (salesEditIndexInput) salesEditIndexInput.value = originalIndex; if (salesEditTypeInput) salesEditTypeInput.value = operationTypeValue; const submitButton = formToReset.querySelector('button[type="submit"]'); if (submitButton) submitButton.textContent = 'Mettre à Jour Opération'; /* REMOVED: salesSection?.scrollIntoView(...) */ };
+    window.editEmployee = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editEmployee ... */ if (index < 0 || index >= employeesData.length) return; const emp = employeesData[index]; if (!employeeForm || !employeeEditIndexInput || !employeeUserConnectedInput) { alert("Erreur: Formulaire employé introuvable."); return; } employeeForm.reset(); if(employeeNomInput) employeeNomInput.value = emp.nom || ''; if(employeePrenomInput) employeePrenomInput.value = emp.prenom || ''; if(employeeRoleInput) employeeRoleInput.value = emp.statut || ''; if(employeeAdresseInput) employeeAdresseInput.value = emp.adresse || ''; if(employeeTelephoneInput) employeeTelephoneInput.value = emp.telephone || ''; if(employeeLieuResidenceInput) employeeLieuResidenceInput.value = emp.lieuResidence || ''; if(employeeJoursTravailInput) employeeJoursTravailInput.value = emp.joursTravail || ''; if(employeeHeureArriveeInput) employeeHeureArriveeInput.value = emp.heureArrivee || ''; if(employeeHeureDepartInput) employeeHeureDepartInput.value = emp.heureDepart || ''; if(employeeSalaryInput) employeeSalaryInput.value = emp.salary ?? ''; if(employeePaidAmountInput) employeePaidAmountInput.value = emp.paidAmount || ''; if(employeeHireDateInput) employeeHireDateInput.value = emp.hireDate || ''; if(employeeContactPersonNomInput) employeeContactPersonNomInput.value = emp.contactPersonNom || ''; if(employeeContactPersonPrenomInput) employeeContactPersonPrenomInput.value = emp.contactPersonPrenom || ''; if(employeeContactPersonAdresseInput) employeeContactPersonAdresseInput.value = emp.contactPersonAdresse || ''; if(employeeContactPersonTelephoneInput) employeeContactPersonTelephoneInput.value = emp.contactPersonTelephone || ''; if(employeeContactPersonLieuResidenceInput) employeeContactPersonLieuResidenceInput.value = emp.contactPersonLieuResidence || ''; updateConnectedUserFields(); employeeEditIndexInput.value = index; employeeForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Employé'; /* REMOVED: employeesSection?.scrollIntoView(...) */ };
+    window.editLearner = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editLearner ... */ if (index < 0 || index >= learnersData.length) return; const lrn = learnersData[index]; if (!learnerForm || !learnerEditIndexInput || !learnerUserConnectedInput) { alert("Erreur: Formulaire apprenant introuvable."); return; } learnerForm.reset(); if(learnerNomInput) learnerNomInput.value = lrn.nom || ''; if(learnerPrenomInput) learnerPrenomInput.value = lrn.prenom || ''; if(learnerAgeInput) learnerAgeInput.value = lrn.age ?? ''; if(learnerAdresseInput) learnerAdresseInput.value = lrn.adresse || ''; if(learnerLieuResidenceInput) learnerLieuResidenceInput.value = lrn.lieuResidence || ''; if(learnerNiveauEtudesInput) learnerNiveauEtudesInput.value = lrn.niveauEtudes || ''; if(learnerSituationMatrimonialeSelect) learnerSituationMatrimonialeSelect.value = lrn.situationMatrimoniale || ''; if(learnerPereNomInput) learnerPereNomInput.value = lrn.pereNom || ''; if(learnerPerePrenomInput) learnerPerePrenomInput.value = lrn.perePrenom || ''; if(learnerMereNomInput) learnerMereNomInput.value = lrn.mereNom || ''; if(learnerMerePrenomInput) learnerMerePrenomInput.value = lrn.merePrenom || ''; if(learnerFiliereInput) learnerFiliereInput.value = lrn.filiere || ''; if(learnerDureeFormationInput) learnerDureeFormationInput.value = lrn.dureeFormation || ''; if(learnerFraisDocumentsInput) learnerFraisDocumentsInput.value = lrn.fraisDocuments || ''; if(learnerTranche1Input) learnerTranche1Input.value = lrn.tranche1 || ''; if(learnerTranche2Input) learnerTranche2Input.value = lrn.tranche2 || ''; if(learnerTranche3Input) learnerTranche3Input.value = lrn.tranche3 || ''; if(learnerTranche4Input) learnerTranche4Input.value = lrn.tranche4 || ''; if(learnerGarantNomInput) learnerGarantNomInput.value = lrn.garantNom || ''; if(learnerGarantPrenomInput) learnerGarantPrenomInput.value = lrn.garantPrenom || ''; if(learnerGarantTelephoneInput) learnerGarantTelephoneInput.value = lrn.garantTelephone || ''; if(learnerGarantAdresseInput) learnerGarantAdresseInput.value = lrn.garantAdresse || ''; updateConnectedUserFields(); learnerEditIndexInput.value = index; learnerForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Apprenant'; /* REMOVED: learnersSection?.scrollIntoView(...) */ };
+    window.editMobileMoney = (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editMobileMoney ... */ if (originalIndex < 0 || originalIndex >= mobileMoneyData.length) { alert("Index invalide."); return; } const item = mobileMoneyData[originalIndex]; if (!mobileMoneyForm || !mobileMoneyEditIndexInput || !mmPointUserConnectedInput) { alert("Erreur: Formulaire MM introuvable."); return; } mobileMoneyForm.reset(); if(mmDateInput) mmDateInput.value = item.date || ''; if(mmAgentInput) mmAgentInput.value = item.agent || ''; if(mmBalanceMoovInput) mmBalanceMoovInput.value = item.balanceMoov || ''; if(mmBalanceMtnInput) mmBalanceMtnInput.value = item.balanceMTN || ''; if(mmBalanceCelttisInput) mmBalanceCelttisInput.value = item.balanceCelttis || ''; if(mmBalanceCashInput) mmBalanceCashInput.value = item.balanceCash || ''; if(mmCreditMoovInput) mmCreditMoovInput.value = item.creditMoov || ''; if(mmCreditMtnInput) mmCreditMtnInput.value = item.creditMTN || ''; if(mmCreditCelttisInput) mmCreditCelttisInput.value = item.creditCelttis || ''; if(mmPerteTransfertInput) mmPerteTransfertInput.value = item.perteTransfert || ''; if(mmPerteCreditInput) mmPerteCreditInput.value = item.perteCredit || ''; updateConnectedUserFields(); mobileMoneyEditIndexInput.value = originalIndex; mobileMoneyForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Point MM'; /* REMOVED: mobileMoneySection?.scrollIntoView(...) */ };
+    window.editMmFournisseur = (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editMmFournisseur ... */ const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const key = `${sN}_${sP}`; const f = mmFournisseursData.find(f => f.nom === sN && f.prenom === sP); if (f && mmFournisseurForm && mmFournisseurEditKeyInput && mmFournisseurUserConnectedInput) { mmFournisseurForm.reset(); if(mmFournisseurNomInput) mmFournisseurNomInput.value = f.nom || ''; if(mmFournisseurPrenomInput) mmFournisseurPrenomInput.value = f.prenom || ''; if(mmFournisseurContactInput) mmFournisseurContactInput.value = f.contact || ''; if(mmFournisseurMontantInput) mmFournisseurMontantInput.value = f.montantFourni || ''; if(mmFournisseurInteretInput) mmFournisseurInteretInput.value = f.interet ?? ''; if(mmFournisseurVenduInput) mmFournisseurVenduInput.value = f.creditVendu || ''; updateConnectedUserFields(); mmFournisseurEditKeyInput.value = key; mmFournisseurForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Fournisseur'; /* REMOVED: mmFournisseurForm?.scrollIntoView(...) */ } else { alert(`Fournisseur ${sN} ${sP} non trouvé ou form incomplet.`); if(mmFournisseurEditKeyInput) mmFournisseurEditKeyInput.value = ''; } };
+    window.editClientProfile = (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editClientProfile ... */ const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const key = `${sN}_${sP}`; const p = clientProfilesData.find(p => p.nom === sN && p.prenom === sP); if (p && clientProfileForm && clientProfileEditKeyInput && clientUserConnectedInput) { clientProfileForm.reset(); if(clientProfileNomInput) clientProfileNomInput.value = p.nom || ''; if(clientProfilePrenomInput) clientProfilePrenomInput.value = p.prenom || ''; if(clientProfileAdresseInput) clientProfileAdresseInput.value = p.adresse || ''; if(clientProfileContactInput) clientProfileContactInput.value = p.contact || ''; if(clientProfileStatutInput) clientProfileStatutInput.value = p.statut || ''; updateConnectedUserFields(); clientProfileEditKeyInput.value = key; clientProfileForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Profil'; /* REMOVED: clientProfileForm?.scrollIntoView(...) */ } else { alert(`Profil ${sN} ${sP} non trouvé ou form incomplet.`); if(clientProfileEditKeyInput) clientProfileEditKeyInput.value = ''; } };
+    window.editDebt = (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editDebt ... */ if (originalIndex < 0 || originalIndex >= debtData.length) { alert("Index invalide."); return; } const item = debtData[originalIndex]; if (!debtForm || !debtEditIndexInput || !debtUserConnectedInput) { alert("Erreur: Formulaire Dette/Prêt introuvable."); return; } debtForm.reset(); if(debtDateInput) debtDateInput.value = item.date || ''; if(debtTypeSelect) debtTypeSelect.value = item.type || ''; if(debtNameInput) debtNameInput.value = item.name || ''; if(debtDescriptionInput) debtDescriptionInput.value = item.description || ''; if(debtAmountInput) debtAmountInput.value = item.amount || ''; if(debtDueDateInput) debtDueDateInput.value = item.dueDate || ''; if(debtStatusSelect) debtStatusSelect.value = item.status || ''; updateConnectedUserFields(); debtEditIndexInput.value = originalIndex; debtForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Dette/Prêt'; /* REMOVED: debtSection?.scrollIntoView(...) */ };
+    window.editAdminUser = (username) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editAdminUser ... */ const safeUsername = String(username || '').replace(/\\'/g, "'"); const user = adminData.find(u => u.username === safeUsername); if (!user) { alert(`Utilisateur '${safeUsername}' non trouvé.`); return; } if (!adminForm || !adminEditKeyInput || !adminUsernameInput || !adminPostInput || !adminPasswordInput || !adminStatusSelect || !adminOpUserConnectedInput) { alert("Erreur interne: Form Admin incomplet."); return; } if(currentUser && currentUser.username === safeUsername) { alert("Modif impossible : propre compte."); return; } adminForm.reset(); adminUsernameInput.value = user.username || ''; adminPostInput.value = user.post || ''; adminStatusSelect.value = user.status || 'Lecteur'; adminPasswordInput.value = ''; adminPasswordInput.placeholder = "Laisser vide si inchangé"; updateConnectedUserFields(); adminEditKeyInput.value = user.username; adminForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Utilisateur'; /* REMOVED: adminSection?.scrollIntoView(...) */ };
+    window.editEquipment = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } /* ... rest of editEquipment ... */ if (index < 0 || index >= equipmentData.length) { alert("Index invalide."); return; } const item = equipmentData[index]; if (!equipmentForm || !equipmentEditIndexInput || !equipmentUserConnectedInput) { alert("Erreur: Formulaire équipement introuvable."); return; } equipmentForm.reset(); if (equipmentNameInput) equipmentNameInput.value = item.name || ''; if (equipmentQuantityInput) equipmentQuantityInput.value = item.quantity || ''; if (equipmentAssignedDateInput) equipmentAssignedDateInput.value = item.assignedDate || ''; if (equipmentAccessoriesInput) equipmentAccessoriesInput.value = item.accessories || ''; if (equipmentEmployeeNameSelect) { populateEmployeeSelect(equipmentEmployeeNameSelect); equipmentEmployeeNameSelect.value = item.employeeName || ''; } if (equipmentOtherInfoTextarea) equipmentOtherInfoTextarea.value = item.otherInfo || ''; updateConnectedUserFields(); equipmentEditIndexInput.value = index; equipmentForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Appareil'; /* REMOVED: equipmentSection?.scrollIntoView(...) */ };
 
 
-    // --- Permission Status Update Function (Added date update and Scroll) ---
+    // --- Permission Status Update Function (MODIFIED: Removed scroll) ---
     window.updatePermissionStatus = async (type, index, newStatus) => {
         if (!currentUser || currentUser.status !== 'Administrateur') {
             alert("Accès Refusé: Admin seulement."); return;
         }
         let dataArray, storageKey, itemType, targetForm;
-        if (type === 'employee') {
-            dataArray = employeePermissionsData;
-            storageKey = 'employeePermissionsData';
-            itemType = 'employé';
-            targetForm = permissionEmployeeForm;
-        } else if (type === 'learner') {
-            dataArray = learnerPermissionsData;
-            storageKey = 'learnerPermissionsData';
-            itemType = 'apprenant';
-            targetForm = permissionLearnerForm;
-        } else {
-            return;
-        }
-
-        if (index < 0 || index >= dataArray.length) {
-            alert("Index invalide."); return;
-        }
-
+        if (type === 'employee') { dataArray = employeePermissionsData; storageKey = 'employeePermissionsData'; itemType = 'employé'; targetForm = permissionEmployeeForm; }
+        else if (type === 'learner') { dataArray = learnerPermissionsData; storageKey = 'learnerPermissionsData'; itemType = 'apprenant'; targetForm = permissionLearnerForm; }
+        else { return; }
+        if (index < 0 || index >= dataArray.length) { alert("Index invalide."); return; }
         let tempLocalData = [...dataArray];
         tempLocalData[index].status = newStatus;
         tempLocalData[index].statusUpdatedBy = currentUser?.username || 'N/A';
         tempLocalData[index].statusUpdateDate = new Date().toISOString().split('T')[0]; // Store update date
-
-        try {
-            await saveDataToFirebase(storageKey, tempLocalData);
-            alert(`Statut demande mis à jour à "${newStatus}".`);
-            targetForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
-        } catch(e) {
-            // Error handled by saveDataToFirebase
-        }
+        try { await saveDataToFirebase(storageKey, tempLocalData); alert(`Statut demande mis à jour à "${newStatus}".`); /* REMOVED: targetForm?.scrollIntoView(...) */ }
+        catch(e) { /* Error handled by saveDataToFirebase */ }
     };
 
-    // --- Payment Recording Functions (Added Scroll) ---
+    // --- Payment Recording Functions (MODIFIED: Removed scroll) ---
     window.recordSalaryPayment = async (index) => {
         if (!currentUser || currentUser.status !== 'Administrateur') {
             alert("Accès Refusé: Admin seulement."); return;
@@ -2347,30 +2095,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const salary = emp.salary !== null ? parseFloat(emp.salary) : 0;
         const totalPaid = emp.paidAmount || 0;
         const remaining = salary - totalPaid;
-
         const paymentDate = prompt("Date paiement (AAAA-MM-JJ) :", new Date().toISOString().split('T')[0]);
-        if (!paymentDate || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) {
-            if (paymentDate !== null) alert("Format date invalide.");
-            return;
-        }
-
+        if (!paymentDate || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) { if (paymentDate !== null) alert("Format date invalide."); return; }
         const amountStr = prompt(`Employé: ${emp.nom || ''} ${emp.prenom || ''}\nSalaire Base: ${formatAmount(salary)}\nDéjà Payé: ${formatAmount(totalPaid)}\nRestant Dû: ${formatAmount(remaining)}\n\nMontant payé ce jour :`, remaining > 0 ? formatAmount(remaining) : '0.00');
         if (amountStr === null) return; // User cancelled
-
         const amountPaidThisTime = parseFloat(amountStr);
-        if (isNaN(amountPaidThisTime) || amountPaidThisTime < 0) {
-            alert("Montant invalide.");
-            return;
-        }
-        if (amountPaidThisTime === 0) {
-             alert("Aucun paiement enregistré (montant = 0).");
-             return;
-        }
-        if (amountPaidThisTime > remaining + 0.005) { // Added tolerance for floating point
-            alert(`Montant payé (${formatAmount(amountPaidThisTime)}) dépasse solde restant (${formatAmount(remaining)}).`);
-            return;
-        }
-
+        if (isNaN(amountPaidThisTime) || amountPaidThisTime < 0) { alert("Montant invalide."); return; }
+        if (amountPaidThisTime === 0) { alert("Aucun paiement enregistré (montant = 0)."); return; }
+        if (amountPaidThisTime > remaining + 0.005) { alert(`Montant payé (${formatAmount(amountPaidThisTime)}) dépasse solde restant (${formatAmount(remaining)}).`); return; }
         let tempLocalData = [...employeesData];
         const empInCopy = tempLocalData[index];
         empInCopy.paidAmount = (empInCopy.paidAmount || 0) + amountPaidThisTime;
@@ -2378,521 +2110,100 @@ document.addEventListener('DOMContentLoaded', function () {
         empInCopy.paymentHistory.push({ date: paymentDate, amount: amountPaidThisTime, recordedBy: currentUser?.username || 'N/A' });
         empInCopy.lastModifiedBy = currentUser?.username || 'N/A';
         empInCopy.lastModifiedDate = new Date().toISOString();
-
         try {
             await saveDataToFirebase('employeesData', tempLocalData);
             alert(`Paiement de ${formatAmount(amountPaidThisTime)} enregistré pour ${emp.nom} ${emp.prenom} le ${paymentDate}.`);
-            employeeForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
-            if (confirm('Imprimer reçu ?')) {
-                printSalaryInvoice(index, paymentDate, amountPaidThisTime);
-            }
-        } catch(e) {
-             // Error handled by saveDataToFirebase
-        }
+            /* REMOVED: employeeForm?.scrollIntoView(...) */
+            if (confirm('Imprimer reçu ?')) { printSalaryInvoice(index, paymentDate, amountPaidThisTime); }
+        } catch(e) { /* Error handled */ }
     };
-
     window.recordTranchePayment = async (index) => {
         if (!currentUser || currentUser.status !== 'Administrateur') {
             alert("Accès Refusé: Admin seulement."); return;
         }
         if (index < 0 || index >= learnersData.length) return;
         const lrn = learnersData[index];
-
         const paymentDate = prompt("Date paiement (AAAA-MM-JJ) :", new Date().toISOString().split('T')[0]);
-        if (!paymentDate || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) {
-            if (paymentDate !== null) alert("Format date invalide.");
-            return;
-        }
-
+        if (!paymentDate || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) { if (paymentDate !== null) alert("Format date invalide."); return; }
         const paymentReason = prompt(`Paiement pour ${lrn.nom} ${lrn.prenom}.\nMotif (Ex: Tranche 1, Frais Docs):`, "Paiement Tranche Formation");
         if (!paymentReason) return; // User cancelled
-
         const amountStr = prompt("Montant payé :");
         if (amountStr === null) return; // User cancelled
-
         const amountPaidThisTime = parseFloat(amountStr);
-        if (isNaN(amountPaidThisTime) || amountPaidThisTime <= 0) {
-            alert("Montant invalide.");
-            return;
-        }
-
-        const trancheChoice = prompt(
-            `Ligne à créditer pour ${formatAmount(amountPaidThisTime)} ?\n` +
-            `1. Frais Docs (${formatAmount(lrn.fraisDocuments)})\n` +
-            `2. Tranche 1 (${formatAmount(lrn.tranche1)})\n` +
-            `3. Tranche 2 (${formatAmount(lrn.tranche2)})\n` +
-            `4. Tranche 3 (${formatAmount(lrn.tranche3)})\n` +
-            `5. Tranche 4 (${formatAmount(lrn.tranche4)})\n` +
-            `Entrez (1-5). MONTANT SERA AJOUTÉ.`
-        );
+        if (isNaN(amountPaidThisTime) || amountPaidThisTime <= 0) { alert("Montant invalide."); return; }
+        const trancheChoice = prompt( `Ligne à créditer pour ${formatAmount(amountPaidThisTime)} ?\n` + `1. Frais Docs (${formatAmount(lrn.fraisDocuments)})\n` + `2. Tranche 1 (${formatAmount(lrn.tranche1)})\n` + `3. Tranche 2 (${formatAmount(lrn.tranche2)})\n` + `4. Tranche 3 (${formatAmount(lrn.tranche3)})\n` + `5. Tranche 4 (${formatAmount(lrn.tranche4)})\n` + `Entrez (1-5). MONTANT SERA AJOUTÉ.` );
         if (!trancheChoice) return; // User cancelled
-
         const choice = parseInt(trancheChoice);
-        if (isNaN(choice) || choice < 1 || choice > 5) {
-            alert("Choix invalide.");
-            return;
-        }
-
+        if (isNaN(choice) || choice < 1 || choice > 5) { alert("Choix invalide."); return; }
         let tempLocalData = [...learnersData];
         const lrnInCopy = tempLocalData[index];
-        let updated = false;
-        let appliedTo = '';
-
-        switch (choice) {
-            case 1: lrnInCopy.fraisDocuments = (lrnInCopy.fraisDocuments || 0) + amountPaidThisTime; appliedTo = 'Frais Docs'; updated = true; break;
-            case 2: lrnInCopy.tranche1 = (lrnInCopy.tranche1 || 0) + amountPaidThisTime; appliedTo = 'Tranche 1'; updated = true; break;
-            case 3: lrnInCopy.tranche2 = (lrnInCopy.tranche2 || 0) + amountPaidThisTime; appliedTo = 'Tranche 2'; updated = true; break;
-            case 4: lrnInCopy.tranche3 = (lrnInCopy.tranche3 || 0) + amountPaidThisTime; appliedTo = 'Tranche 3'; updated = true; break;
-            case 5: lrnInCopy.tranche4 = (lrnInCopy.tranche4 || 0) + amountPaidThisTime; appliedTo = 'Tranche 4'; updated = true; break;
-        }
-
+        let updated = false; let appliedTo = '';
+        switch (choice) { case 1: lrnInCopy.fraisDocuments = (lrnInCopy.fraisDocuments || 0) + amountPaidThisTime; appliedTo = 'Frais Docs'; updated = true; break; case 2: lrnInCopy.tranche1 = (lrnInCopy.tranche1 || 0) + amountPaidThisTime; appliedTo = 'Tranche 1'; updated = true; break; case 3: lrnInCopy.tranche2 = (lrnInCopy.tranche2 || 0) + amountPaidThisTime; appliedTo = 'Tranche 2'; updated = true; break; case 4: lrnInCopy.tranche3 = (lrnInCopy.tranche3 || 0) + amountPaidThisTime; appliedTo = 'Tranche 3'; updated = true; break; case 5: lrnInCopy.tranche4 = (lrnInCopy.tranche4 || 0) + amountPaidThisTime; appliedTo = 'Tranche 4'; updated = true; break; }
         if (!lrnInCopy.paymentHistory) lrnInCopy.paymentHistory = [];
         lrnInCopy.paymentHistory.push({ date: paymentDate, amount: amountPaidThisTime, reason: paymentReason, appliedTo, recordedBy: currentUser?.username || 'N/A' });
         lrnInCopy.lastModifiedBy = currentUser?.username || 'N/A';
         lrnInCopy.lastModifiedDate = new Date().toISOString();
-
         if (updated) {
-             try {
-                await saveDataToFirebase('learnersData', tempLocalData);
-                alert(`Paiement de ${formatAmount(amountPaidThisTime)} pour "${paymentReason}" enregistré pour ${lrn.nom} ${lrn.prenom} le ${paymentDate}.`);
-                learnerForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scroll
-                 if (confirm('Imprimer reçu ?')) {
-                     printLearnerInvoice(index, paymentDate, paymentReason, amountPaidThisTime);
-                 }
-            } catch (e) {
-                // Error handled by saveDataToFirebase
-            }
+             try { await saveDataToFirebase('learnersData', tempLocalData); alert(`Paiement de ${formatAmount(amountPaidThisTime)} pour "${paymentReason}" enregistré pour ${lrn.nom} ${lrn.prenom} le ${paymentDate}.`); /* REMOVED: learnerForm?.scrollIntoView(...) */ if (confirm('Imprimer reçu ?')) { printLearnerInvoice(index, paymentDate, paymentReason, amountPaidThisTime); } }
+             catch (e) { /* Error handled */ }
         }
     };
 
-    // --- Invoice Printing Functions (Unchanged Logic, Uses CONSTANTS) ---
-    function printSalaryInvoice(employeeIndex, paymentDate, amountPaidThisTime) {
-        if (employeeIndex < 0 || employeeIndex >= employeesData.length) return;
-        const emp = employeesData[employeeIndex];
-        const invoiceArea = document.getElementById('invoice-print-area');
-        if (!invoiceArea) { alert("Zone d'impression introuvable."); return; }
+    // --- Invoice Printing Functions (Unchanged Logic, Uses CONSTANTS, DO NOT increment counter) ---
+    function printSalaryInvoice(employeeIndex, paymentDate, amountPaidThisTime) { /* ... Function remains the same ... */ if (employeeIndex < 0 || employeeIndex >= employeesData.length) return; const emp = employeesData[employeeIndex]; const invoiceArea = document.getElementById('invoice-print-area'); if (!invoiceArea) { alert("Zone d'impression introuvable."); return; } const html = `<div style="border: 1px solid #ccc; padding: 20px; width: 80%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;"><div style="text-align: center; margin-bottom: 20px;"><img src="${LOGO_PATH}" alt="Logo" style="max-height: 60px; border-radius: 50%; display: block; margin: 0 auto 10px auto;"><h2 style="margin: 0;">REÇU DE PAIEMENT DE SALAIRE</h2><strong>${ESTABLISHMENT_NAME}</strong><br><small>${COMPANY_INFO_PRINT}</small></div><hr><p><strong>Date de Paiement :</strong> ${paymentDate}</p><p><strong>Employé :</strong> ${emp.nom || ''} ${emp.prenom || ''}</p><p><strong>Poste :</strong> ${emp.statut || 'N/A'}</p><hr><p><strong>Montant Payé :</strong> ${formatAmount(amountPaidThisTime)} FCFA</p><p><strong>En Lettres :</strong> ${numberToWordsFrench(amountPaidThisTime)}</p><hr><div style="margin-top: 30px; display: flex; justify-content: space-between;"><p><strong>Signature Employé :</strong><br><br>_________________________</p><p><strong>Signature Employeur :</strong><br><br>_________________________</p></div><p style="text-align: center; font-size: 0.8em; margin-top: 40px;">Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}</p></div>`; invoiceArea.innerHTML = html; printElement('invoice-print-area'); }
+    function printLearnerInvoice(learnerIndex, paymentDate, paymentReason, amountPaidThisTime) { /* ... Function remains the same ... */ if (learnerIndex < 0 || learnerIndex >= learnersData.length) return; const lrn = learnersData[learnerIndex]; const invoiceArea = document.getElementById('invoice-print-area'); if (!invoiceArea) { alert("Zone d'impression introuvable."); return; } const html = `<div style="border: 1px solid #ccc; padding: 20px; width: 80%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;"><div style="text-align: center; margin-bottom: 20px;"><img src="${LOGO_PATH}" alt="Logo" style="max-height: 60px; border-radius: 50%; display: block; margin: 0 auto 10px auto;"><h2 style="margin: 0;">REÇU DE PAIEMENT FRAIS FORMATION</h2><strong>${ESTABLISHMENT_NAME}</strong><br><small>${COMPANY_INFO_PRINT}</small></div><hr><p><strong>Date de Paiement :</strong> ${paymentDate}</p><p><strong>Apprenant :</strong> ${lrn.nom || ''} ${lrn.prenom || ''}</p><p><strong>Filière :</strong> ${lrn.filiere || 'N/A'}</p><hr><p><strong>Motif Paiement :</strong> ${paymentReason || 'N/A'}</p><p><strong>Montant Payé :</strong> ${formatAmount(amountPaidThisTime)} FCFA</p><p><strong>En Lettres :</strong> ${numberToWordsFrench(amountPaidThisTime)}</p><hr><div style="margin-top: 30px; display: flex; justify-content: space-between;"><p><strong>Signature Apprenant/Parent :</strong><br><br>_________________________</p><p><strong>Signature Établissement :</strong><br><br>_________________________</p></div><p style="text-align: center; font-size: 0.8em; margin-top: 40px;">Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}</p></div>`; invoiceArea.innerHTML = html; printElement('invoice-print-area'); }
+    window.printCreditReceipt = (originalIndex) => { /* ... Function remains the same ... */ if (originalIndex < 0 || originalIndex >= creditorsData.length) return; const credit = creditorsData[originalIndex]; const clientProfile = clientProfilesData.find(p => `${p.nom || ''} ${p.prenom || ''}`.trim() === credit.name); const invoiceArea = document.getElementById('invoice-print-area'); if (!invoiceArea) { alert("Zone d'impression introuvable."); return; } const totalAmount = credit.totalAmountDue || 0; const totalPaid = credit.amountPaidTotal || 0; const remaining = totalAmount - totalPaid; let paymentHistoryHTML = '<h4>Historique Paiements :</h4><ul>'; if (credit.paymentHistory && credit.paymentHistory.length > 0) { credit.paymentHistory.forEach(p => { paymentHistoryHTML += `<li>${p.date}: ${formatAmount(p.amount)} FCFA (par ${p.recordedBy || 'N/A'})</li>`; }); } else { paymentHistoryHTML += '<li>Aucun paiement enregistré dans l\'historique détaillé.</li>'; } paymentHistoryHTML += '</ul>'; const html = `<div style="border: 1px solid #ccc; padding: 20px; width: 90%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;"><div style="text-align: center; margin-bottom: 15px;"><img src="${LOGO_PATH}" alt="Logo" style="max-height: 50px; border-radius: 50%; display: block; margin: 0 auto 8px auto;"><h3 style="margin: 0;">RELEVÉ DE COMPTE CRÉDIT</h3><strong>${ESTABLISHMENT_NAME}</strong><br><small>${COMPANY_INFO_PRINT}</small></div><hr><p><strong>Date Relevé :</strong> ${new Date().toLocaleDateString('fr-FR')}</p><p><strong>Client :</strong> ${credit.name || ''}</p>${clientProfile?.contact ? `<p><strong>Contact Client :</strong> ${clientProfile.contact}</p>` : ''}<hr><p><strong>Désignation/Produit :</strong> ${credit.designation || 'N/A'}</p>${credit.quantity !== null ? `<p><strong>Quantité :</strong> ${credit.quantity}</p>` : ''}${credit.unitPrice !== null ? `<p><strong>Prix Unitaire :</strong> ${formatAmount(credit.unitPrice)}</p>` : ''}<p><strong>Date Initiale Transaction :</strong> ${credit.date || 'N/A'}</p><p><strong>Date Échéance :</strong> ${credit.dueDate || 'N/A'}</p><hr style="margin: 10px 0;"><p><strong>Montant Total Dû :</strong> ${formatAmount(totalAmount)} FCFA</p><p><strong>Montant Total Payé :</strong> ${formatAmount(totalPaid)} FCFA</p><p><strong>Montant Restant Dû : <span style="font-weight: bold; color: ${remaining > 0 ? 'red' : 'green'};">${formatAmount(remaining)} FCFA</span></strong></p><hr style="margin: 10px 0;">${paymentHistoryHTML}<hr style="margin: 10px 0;"><p style="text-align: center; font-size: 0.8em; margin-top: 20px;">Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}</p></div>`; invoiceArea.innerHTML = html; printElement('invoice-print-area'); };
 
-        const html = `
-            <div style="border: 1px solid #ccc; padding: 20px; width: 80%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <img src="${LOGO_PATH}" alt="Logo" style="max-height: 60px; border-radius: 50%; display: block; margin: 0 auto 10px auto;">
-                    <h2 style="margin: 0;">REÇU DE PAIEMENT DE SALAIRE</h2>
-                    <strong>${ESTABLISHMENT_NAME}</strong><br>
-                    <small>${COMPANY_INFO_PRINT}</small>
-                </div>
-                <hr>
-                <p><strong>Date de Paiement :</strong> ${paymentDate}</p>
-                <p><strong>Employé :</strong> ${emp.nom || ''} ${emp.prenom || ''}</p>
-                <p><strong>Poste :</strong> ${emp.statut || 'N/A'}</p>
-                <hr>
-                <p><strong>Montant Payé :</strong> ${formatAmount(amountPaidThisTime)} FCFA</p>
-                <p><strong>En Lettres :</strong> ${numberToWordsFrench(amountPaidThisTime)}</p>
-                <hr>
-                <div style="margin-top: 30px; display: flex; justify-content: space-between;">
-                    <p><strong>Signature Employé :</strong><br><br>_________________________</p>
-                    <p><strong>Signature Employeur :</strong><br><br>_________________________</p>
-                </div>
-                <p style="text-align: center; font-size: 0.8em; margin-top: 40px;">
-                    Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}
-                </p>
-            </div>
-            `;
-        invoiceArea.innerHTML = html;
-        printElement('invoice-print-area');
-    }
+    function generateInvoiceHTML(invoiceData) { /* ... Function remains the same ... */ const { date, number, clientName, clientContact, items, totalAmount, totalWords } = invoiceData; let itemsHTML = ''; items.forEach(item => { itemsHTML += `<tr><td style="border: 1px solid #ddd; padding: 6px;">${item.designation || ''}</td><td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${item.quantity || 0}</td><td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatAmount(item.unitPrice)}</td><td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatAmount(item.total)}</td></tr>`; }); const html = `<div class="invoice-wrapper" style="border: 1px solid #aaa; padding: 25px; margin: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10pt; background-color: #fff; color: #000;"><div class="invoice-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #333;"><div class="invoice-details"><img src="${LOGO_PATH}" alt="Logo La Charité Modeste" class="invoice-logo" style="max-height: 60px; margin-bottom: 10px;"><br><strong>${ESTABLISHMENT_NAME}</strong><br><small>${COMPANY_INFO_PRINT}</small></div><div class="invoice-title" style="text-align: right;"><h2 style="margin: 0 0 10px 0; font-size: 18pt;">FACTURE</h2><div class="invoice-details"><strong>N° Facture :</strong> ${number}<br><strong>Date :</strong> ${date}</div></div></div><div class="invoice-client-details" style="margin-bottom: 25px; text-align: left;"><strong>Client :</strong><br>${clientName}<br>${clientContact ? `Contact: ${clientContact}<br>` : ''}</div><div class="invoice-items"><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><thead><tr><th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: left;">Désignation</th><th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: center; width: 10%;">Quantité</th><th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: right; width: 20%;">Prix Unitaire</th><th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: right; width: 20%;">Montant Total</th></tr></thead><tbody>${itemsHTML}</tbody></table></div><div class="invoice-summary" style="text-align: right; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 11pt;">Arrêté la présente facture à la somme de :<br><strong style="font-size: 10.5pt;">${totalWords}</strong><hr style="margin: 8px 0; border: none; border-top: 1px dashed #ccc;"><strong>MONTANT TOTAL :</strong> <strong style="display: inline-block; min-width: 120px; text-align: right; margin-left: 10px;">${formatAmount(totalAmount)} FCFA</strong></div><div class="invoice-signature" style="margin-top: 40px; padding-top: 10px; text-align: right;"><p><strong>Signature du Responsable :</strong></p><p style="margin-top: 30px;">_________________________</p><p><em>Modeste KODA MICHEL</em></p></div><div class="invoice-footer" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee; font-size: 8pt; text-align: center; color: #555;">Merci de votre confiance.<br></div></div>`; return html; }
 
-    function printLearnerInvoice(learnerIndex, paymentDate, paymentReason, amountPaidThisTime) {
-        if (learnerIndex < 0 || learnerIndex >= learnersData.length) return;
-        const lrn = learnersData[learnerIndex];
-        const invoiceArea = document.getElementById('invoice-print-area');
-        if (!invoiceArea) { alert("Zone d'impression introuvable."); return; }
-
-        const html = `
-            <div style="border: 1px solid #ccc; padding: 20px; width: 80%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <img src="${LOGO_PATH}" alt="Logo" style="max-height: 60px; border-radius: 50%; display: block; margin: 0 auto 10px auto;">
-                    <h2 style="margin: 0;">REÇU DE PAIEMENT FRAIS FORMATION</h2>
-                    <strong>${ESTABLISHMENT_NAME}</strong><br>
-                    <small>${COMPANY_INFO_PRINT}</small>
-                </div>
-                <hr>
-                <p><strong>Date de Paiement :</strong> ${paymentDate}</p>
-                <p><strong>Apprenant :</strong> ${lrn.nom || ''} ${lrn.prenom || ''}</p>
-                <p><strong>Filière :</strong> ${lrn.filiere || 'N/A'}</p>
-                <hr>
-                <p><strong>Motif Paiement :</strong> ${paymentReason || 'N/A'}</p>
-                <p><strong>Montant Payé :</strong> ${formatAmount(amountPaidThisTime)} FCFA</p>
-                <p><strong>En Lettres :</strong> ${numberToWordsFrench(amountPaidThisTime)}</p>
-                <hr>
-                <div style="margin-top: 30px; display: flex; justify-content: space-between;">
-                    <p><strong>Signature Apprenant/Parent :</strong><br><br>_________________________</p>
-                    <p><strong>Signature Établissement :</strong><br><br>_________________________</p>
-                </div>
-                <p style="text-align: center; font-size: 0.8em; margin-top: 40px;">
-                    Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}
-                </p>
-            </div>
-            `;
-        invoiceArea.innerHTML = html;
-        printElement('invoice-print-area');
-    }
-
-    window.printCreditReceipt = (originalIndex) => {
-        if (originalIndex < 0 || originalIndex >= creditorsData.length) return;
-        const credit = creditorsData[originalIndex];
-        const clientProfile = clientProfilesData.find(p => `${p.nom || ''} ${p.prenom || ''}`.trim() === credit.name);
-        const invoiceArea = document.getElementById('invoice-print-area');
-        if (!invoiceArea) { alert("Zone d'impression introuvable."); return; }
-        const totalAmount = credit.totalAmountDue || 0;
-        const totalPaid = credit.amountPaidTotal || 0;
-        const remaining = totalAmount - totalPaid;
-        let paymentHistoryHTML = '<h4>Historique Paiements :</h4><ul>';
-        if (credit.paymentHistory && credit.paymentHistory.length > 0) {
-            credit.paymentHistory.forEach(p => {
-                paymentHistoryHTML += `<li>${p.date}: ${formatAmount(p.amount)} FCFA (par ${p.recordedBy || 'N/A'})</li>`;
-            });
-        } else {
-            paymentHistoryHTML += '<li>Aucun paiement enregistré dans l\'historique détaillé.</li>';
-        }
-        paymentHistoryHTML += '</ul>';
-
-        const html = `
-            <div style="border: 1px solid #ccc; padding: 20px; width: 90%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;">
-                <div style="text-align: center; margin-bottom: 15px;">
-                    <img src="${LOGO_PATH}" alt="Logo" style="max-height: 50px; border-radius: 50%; display: block; margin: 0 auto 8px auto;">
-                    <h3 style="margin: 0;">RELEVÉ DE COMPTE CRÉDIT</h3>
-                    <strong>${ESTABLISHMENT_NAME}</strong><br>
-                    <small>${COMPANY_INFO_PRINT}</small>
-                </div>
-                <hr>
-                <p><strong>Date Relevé :</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
-                <p><strong>Client :</strong> ${credit.name || ''}</p>
-                ${clientProfile?.contact ? `<p><strong>Contact Client :</strong> ${clientProfile.contact}</p>` : ''}
-                <hr>
-                <p><strong>Désignation/Produit :</strong> ${credit.designation || 'N/A'}</p>
-                ${credit.quantity !== null ? `<p><strong>Quantité :</strong> ${credit.quantity}</p>` : ''}
-                ${credit.unitPrice !== null ? `<p><strong>Prix Unitaire :</strong> ${formatAmount(credit.unitPrice)}</p>` : ''}
-                <p><strong>Date Initiale Transaction :</strong> ${credit.date || 'N/A'}</p>
-                <p><strong>Date Échéance :</strong> ${credit.dueDate || 'N/A'}</p>
-                <hr style="margin: 10px 0;">
-                <p><strong>Montant Total Dû :</strong> ${formatAmount(totalAmount)} FCFA</p>
-                <p><strong>Montant Total Payé :</strong> ${formatAmount(totalPaid)} FCFA</p>
-                <p><strong>Montant Restant Dû : <span style="font-weight: bold; color: ${remaining > 0 ? 'red' : 'green'};">${formatAmount(remaining)} FCFA</span></strong></p>
-                <hr style="margin: 10px 0;">
-                ${paymentHistoryHTML}
-                <hr style="margin: 10px 0;">
-                <p style="text-align: center; font-size: 0.8em; margin-top: 20px;">
-                    Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}
-                </p>
-            </div>
-            `;
-        invoiceArea.innerHTML = html;
-        printElement('invoice-print-area');
-    };
-
-    function generateInvoiceHTML(invoiceData) {
-        const { date, number, clientName, clientContact, items, totalAmount, totalWords } = invoiceData;
-        let itemsHTML = '';
-        items.forEach(item => {
-            itemsHTML += `
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 6px;">${item.designation || ''}</td>
-                    <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${item.quantity || 0}</td>
-                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatAmount(item.unitPrice)}</td>
-                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatAmount(item.total)}</td>
-                </tr>
-                `;
-        });
-
-        const html = `
-            <div class="invoice-wrapper" style="border: 1px solid #aaa; padding: 25px; margin: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10pt; background-color: #fff; color: #000;">
-                <div class="invoice-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #333;">
-                    <div class="invoice-details">
-                        <img src="${LOGO_PATH}" alt="Logo La Charité Modeste" class="invoice-logo" style="max-height: 60px; margin-bottom: 10px;">
-                        <br><strong>${ESTABLISHMENT_NAME}</strong>
-                        <br><small>${COMPANY_INFO_PRINT}</small>
-                    </div>
-                    <div class="invoice-title" style="text-align: right;">
-                        <h2 style="margin: 0 0 10px 0; font-size: 18pt;">FACTURE</h2>
-                        <div class="invoice-details">
-                            <strong>N° Facture :</strong> ${number}<br>
-                            <strong>Date :</strong> ${date}
-                        </div>
-                    </div>
-                </div>
-                <div class="invoice-client-details" style="margin-bottom: 25px; text-align: left;">
-                    <strong>Client :</strong><br>
-                    ${clientName}<br>
-                    ${clientContact ? `Contact: ${clientContact}<br>` : ''}
-                </div>
-                <div class="invoice-items">
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                        <thead>
-                            <tr>
-                                <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: left;">Désignation</th>
-                                <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: center; width: 10%;">Quantité</th>
-                                <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: right; width: 20%;">Prix Unitaire</th>
-                                <th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: right; width: 20%;">Montant Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${itemsHTML}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="invoice-summary" style="text-align: right; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 11pt;">
-                    Arrêté la présente facture à la somme de :<br>
-                    <strong style="font-size: 10.5pt;">${totalWords}</strong>
-                    <hr style="margin: 8px 0; border: none; border-top: 1px dashed #ccc;">
-                    <strong>MONTANT TOTAL :</strong> <strong style="display: inline-block; min-width: 120px; text-align: right; margin-left: 10px;">${formatAmount(totalAmount)} FCFA</strong>
-                </div>
-                <div class="invoice-signature" style="margin-top: 40px; padding-top: 10px; text-align: right;">
-                    <p><strong>Signature du Responsable :</strong></p>
-                    <p style="margin-top: 30px;">_________________________</p>
-                    <p><em>Modeste KODA MICHEL</em></p>
-                </div>
-                <div class="invoice-footer" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee; font-size: 8pt; text-align: center; color: #555;">
-                    Merci de votre confiance.<br>
-                </div>
-            </div>
-            `;
-        return html;
-    }
-
+    // --- MODIFIED: previewPrintInvoiceButton listener triggers counter increment via printElement ---
     if (previewPrintInvoiceButton && !previewPrintInvoiceButton._hasClickListener) {
         previewPrintInvoiceButton.addEventListener('click', () => {
             if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { alert("Accès Refusé."); return; }
-            // ... rest of preview/print logic ...
-            let isValid = true; invoiceGeneratorForm?.querySelectorAll('.invalid-field').forEach(el => el.classList.remove('invalid-field')); if (!invoiceGenDateInput?.value) { isValid = false; invoiceGenDateInput?.classList.add('invalid-field'); } if (!invoiceGenClientNameInput?.value.trim()) { isValid = false; invoiceGenClientNameInput?.classList.add('invalid-field'); } if (!invoiceGenNumberInput?.value) { isValid = false; invoiceGenNumberInput?.classList.add('invalid-field'); } const items = []; const itemRows = invoiceItemsContainer?.querySelectorAll('.invoice-item-row'); if (!itemRows || itemRows.length === 0) { alert("Ajoutez au moins une ligne."); return; } itemRows.forEach((row) => { const designationInput = row.querySelector('.item-designation'); const quantityInput = row.querySelector('.item-quantity'); const unitPriceInput = row.querySelector('.item-unit-price'); const designation = designationInput?.value.trim(); const quantity = parseFloat(quantityInput?.value); const unitPrice = parseFloat(unitPriceInput?.value); let rowIsValid = true; if (!designation) { isValid = false; rowIsValid = false; designationInput?.classList.add('invalid-field'); } if (isNaN(quantity) || quantity < 0) { isValid = false; rowIsValid = false; quantityInput?.classList.add('invalid-field'); } if (isNaN(unitPrice) || unitPrice < 0) { isValid = false; rowIsValid = false; unitPriceInput?.classList.add('invalid-field'); } if (rowIsValid) { items.push({ designation, quantity, unitPrice, total: quantity * unitPrice }); } }); if (!isValid) { alert("Vérifiez champs en rouge."); const firstInvalid = invoiceGeneratorForm?.querySelector('.invalid-field'); firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' }); firstInvalid?.focus(); return; } calculateInvoiceTotal(); const finalTotalAmount = parseFloat(invoiceGenTotalAmountInput.value); const invoiceData = { date: invoiceGenDateInput.value, number: invoiceGenNumberInput.value, clientName: invoiceGenClientNameInput.value.trim(), clientContact: invoiceGenClientContactInput?.value.trim() || '', items: items, totalAmount: finalTotalAmount, totalWords: numberToWordsFrench(finalTotalAmount) }; const invoiceHTML = generateInvoiceHTML(invoiceData); const invoiceArea = document.getElementById('invoice-print-area'); if (invoiceArea) { invoiceArea.innerHTML = invoiceHTML; printElement('invoice-print-area'); } else { alert("Erreur critique: Zone impression facture introuvable."); }
+            // ... validation logic (same as before) ...
+            let isValid = true; invoiceGeneratorForm?.querySelectorAll('.invalid-field').forEach(el => el.classList.remove('invalid-field')); if (!invoiceGenDateInput?.value) { isValid = false; invoiceGenDateInput?.classList.add('invalid-field'); } if (!invoiceGenClientNameInput?.value.trim()) { isValid = false; invoiceGenClientNameInput?.classList.add('invalid-field'); } if (!invoiceGenNumberInput?.value) { isValid = false; invoiceGenNumberInput?.classList.add('invalid-field'); } const items = []; const itemRows = invoiceItemsContainer?.querySelectorAll('.invoice-item-row'); if (!itemRows || itemRows.length === 0) { alert("Ajoutez au moins une ligne."); return; } itemRows.forEach((row) => { const designationInput = row.querySelector('.item-designation'); const quantityInput = row.querySelector('.item-quantity'); const unitPriceInput = row.querySelector('.item-unit-price'); const designation = designationInput?.value.trim(); const quantity = parseFloat(quantityInput?.value); const unitPrice = parseFloat(unitPriceInput?.value); let rowIsValid = true; if (!designation) { isValid = false; rowIsValid = false; designationInput?.classList.add('invalid-field'); } if (isNaN(quantity) || quantity < 0) { isValid = false; rowIsValid = false; quantityInput?.classList.add('invalid-field'); } if (isNaN(unitPrice) || unitPrice < 0) { isValid = false; rowIsValid = false; unitPriceInput?.classList.add('invalid-field'); } if (rowIsValid) { items.push({ designation, quantity, unitPrice, total: quantity * unitPrice }); } }); if (!isValid) { alert("Vérifiez champs en rouge."); const firstInvalid = invoiceGeneratorForm?.querySelector('.invalid-field'); firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' }); firstInvalid?.focus(); return; } calculateInvoiceTotal(); const finalTotalAmount = parseFloat(invoiceGenTotalAmountInput.value); const invoiceData = { date: invoiceGenDateInput.value, number: invoiceGenNumberInput.value, clientName: invoiceGenClientNameInput.value.trim(), clientContact: invoiceGenClientContactInput?.value.trim() || '', items: items, totalAmount: finalTotalAmount, totalWords: numberToWordsFrench(finalTotalAmount) }; const invoiceHTML = generateInvoiceHTML(invoiceData); const invoiceArea = document.getElementById('invoice-print-area');
+            if (invoiceArea) {
+                invoiceArea.innerHTML = invoiceHTML;
+                printElement('invoice-print-area'); // This will call incrementAndSaveInvoiceCounter after print
+            } else {
+                alert("Erreur critique: Zone impression facture introuvable.");
+            }
         });
         previewPrintInvoiceButton._hasClickListener = true;
     }
 
-    // --- NEW: Invoice PDF Export Function ---
-    async function exportInvoiceToPdf(invoiceData) {
-        try {
-            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined' || typeof window.jspdf.jsPDF.API?.autoTable === 'undefined') {
-                throw new Error("Librairies PDF (jsPDF, jsPDF-AutoTable) non chargées.");
-            }
+    // --- NEW: Invoice PDF Export Function (Unchanged from previous version) ---
+    async function exportInvoiceToPdf(invoiceData) { /* ... Function remains the same ... */ try { if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined' || typeof window.jspdf.jsPDF.API?.autoTable === 'undefined') { throw new Error("Librairies PDF (jsPDF, jsPDF-AutoTable) non chargées."); } const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" }); const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight(); const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth(); const margin = 40; let currentY = margin; const contentWidth = pageWidth - 2 * margin; let logoDataUrl = null; try { logoDataUrl = await getBase64Image(LOGO_PATH); } catch (error) { console.warn("Impossible de charger/encoder le logo pour PDF:", error); } const logoHeight = 45; const logoWidth = 45; const logoX = margin; const headerTextX = logoDataUrl ? logoX + logoWidth + 10 : margin; if (logoDataUrl) { doc.addImage(logoDataUrl, 'JPEG', logoX, currentY, logoWidth, logoHeight); } doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.text(ESTABLISHMENT_NAME, headerTextX, currentY + 10); doc.setFontSize(8); doc.setFont(undefined, 'normal'); const companyInfoLines = COMPANY_INFO_PRINT.replace(/<br>/gi, '\n').split('\n'); doc.text(companyInfoLines, headerTextX, currentY + 22); let companyInfoHeight = doc.getTextDimensions(companyInfoLines.join('\n')).h; const rightColX = pageWidth - margin; doc.setFontSize(16); doc.setFont(undefined, 'bold'); doc.text("FACTURE", rightColX, currentY + 10, { align: 'right' }); doc.setFontSize(10); doc.setFont(undefined, 'normal'); doc.text(`N° Facture : ${invoiceData.number}`, rightColX, currentY + 25, { align: 'right' }); doc.text(`Date : ${invoiceData.date}`, rightColX, currentY + 37, { align: 'right' }); currentY += Math.max(logoHeight, companyInfoHeight) + 25; doc.setFontSize(10); doc.setFont(undefined, 'bold'); doc.text("Client :", margin, currentY); doc.setFont(undefined, 'normal'); doc.text(invoiceData.clientName, margin, currentY + 12); if (invoiceData.clientContact) { doc.text(`Contact: ${invoiceData.clientContact}`, margin, currentY + 24); currentY += 36; } else { currentY += 24; } currentY += 10; doc.autoTable({ startY: currentY, head: [['Désignation', 'Quantité', 'Prix Unitaire', 'Montant Total']], body: invoiceData.items.map(item => [ item.designation || '', item.quantity || 0, formatAmount(item.unitPrice), formatAmount(item.total) ]), theme: 'grid', headStyles: { fillColor: [230, 230, 230], textColor: 30, fontStyle: 'bold', halign: 'center' }, columnStyles: { 0: { halign: 'left' }, 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' } }, margin: { left: margin, right: margin } }); currentY = doc.lastAutoTable.finalY + 20; const totalLabel = "MONTANT TOTAL :"; const totalValue = `${formatAmount(invoiceData.totalAmount)} FCFA`; const totalLabelFontSize = 11; const totalValueFontSize = 11; const labelValueGap = 10; doc.setFontSize(10); doc.setFont(undefined, 'normal'); doc.text("Arrêté la présente facture à la somme de :", rightColX, currentY, { align: 'right', maxWidth: contentWidth }); doc.setFont(undefined, 'bold'); doc.text(invoiceData.totalWords, rightColX, currentY + 12, { align: 'right', maxWidth: contentWidth }); currentY += 30; doc.setLineDashPattern([2, 2], 0); doc.line(margin, currentY - 5, pageWidth - margin, currentY - 5); doc.setLineDashPattern([], 0); doc.setFontSize(totalLabelFontSize); doc.setFont(undefined, 'bold'); const totalLabelWidth = doc.getStringUnitWidth(totalLabel) * totalLabelFontSize / doc.internal.scaleFactor; doc.setFontSize(totalValueFontSize); doc.setFont(undefined, 'bold'); const totalValueWidth = doc.getStringUnitWidth(totalValue) * totalValueFontSize / doc.internal.scaleFactor; const totalX_Value = rightColX; const totalX_Label = rightColX - totalValueWidth - labelValueGap; doc.setFontSize(totalLabelFontSize); doc.setFont(undefined, 'bold'); doc.text(totalLabel, totalX_Label, currentY, { align: 'right'}); doc.setFontSize(totalValueFontSize); doc.setFont(undefined, 'bold'); doc.text(totalValue, totalX_Value, currentY, { align: 'right' }); currentY += 40; doc.setFontSize(10); doc.setFont(undefined, 'normal'); doc.text("Signature du Responsable :", rightColX, currentY, { align: 'right' }); doc.text("_________________________", rightColX, currentY + 35, { align: 'right' }); doc.setFont(undefined, 'italic'); doc.text("Modeste KODA MICHEL", rightColX, currentY + 48, { align: 'right' }); currentY += 70; doc.setFontSize(8); doc.setFont(undefined, 'normal'); doc.setTextColor(100); doc.text("Merci de votre confiance.", pageWidth / 2, currentY, { align: 'center' }); doc.save(`Facture_${invoiceData.number}_${invoiceData.clientName}.pdf`); } catch (error) { console.error("Erreur export facture PDF:", error); alert(`Erreur lors de l'export PDF de la facture: ${error.message}`); } }
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-            const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-            const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
-            const margin = 40;
-            let currentY = margin;
-            const contentWidth = pageWidth - 2 * margin;
-
-            // --- Load and Add Logo ---
-            let logoDataUrl = null;
-            try {
-                logoDataUrl = await getBase64Image(LOGO_PATH);
-            } catch (error) {
-                console.warn("Impossible de charger/encoder le logo pour PDF:", error);
-            }
-
-            const logoHeight = 45;
-            const logoWidth = 45; // Adjust if needed
-            const logoX = margin;
-            const headerTextX = logoDataUrl ? logoX + logoWidth + 10 : margin;
-
-            if (logoDataUrl) {
-                doc.addImage(logoDataUrl, 'JPEG', logoX, currentY, logoWidth, logoHeight);
-            }
-
-            // --- Add Text Header ---
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'bold');
-            doc.text(ESTABLISHMENT_NAME, headerTextX, currentY + 10);
-
-            doc.setFontSize(8);
-            doc.setFont(undefined, 'normal');
-            // Split COMPANY_INFO_PRINT by <br> and print line by line
-            const companyInfoLines = COMPANY_INFO_PRINT.replace(/<br>/gi, '\n').split('\n');
-            doc.text(companyInfoLines, headerTextX, currentY + 22); // Start slightly lower
-            let companyInfoHeight = doc.getTextDimensions(companyInfoLines.join('\n')).h;
-
-            // --- Add Invoice Title/Details (Top Right) ---
-            const rightColX = pageWidth - margin;
-            doc.setFontSize(16);
-            doc.setFont(undefined, 'bold');
-            doc.text("FACTURE", rightColX, currentY + 10, { align: 'right' });
-
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            doc.text(`N° Facture : ${invoiceData.number}`, rightColX, currentY + 25, { align: 'right' });
-            doc.text(`Date : ${invoiceData.date}`, rightColX, currentY + 37, { align: 'right' });
-
-            currentY += Math.max(logoHeight, companyInfoHeight) + 25; // Move below header
-
-            // --- Client Details ---
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'bold');
-            doc.text("Client :", margin, currentY);
-            doc.setFont(undefined, 'normal');
-            doc.text(invoiceData.clientName, margin, currentY + 12);
-            if (invoiceData.clientContact) {
-                doc.text(`Contact: ${invoiceData.clientContact}`, margin, currentY + 24);
-                currentY += 36;
-            } else {
-                currentY += 24;
-            }
-            currentY += 10; // Space before table
-
-            // --- Items Table ---
-            doc.autoTable({
-                startY: currentY,
-                head: [['Désignation', 'Quantité', 'Prix Unitaire', 'Montant Total']],
-                body: invoiceData.items.map(item => [
-                    item.designation || '',
-                    item.quantity || 0,
-                    formatAmount(item.unitPrice),
-                    formatAmount(item.total)
-                ]),
-                theme: 'grid',
-                headStyles: { fillColor: [230, 230, 230], textColor: 30, fontStyle: 'bold', halign: 'center' },
-                columnStyles: {
-                    0: { halign: 'left' }, // Designation
-                    1: { halign: 'center' }, // Quantity
-                    2: { halign: 'right' }, // Unit Price
-                    3: { halign: 'right' }  // Total Amount
-                },
-                margin: { left: margin, right: margin }
-            });
-
-            currentY = doc.lastAutoTable.finalY + 20; // Update Y after table
-
-            // --- Summary ---
-            // START MODIFICATION: Adjusted PDF Total positioning
-            const totalLabel = "MONTANT TOTAL :"; // Label Text
-            const totalValue = `${formatAmount(invoiceData.totalAmount)} FCFA`; // Value Text
-            const totalLabelFontSize = 11; // Font size for the label
-            const totalValueFontSize = 11; // Font size for the value
-            const labelValueGap = 10; // Space between label and value
-
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal'); // Ensure normal font for the preceding text
-            doc.text("Arrêté la présente facture à la somme de :", rightColX, currentY, { align: 'right', maxWidth: contentWidth });
-            doc.setFont(undefined, 'bold');
-            doc.text(invoiceData.totalWords, rightColX, currentY + 12, { align: 'right', maxWidth: contentWidth });
-            currentY += 30; // Increase space before total line
-
-            // Draw the dashed line
-            doc.setLineDashPattern([2, 2], 0);
-            doc.line(margin, currentY - 5, pageWidth - margin, currentY - 5); // Draw line slightly above text
-            doc.setLineDashPattern([], 0); // Reset dash pattern
-
-            doc.setFontSize(totalLabelFontSize); // Set font size for label
-            doc.setFont(undefined, 'bold'); // Make label bold
-            const totalLabelWidth = doc.getStringUnitWidth(totalLabel) * totalLabelFontSize / doc.internal.scaleFactor;
-
-            doc.setFontSize(totalValueFontSize); // Set font size for value (can be different)
-            doc.setFont(undefined, 'bold');   // Make value bold
-            const totalValueWidth = doc.getStringUnitWidth(totalValue) * totalValueFontSize / doc.internal.scaleFactor;
-
-            // Calculate positions
-            const totalX_Value = rightColX; // Align value to the right margin
-            const totalX_Label = rightColX - totalValueWidth - labelValueGap; // Position label to the left of the value
-
-            // Draw text
-            doc.setFontSize(totalLabelFontSize); // Apply label font size
-             doc.setFont(undefined, 'bold');   // Apply label font style
-            doc.text(totalLabel, totalX_Label, currentY, { align: 'right'}); // Align label right up to its position
-
-            doc.setFontSize(totalValueFontSize); // Apply value font size
-             doc.setFont(undefined, 'bold');   // Apply value font style
-            doc.text(totalValue, totalX_Value, currentY, { align: 'right' }); // Align value to the right margin
-            // END MODIFICATION
-
-            currentY += 40; // Space before signature
-
-            // --- Signature ---
-            doc.setFontSize(10);
-             doc.setFont(undefined, 'normal'); // Ensure normal font for signature label
-            doc.text("Signature du Responsable :", rightColX, currentY, { align: 'right' });
-            doc.text("_________________________", rightColX, currentY + 35, { align: 'right' });
-            doc.setFont(undefined, 'italic');
-            doc.text("Modeste KODA MICHEL", rightColX, currentY + 48, { align: 'right' });
-
-            currentY += 70; // Space before footer
-
-            // --- Footer ---
-            doc.setFontSize(8);
-            doc.setFont(undefined, 'normal');
-            doc.setTextColor(100);
-            doc.text("Merci de votre confiance.", pageWidth / 2, currentY, { align: 'center' });
-
-            // Page numbers (if needed, add logic similar to table export footer)
-
-            doc.save(`Facture_${invoiceData.number}_${invoiceData.clientName}.pdf`);
-
-        } catch (error) {
-            console.error("Erreur export facture PDF:", error);
-            alert(`Erreur lors de l'export PDF de la facture: ${error.message}`);
-        }
-    }
-
-    // --- NEW: Event Listener for Invoice PDF Export Button ---
+    // --- MODIFIED: Event Listener for Invoice PDF Export Button increments counter ---
     if (exportInvoicePdfButton && !exportInvoicePdfButton._hasClickListener) {
-        exportInvoicePdfButton.addEventListener('click', () => {
+        exportInvoicePdfButton.addEventListener('click', async () => { // Added async
             if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) {
                 alert("Accès Refusé.");
                 return;
             }
-            // Validation logic copied from previewPrintInvoiceButton listener
+            // Validation logic (same as before)
             let isValid = true;
             invoiceGeneratorForm?.querySelectorAll('.invalid-field').forEach(el => el.classList.remove('invalid-field'));
             if (!invoiceGenDateInput?.value) { isValid = false; invoiceGenDateInput?.classList.add('invalid-field'); }
             if (!invoiceGenClientNameInput?.value.trim()) { isValid = false; invoiceGenClientNameInput?.classList.add('invalid-field'); }
             if (!invoiceGenNumberInput?.value) { isValid = false; invoiceGenNumberInput?.classList.add('invalid-field'); }
-
             const items = [];
             const itemRows = invoiceItemsContainer?.querySelectorAll('.invoice-item-row');
-            if (!itemRows || itemRows.length === 0) {
-                alert("Ajoutez au moins une ligne d'article à la facture.");
-                return; // Stop if no items
-            }
-
-            itemRows.forEach((row) => {
-                const designationInput = row.querySelector('.item-designation');
-                const quantityInput = row.querySelector('.item-quantity');
-                const unitPriceInput = row.querySelector('.item-unit-price');
-                const designation = designationInput?.value.trim();
-                const quantity = parseFloat(quantityInput?.value);
-                const unitPrice = parseFloat(unitPriceInput?.value);
-                let rowIsValid = true;
-                if (!designation) { isValid = false; rowIsValid = false; designationInput?.classList.add('invalid-field'); }
-                if (isNaN(quantity) || quantity < 0) { isValid = false; rowIsValid = false; quantityInput?.classList.add('invalid-field'); }
-                if (isNaN(unitPrice) || unitPrice < 0) { isValid = false; rowIsValid = false; unitPriceInput?.classList.add('invalid-field'); }
-                if (rowIsValid) {
-                    items.push({ designation, quantity, unitPrice, total: quantity * unitPrice });
-                }
-            });
-
-            if (!isValid) {
-                alert("Veuillez vérifier et corriger les champs marqués en rouge.");
-                const firstInvalid = invoiceGeneratorForm?.querySelector('.invalid-field');
-                firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                firstInvalid?.focus();
-                return;
-            }
-
-            calculateInvoiceTotal(); // Ensure totals are up-to-date
+            if (!itemRows || itemRows.length === 0) { alert("Ajoutez au moins une ligne d'article à la facture."); return; }
+            itemRows.forEach((row) => { const designationInput = row.querySelector('.item-designation'); const quantityInput = row.querySelector('.item-quantity'); const unitPriceInput = row.querySelector('.item-unit-price'); const designation = designationInput?.value.trim(); const quantity = parseFloat(quantityInput?.value); const unitPrice = parseFloat(unitPriceInput?.value); let rowIsValid = true; if (!designation) { isValid = false; rowIsValid = false; designationInput?.classList.add('invalid-field'); } if (isNaN(quantity) || quantity < 0) { isValid = false; rowIsValid = false; quantityInput?.classList.add('invalid-field'); } if (isNaN(unitPrice) || unitPrice < 0) { isValid = false; rowIsValid = false; unitPriceInput?.classList.add('invalid-field'); } if (rowIsValid) { items.push({ designation, quantity, unitPrice, total: quantity * unitPrice }); } });
+            if (!isValid) { alert("Veuillez vérifier et corriger les champs marqués en rouge."); const firstInvalid = invoiceGeneratorForm?.querySelector('.invalid-field'); firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' }); firstInvalid?.focus(); return; }
+            calculateInvoiceTotal();
             const finalTotalAmount = parseFloat(invoiceGenTotalAmountInput.value);
+            const invoiceData = { date: invoiceGenDateInput.value, number: invoiceGenNumberInput.value, clientName: invoiceGenClientNameInput.value.trim(), clientContact: invoiceGenClientContactInput?.value.trim() || '', items: items, totalAmount: finalTotalAmount, totalWords: numberToWordsFrench(finalTotalAmount) };
 
-            const invoiceData = {
-                date: invoiceGenDateInput.value,
-                number: invoiceGenNumberInput.value,
-                clientName: invoiceGenClientNameInput.value.trim(),
-                clientContact: invoiceGenClientContactInput?.value.trim() || '',
-                items: items,
-                totalAmount: finalTotalAmount,
-                totalWords: numberToWordsFrench(finalTotalAmount)
-            };
-
-            // Call the new PDF export function
-            exportInvoiceToPdf(invoiceData);
-
+            try {
+                await exportInvoiceToPdf(invoiceData); // Await the PDF export
+                await incrementAndSaveInvoiceCounter(); // Increment counter AFTER successful export
+            } catch (error) {
+                 console.error("Erreur lors de l'export PDF ou sauvegarde compteur:", error);
+                 // Alert is already shown in exportInvoiceToPdf or incrementAndSaveInvoiceCounter
+            }
         });
         exportInvoicePdfButton._hasClickListener = true;
     }
@@ -2904,14 +2215,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const username = loginUsernameInput.value.trim(); const password = loginPasswordInput.value;
         if (!username || !password) { loginErrorMessage.textContent = "Nom d'utilisateur et mot de passe requis."; loginErrorMessage.classList.remove('hidden'); return; }
 
-        // Ensure adminData is loaded before attempting login
         if (!Array.isArray(adminData)) {
              loginErrorMessage.textContent = "Données utilisateur non chargées. Réessayez.";
              loginErrorMessage.classList.remove('hidden');
              return;
         }
 
-        // INSECURE LOGIN - Replace with Firebase Auth in a real app
         const foundUser = adminData.find(user => user.username === username && user.password === password);
         if (foundUser) {
             console.log(`Connecté: ${username}, Statut: ${foundUser.status}`);
@@ -2919,7 +2228,18 @@ document.addEventListener('DOMContentLoaded', function () {
             if (loginContainer) loginContainer.classList.add('hidden');
             if (mainAppContainer) mainAppContainer.classList.remove('hidden');
             loginForm.reset(); loginErrorMessage.classList.add('hidden');
-            initializeAppUI(); // Initialize UI AFTER successful login
+
+             // Fetch invoice counter *after* successful login, before initializing UI
+            invoiceCounterRef.once('value').then(snapshot => {
+                localInvoiceCounter = snapshot.val() || 1; // Default to 1 if not set
+                console.log("Compteur facture chargé:", localInvoiceCounter);
+                initializeAppUI(); // Initialize UI AFTER successful login AND counter fetch
+            }).catch(error => {
+                console.error("Erreur chargement compteur facture:", error);
+                localInvoiceCounter = 1; // Fallback
+                initializeAppUI(); // Initialize UI even if counter fetch fails
+            });
+
         } else {
             console.log("Échec connexion pour:", username);
             loginErrorMessage.textContent = "Nom d'utilisateur ou mot de passe incorrect.";
@@ -2931,14 +2251,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function handleLogout() {
          if (confirm("Voulez-vous vraiment vous déconnecter ?")) {
-             // Detach listener is usually not needed for RTDB `on()` unless stopping updates entirely
-             // if (firebaseListenerHandle) {
-             //     dataRef.off('value', firebaseListenerHandle);
-             //     firebaseListenerHandle = null;
-             //     console.log("Firebase listener détaché.");
-             // }
-
              currentUser = null;
+             localInvoiceCounter = 1; // Reset local counter on logout
              if (mainAppContainer) mainAppContainer.classList.add('hidden');
              if (loginContainer) loginContainer.classList.remove('hidden');
              const allSections = [supplySection, salesSection, employeesSection, learnersSection, mobileMoneySection, creditorsSection, debtSection, reportSection, invoiceGeneratorSection, adminSection, equipmentSection].filter(Boolean);
@@ -2947,34 +2261,50 @@ document.addEventListener('DOMContentLoaded', function () {
              if (userInfoStatusSpan) userInfoStatusSpan.textContent = '';
               if(loginButton) loginButton.disabled = false; // <-- ENABLE login button on logout
              console.log("Utilisateur déconnecté.");
-
-             // Re-attach listener if it was detached, or ensure it's still active
-             // attachFirebaseListener(); // Usually not needed if never detached
+             // No need to detach listener usually
          }
     }
 
     // --- Initialisation ---
     function attachFirebaseListener() {
         if (!firebaseListenerHandle) { // Only attach if not already attached
+            // Listen for main data changes
             firebaseListenerHandle = dataRef.on('value', handleFirebaseDataUpdate, (error) => {
-                console.error("Erreur écoute Firebase:", error);
-                alert("Erreur de connexion à la base de données en temps réel. Certaines fonctionnalités peuvent être indisponibles.");
-                if(loginButton) loginButton.disabled = true; // Keep disabled on error
+                console.error("Erreur écoute Firebase (dataRef):", error);
+                alert("Erreur de connexion à la base de données principale. Certaines fonctionnalités peuvent être indisponibles.");
+                if(loginButton) loginButton.disabled = true;
                 if(loginErrorMessage){
                      loginErrorMessage.textContent = "Erreur de connexion temps réel.";
                      loginErrorMessage.classList.remove('hidden');
                 }
             });
-            console.log("Firebase listener attaché.");
+            console.log("Firebase listener (dataRef) attaché.");
+
+            // Separate listener for invoice counter changes (optional, but good for real-time updates if needed elsewhere)
+            invoiceCounterRef.on('value', (snapshot) => {
+                const counterVal = snapshot.val();
+                if (counterVal !== null && counterVal !== undefined) {
+                    localInvoiceCounter = counterVal;
+                    console.log("Compteur facture mis à jour (listener):", localInvoiceCounter);
+                    // Optionally update the invoice form if it's visible
+                    if (invoiceGeneratorSection && !invoiceGeneratorSection.classList.contains('hidden') && invoiceGenNumberInput) {
+                         invoiceGenNumberInput.value = generateInvoiceNumber();
+                    }
+                }
+            }, (error) => {
+                console.error("Erreur écoute Firebase (invoiceCounterRef):", error);
+                // Handle counter listener error if necessary, maybe fall back to local counter
+            });
+             console.log("Firebase listener (invoiceCounterRef) attaché.");
+
         }
     }
 
-    attachFirebaseListener(); // Attach listener on load
+    attachFirebaseListener(); // Attach listeners on load
 
     if (loginForm && !loginForm._hasSubmitListener) {
          loginForm.addEventListener('submit', handleLogin);
          loginForm._hasSubmitListener = true;
-         // ** CHANGE: Keep login button enabled by default **
          if(loginButton) loginButton.disabled = false;
     } else if (!loginForm) {
          console.error("Login form not found!");
@@ -3005,16 +2335,5 @@ document.addEventListener('DOMContentLoaded', function () {
     // Set footer year
     const footerYearSpan = document.getElementById('footer-year');
     if (footerYearSpan) { footerYearSpan.textContent = new Date().getFullYear(); }
-
-    // --- Note on Mobile Printing ---
-    // The existing print logic using `@media print` in CSS and `window.print()` in JS
-    // is the standard web approach and is generally well-supported by modern mobile browsers.
-    // The print preview seen on mobile *is* the browser's native preview, rendering
-    // the page using the `@media print` styles.
-    // No specific code changes are required *in this application's code* to enable
-    // mobile printing or preview, as the core mechanism relies on browser features
-    // and the existing print-specific CSS rules which are designed to be device-independent
-    // for the *print output* itself. Ensuring the `@media print` styles are correct
-    // is the key, and they appear comprehensive in `style.css`.
 
 }); // End DOMContentLoaded
