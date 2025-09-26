@@ -1,36 +1,35 @@
 /* style.css */
 :root {
-    /* ... (Existing color variables - unchanged) ... */
-    --color-primary: #0014db;       /* Dark Blue (Existing) */
-    --color-primary-light: #0401a7; /* Lighter Blue (Existing) */
-    --color-accent: #EAA43A;        /* Gold/Orange (Existing - Keeping) */
-    --color-accent-yellow: #f3f300; /* Yellow (Alternative/Warning) */
-    --color-success: #0ea701;       /* Green (Requested) */
-    --color-success-dark: #218838;
-    --color-danger: #f30000;        /* Red (Requested) */
-    --color-danger-dark: #a71d2a;
-    --color-info: #070050;          /* Teal (For Info/Print/Export) */
-    --color-info-dark: #138496;
-    --color-secondary: #0014db;     /* Gray (For Secondary Buttons - Using Blue as requested) */
-    --color-secondary-dark: #0401a7; /* Darker Blue for secondary hover */
-    --color-text: #333;
-    --color-text-muted: #555;
-    --color-background: #f4f7fc;    /* Lighter background */
+    --color-primary: #2c3e50;       /* Dark Slate Blue (NEW) */
+    --color-primary-light: #34495e; /* Lighter Slate Blue (NEW) */
+    --color-accent: #f39c12;        /* Vibrant Orange (NEW) */
+    --color-accent-yellow: #f1c40f; /* Vibrant Yellow (NEW) */
+    --color-success: #27ae60;       /* Modern Green (NEW) */
+    --color-success-dark: #229954;
+    --color-danger: #e74c3c;        /* Modern Red (NEW) */
+    --color-danger-dark: #c0392b;
+    --color-info: #3498db;          /* Modern Blue/Teal (NEW) */
+    --color-info-dark: #2980b9;
+    --color-secondary: #34495e;     /* Using Lighter Slate Blue (NEW) */
+    --color-secondary-dark: #2c3e50; /* Using Dark Slate Blue (NEW) */
+    --color-text: #34495E;          /* Dark Slate Blue for text (NEW) */
+    --color-text-muted: #7F8C8D;
+    --color-background: #eef2f7;    /* Lighter, cool background (NEW) */
     --color-background-alt: #ffffff;/* White */
     --color-border: #dee2e6;
     --color-input-border: #ced4da;
-    --color-input-focus-border: var(--color-primary-light); /* Use Lighter Blue for focus */
-    --color-input-focus-shadow: rgba(74, 112, 168, 0.25); /* Matching Lighter Blue Shadow */
-    --color-table-header-bg: #e9ecef;
-    --color-table-stripe-bg: #f8f9fa; /* Keep light stripe */
-    --color-table-hover-bg: #e2e6ea;
+    --color-input-focus-border: var(--color-primary-light);
+    --color-input-focus-shadow: rgba(52, 73, 94, 0.25); /* Matching Slate Blue Shadow (NEW) */
+    --color-table-header-bg: #f8f9fa; /* Lighter header bg (NEW) */
+    --color-table-stripe-bg: #f8f9fa;
+    --color-table-hover-bg: #eef2f7; /* Matching page background (NEW) */
     --color-link: var(--color-primary);
     --color-link-hover: var(--color-primary-light);
-    --color-warning-bg: #fff3cd;    /* Light Yellow for Warning/Partiel BG */
+    --color-warning-bg: #fff3cd;
     --color-warning-text: #856404;
-    --color-success-bg: #d4edda;    /* Light Green for Success/Solde BG */
+    --color-success-bg: #d4edda;
     --color-success-text: #155724;
-    --color-danger-bg: #f8d7da;     /* Light Red for Danger BG (e.g., stock out) */
+    --color-danger-bg: #f8d7da;
     --color-danger-text: #721c24;
 }
 
@@ -55,7 +54,7 @@ body {
     margin: 15px auto 0 auto; /* Center with less top margin, no bottom margin */
     padding: 0 20px 30px 20px; /* More padding */
     background-color: var(--color-background-alt); /* White background for main area */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07); /* Softer shadow */
+    box-shadow: 0 8px 30px rgba(44, 62, 80, 0.08); /* Softer, more pronounced shadow (NEW) */
     border-radius: 8px; /* Rounded corners for the main container */
     box-sizing: border-box; /* Include padding in width */
 }
@@ -72,7 +71,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.75); /* Darker overlay */
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); /* Branded gradient background (NEW) */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -135,7 +134,7 @@ body {
 #login-button {
     padding: 12px 25px;
     width: 100%; /* Full width button */
-    background-color: #0127a7;
+    background-color: var(--color-primary); /* Use primary color (NEW) */
     color: white;
     font-size: 1.1em;
     font-weight: 600;
@@ -147,7 +146,7 @@ body {
 }
 
 #login-button:hover {
-    background-color: #0ea701;
+    background-color: var(--color-success); /* Green on hover (NEW) */
 }
 #login-button:disabled {
     background-color: #cccccc;
@@ -172,7 +171,7 @@ body {
     justify-content: flex-start; /* Keep items aligned to the start */
     flex-wrap: wrap; /* Allow wrapping on smaller screens */
     padding: 20px 30px; /* More padding */
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%); /* Gradient background */
+    background: var(--color-primary); /* Solid, professional background (NEW) */
     color: var(--color-background-alt);
     border-bottom: 4px solid var(--color-accent); /* Accent border */
     margin: -1px -21px 30px -21px; /* Extend to edges of rounded container */
@@ -195,7 +194,7 @@ h1 {
     font-size: 2em; /* Larger title */
     font-weight: 600;
     color: var(--color-background-alt);
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    text-shadow: none; /* Cleaner look (NEW) */
     text-align: left;
     margin-right: 20px; /* Add space after title */
     flex-shrink: 0; /* Prevent title from shrinking too much */
@@ -224,7 +223,7 @@ h1 {
     padding: 8px 15px;
     font-size: 13px;
     font-weight: 600;
-    background-color: var(--color-secondary); /* Use secondary blue */
+    background-color: var(--color-secondary);
     color: white;
     border: none;
     border-radius: 5px;
@@ -233,57 +232,67 @@ h1 {
     flex-shrink: 0; /* Prevent shrinking */
 }
 #logout-button:hover {
-    background-color: var(--color-secondary-dark); /* Darker blue on hover */
+    background-color: var(--color-secondary-dark);
 }
 
 
 /* --- Main Buttons --- */
 .main-buttons {
     display: grid; /* Use Grid for better control */
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Adjusted minmax. 1fr makes them take full width of column */
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Wider min width (NEW) */
     gap: 15px; /* More gap */
     margin-bottom: 35px; /* More space below */
     padding: 20px;
-    background-color: #fff; /* White background */
+    background-color: var(--color-background); /* Light background for the container (NEW) */
     border-radius: 8px;
-    margin-left: 0px; /* Align with section padding */
+    margin-left: 0px;
     margin-right: 0px;
     border: 1px solid var(--color-border);
-    box-shadow: 0 2px 8px rgba(0,0,0, 0.05);
 }
 
 .main-buttons button {
     padding: 15px 10px; /* Taller buttons */
     font-size: 13px; /* Slightly smaller font */
     font-weight: 600; /* Bolder font */
-    background-color: var(--color-primary-light); /* Use lighter primary */
-    color: white;
-    border: none;
+    background-color: var(--color-background-alt); /* White background by default (NEW) */
+    color: var(--color-primary); /* Dark text (NEW) */
+    border: 1px solid var(--color-border); /* Subtle border (NEW) */
     border-radius: 6px;
     cursor: pointer;
     text-align: center;
-    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    /* width: 100%; */ /* Not strictly needed with grid-template-columns: 1fr */
+    transition: all 0.2s ease; /* Transition all properties (NEW) */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Softer shadow (NEW) */
+    display: flex; /* For icon alignment (NEW) */
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Space between icon and text (NEW) */
 }
 .main-buttons button:hover {
-     background-color: var(--color-primary); /* Darker on hover */
+     background-color: var(--color-primary-light); /* Darker on hover */
+     color: white; /* White text on hover (NEW) */
      transform: translateY(-2px); /* Lift effect */
-     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+     box-shadow: 0 4px 12px rgba(44, 62, 80, 0.15); /* Stronger shadow on hover (NEW) */
+     border-color: var(--color-primary-light);
 }
 .main-buttons button:active {
     transform: translateY(0px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-/* Specific Colors for Key Actions */
-#show-supply-section { background-color: var(--color-success); }
-#show-supply-section:hover { background-color: var(--color-success-dark); }
-#show-sales-section { background-color: var(--color-accent-yellow); color: var(--color-text); }
-#show-sales-section:hover { background-color: #e6ac00; }
-#show-report-section { background-color: var(--color-info); }
-#show-report-section:hover { background-color: var(--color-info-dark); }
-#show-admin-section { background-color: var(--color-danger); } /* Admin button red */
-#show-admin-section:hover { background-color: var(--color-danger-dark); }
+/* Specific Colors for Key Actions (overrides base style) */
+#show-supply-section, #show-sales-section, #show-report-section, #show-admin-section {
+    color: white; /* Ensure text is white on colored buttons */
+}
+#show-supply-section { background-color: var(--color-success); border-color: var(--color-success);}
+#show-supply-section:hover { background-color: var(--color-success-dark); border-color: var(--color-success-dark);}
+
+#show-sales-section { background-color: var(--color-accent-yellow); color: var(--color-text); border-color: var(--color-accent-yellow);}
+#show-sales-section:hover { background-color: #e6ac00; border-color: #e6ac00; color: var(--color-text); }
+
+#show-report-section { background-color: var(--color-info); border-color: var(--color-info);}
+#show-report-section:hover { background-color: var(--color-info-dark); border-color: var(--color-info-dark);}
+
+#show-admin-section { background-color: var(--color-danger); border-color: var(--color-danger);}
+#show-admin-section:hover { background-color: var(--color-danger-dark); border-color: var(--color-danger-dark);}
 
 
 /* --- Sections & Forms --- */
@@ -295,7 +304,7 @@ section {
     padding: 30px; /* More padding */
     background-color: white;
     border-radius: 8px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Softer shadow (NEW) */
     border: 1px solid var(--color-border);
 }
 
@@ -472,7 +481,7 @@ button[type="submit"]:hover:not(:disabled) {
 /* Specific styling for Invoice Preview/Print button */
 #preview-print-invoice-button {
     background-color: var(--color-accent);
-    color: var(--color-primary); /* Dark text on gold */
+    color: white; /* White text on orange (NEW) */
     font-weight: bold;
 }
 #preview-print-invoice-button:hover:not(:disabled) {
@@ -481,12 +490,12 @@ button[type="submit"]:hover:not(:disabled) {
 
 /* Secondary Buttons (Show/Hide, etc.) */
 .secondary-btn {
-    background-color: var(--color-secondary); /* Use secondary blue */
+    background-color: var(--color-secondary);
     color: white;
     margin-top: 25px; /* Space above toggle buttons */
 }
 .secondary-btn:hover:not(:disabled) {
-     background-color: var(--color-secondary-dark); /* Darker blue */
+     background-color: var(--color-secondary-dark);
 }
 
 /* Add invoice item button */
@@ -598,26 +607,28 @@ table {
 th, td {
     text-align: left;
     padding: 14px 16px; /* More padding */
-    border: 1px solid var(--color-border);
+    border: none; /* Removed all borders (NEW) */
     vertical-align: middle; /* Align middle */
-    border-bottom: 1px solid var(--color-border); /* Add bottom border to all cells */
-    border-right: none; /* Remove right border */
-    border-left: none; /* Remove left border */
+    border-bottom: 1px solid var(--color-border); /* Add bottom border to all cells for horizontal separation (NEW) */
 }
-/* Add left/right border only to first/last cell */
-th:first-child, td:first-child { border-left: 1px solid var(--color-border); }
-th:last-child, td:last-child { border-right: 1px solid var(--color-border); }
+
+/* Remove border from last row */
+tbody tr:last-child td {
+    border-bottom: none;
+}
 
 
 th {
     background-color: var(--color-table-header-bg);
     font-weight: 600;
     white-space: nowrap;
-    color: var(--color-primary); /* Dark blue text for headers */
+    color: var(--color-text-muted); /* Muted color for header text (NEW) */
     text-align: center; /* Center align header text by default */
-    font-size: 1em; /* Larger header font */
-    border-bottom: 2px solid var(--color-primary-light); /* Stronger bottom border */
-    border-top: 1px solid var(--color-border); /* Top border for header */
+    font-size: 11px; /* Smaller, cleaner header font (NEW) */
+    text-transform: uppercase; /* Uppercase for professional look (NEW) */
+    letter-spacing: 0.08em; /* Spacing for readability (NEW) */
+    border-bottom: 2px solid var(--color-border); /* Stronger bottom border for header (NEW) */
+    border-top: 1px solid var(--color-border);
 }
 /* Left align specific headers */
 /* START MODIFICATION: Also left align date column header */
@@ -637,9 +648,12 @@ th.category-col /* NEW: Category column */
 tbody tr {
     transition: background-color 0.15s ease;
 }
-tbody tr:nth-child(even) {
+
+/* REMOVED ZEBRA STRIPING FOR CLEANER LOOK */
+/* tbody tr:nth-child(even) {
     background-color: var(--color-table-stripe-bg);
-}
+} */
+
 tbody tr:hover {
     background-color: var(--color-table-hover-bg);
 }
@@ -719,16 +733,16 @@ td.category-col /* NEW: Category column */
     transform: scale(1.1);
 }
 /* Use requested colors */
-.edit-btn { color: var(--color-primary-light); } /* Blue */
+.edit-btn { color: var(--color-primary-light); }
 .edit-btn:hover:not(:disabled) { color: var(--color-primary); }
 
-.delete-btn { color: var(--color-danger); } /* Red */
+.delete-btn { color: var(--color-danger); }
 .delete-btn:hover:not(:disabled) { color: var(--color-danger-dark); }
 
-.pay-btn { color: var(--color-success); } /* Green (Also used for Grant Permission ✔️) */
+.pay-btn { color: var(--color-success); }
 .pay-btn:hover:not(:disabled) { color: var(--color-success-dark); }
 
-.invoice-btn { color: var(--color-info); } /* Teal (Print Receipt) */
+.invoice-btn { color: var(--color-info); }
 .invoice-btn:hover:not(:disabled) { color: var(--color-info-dark); }
 
 /* Correct disabled state for action buttons */
@@ -822,9 +836,9 @@ footer {
     text-align: center;
     padding: 20px 15px;
     margin-top: 40px; /* Space above footer */
-    background-color: #0014db; /* Use primary blue */
-    color: #ffffff; /* White text */
-    font-size: 1.1em;
+    background-color: var(--color-primary); /* Use primary color (NEW) */
+    color: #eef2f7; /* Soft white text (NEW) */
+    font-size: 0.9em; /* Slightly smaller (NEW) */
     border-top: 1px solid var(--color-border);
     line-height: 1.4;
     width: 100%; /* Ensure footer takes full width */
@@ -889,6 +903,7 @@ footer p {
      .main-buttons button {
          font-size: 12px; /* Adjusted */
          padding: 12px 8px;
+         gap: 6px; /* Less gap on mobile (NEW) */
      }
     /* Stack form elements */
     .form-row { gap: 18px; margin-bottom: 18px; }
