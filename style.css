@@ -1,6 +1,6 @@
 /* style.css */
 :root {
-    --color-primary: #2c3e50;       /* Dark Slate Blue (NEW) */
+    --color-primary: #0f0774;       /* Dark Slate Blue (NEW) */
     --color-primary-light: #34495e; /* Lighter Slate Blue (NEW) */
     --color-accent: #f39c12;        /* Vibrant Orange (NEW) */
     --color-accent-yellow: #f1c40f; /* Vibrant Yellow (NEW) */
@@ -1203,4 +1203,5 @@ footer p {
 .printing-invoice-header {
     /* Uses general .invoice-header styles defined within @media print */
 }
+
 /* No device-specific print changes needed; @media print handles the output format. */
