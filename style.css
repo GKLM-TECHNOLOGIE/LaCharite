@@ -12,6 +12,7 @@
     --color-info-dark: #2980b9;
     --color-secondary: #34495e;     /* Using Lighter Slate Blue (NEW) */
     --color-secondary-dark: #2c3e50; /* Using Dark Slate Blue (NEW) */
+    --color-network: #5a4d8a;       /* NEW: Darker Indigo/Purple for Network Role */
     --color-text: #34495E;          /* Dark Slate Blue for text (NEW) */
     --color-text-muted: #7F8C8D;
     --color-background: #eef2f7;    /* Lighter, cool background (NEW) */
@@ -279,7 +280,8 @@ h1 {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 /* Specific Colors for Key Actions (overrides base style) */
-#show-supply-section, #show-sales-section, #show-report-section, #show-admin-section {
+#show-supply-section, #show-sales-section, #show-report-section, #show-admin-section,
+#show-piece-en-ligne-section, #show-wifi-zone-section {
     color: white; /* Ensure text is white on colored buttons */
 }
 #show-supply-section { background-color: var(--color-success); border-color: var(--color-success);}
@@ -294,6 +296,12 @@ h1 {
 #show-admin-section { background-color: var(--color-danger); border-color: var(--color-danger);}
 #show-admin-section:hover { background-color: var(--color-danger-dark); border-color: var(--color-danger-dark);}
 
+/* NEW: Styles for new sections */
+#show-piece-en-ligne-section { background-color: var(--color-primary-light); border-color: var(--color-primary-light); }
+#show-piece-en-ligne-section:hover { background-color: var(--color-primary); border-color: var(--color-primary); }
+
+#show-wifi-zone-section { background-color: var(--color-secondary-dark); border-color: var(--color-secondary-dark); }
+#show-wifi-zone-section:hover { background-color: var(--color-secondary); border-color: var(--color-secondary); }
 
 /* --- Sections & Forms --- */
 main { /* Ensure main takes up available space if needed */
@@ -631,16 +639,15 @@ th {
     border-top: 1px solid var(--color-border);
 }
 /* Left align specific headers */
-/* START MODIFICATION: Also left align date column header */
 th.date-col,
-/* END MODIFICATION */
 th.designation-col,
 th.name-col, th.reason-col, th.contact-col,
 th.type-col, th.status-col, th.description-col, th.address-col,
 th.residence-col, th.workdays-col, th.agent-col, th.post-col, th.filiere-col,
 th.employee-name-col, th.equipment-name-col, /* Added for new table */
 th.user-col, /* Added user column alignment */
-th.category-col /* NEW: Category column */
+th.category-col, /* NEW: Category column */
+th.piece-designation-col, th.wifi-designation-col /* NEW: Added for new tables */
 {
     text-align: left;
 }
@@ -680,9 +687,7 @@ td.balance-col, td.credit-col, td.remaining-salary-col
 td.quantity-col, td.supply-col, td.sold-col, td.remaining-col, td.age-col,
 td.interest-col, td.time-col /* Added */
 { text-align: center; }
-/* START MODIFICATION: Left align date TD */
 td.date-col { text-align: left; }
-/* END MODIFICATION */
 
 
 /* Added user column alignment for TD */
@@ -693,14 +698,12 @@ td.user-col {
     color: var(--color-text-muted);
 }
 /* Added text-align left for TD cells corresponding to left-aligned TH */
-/* START MODIFICATION: Also left align date column TD content */
-/* td.date-col, - Already handled above */
-/* END MODIFICATION */
 td.designation-col, td.name-col, td.reason-col, td.contact-col,
 td.type-col, td.status-col, td.description-col, td.address-col,
 td.residence-col, td.workdays-col, td.agent-col, td.post-col, td.filiere-col,
 td.employee-name-col, td.equipment-name-col, /* Added for new table */
-td.category-col /* NEW: Category column */
+td.category-col, /* NEW: Category column */
+td.piece-designation-col, td.wifi-designation-col /* NEW: Added for new tables */
 {
     text-align: left;
 }
@@ -784,11 +787,9 @@ th.sortable-header.sort-desc::after {
     opacity: 1; /* Make sorted arrow fully visible */
 }
 /* Don't show arrows on non-sortable headers */
-/* START MODIFICATION: Ensure actions header doesn't get arrows */
 th.actions-header::after, th.no-sort::after {
     display: none !important;
 }
-/* END MODIFICATION */
 /* --------------------------------------------- */
 
 /* --- Style adjustments for Multi-Item Invoice --- */
@@ -1034,6 +1035,7 @@ footer p {
      body.printing-active .printable-content.show-in-print th.actions-header,
      body.printing-active .printable-content.show-in-print td.actions-cell,
      body.printing-active .printable-content.show-in-print th.no-print,
+     body.printing-active .printable-content.show-in-print .no-export, /* ADDED: Hide Excel export buttons from print */
      body.printing-active .printable-content.show-in-print td.no-print
      {
          display: none !important;
@@ -1084,7 +1086,6 @@ footer p {
          padding-right: 6px !important; /* Reset padding for print */
     }
     /* Specific header alignments */
-    /* START MODIFICATION: Add date-col and category-col to left alignment in print */
     .show-in-print th.date-col,
     .show-in-print th.designation-col,
     .show-in-print th.name-col, .show-in-print th.reason-col, .show-in-print th.contact-col,
@@ -1092,8 +1093,9 @@ footer p {
     .show-in-print th.residence-col, .show-in-print th.workdays-col,
     .show-in-print th.user-col, .show-in-print th.agent-col, .show-in-print th.post-col, .show-in-print th.filiere-col,
     .show-in-print th.employee-name-col, .show-in-print th.equipment-name-col, /* Added */
-    .show-in-print th.category-col /* NEW */
-    /* END MODIFICATION */
+    .show-in-print th.category-col, /* NEW */
+    .show-in-print th.piece-designation-col, /* NEW */
+    .show-in-print th.wifi-designation-col /* NEW */
     { text-align: left !important; }
 
     .show-in-print tbody tr { page-break-inside: avoid !important; }
@@ -1104,10 +1106,10 @@ footer p {
     .show-in-print .danger td { background-color: #f8d7da !important; color: #721c24 !important; }
     /* Specific cell alignments */
     .show-in-print td.unit-price-col, .show-in-print td.salary-col, .show-in-print td.amount-col, .show-in-print td.total-cost-col, .show-in-print td.balance-col, .show-in-print td.credit-col, .show-in-print td.remaining-salary-col { text-align: right !important; font-family: sans-serif !important; }
-    /* START MODIFICATION: Left align date-col and category-col TD in print */
     .show-in-print td.date-col,
-    .show-in-print td.category-col /* NEW */
-    /* END MODIFICATION */
+    .show-in-print td.category-col, /* NEW */
+    .show-in-print td.piece-designation-col, /* NEW */
+    .show-in-print td.wifi-designation-col /* NEW */
     { text-align: left !important; } /* Ensure date and category are left aligned */
     .show-in-print td.quantity-col, .show-in-print td.supply-col, .show-in-print td.sold-col, .show-in-print td.remaining-col, .show-in-print td.age-col, .show-in-print td.interest-col, .show-in-print td.time-col { text-align: center !important; }
 
@@ -1118,7 +1120,6 @@ footer p {
     .show-in-print td.user-col { font-style: italic; font-size: 0.9em; color: #555 !important; } /* Style user col */
 
     /* --- Styles for Invoice Printing --- */
-    /* ... (Invoice printing styles remain the same, already have logo/name) ... */
     body.printing-invoice #printable-area { display: none !important; }
     body.printing-invoice #invoice-print-area.show-in-print {
         display: block !important; visibility: visible !important; page-break-inside: avoid;
@@ -1126,7 +1127,10 @@ footer p {
         width: 100% !important; box-sizing: border-box !important; background-color: #fff !important;
         color: #000 !important; font-size: 10pt !important; line-height: 1.4 !important;
     }
-    body.printing-invoice #invoice-print-area.show-in-print * {
+    body.printing-invoice .show-in-print #print-header-temp {
+        display: none !important; /* Hide generic temp header for invoices */
+    }
+    body.printing-invoice .show-in-print * {
          visibility: visible !important; color: #000 !important;
          background-color: transparent !important; box-shadow: none !important; text-shadow: none !important;
     }
@@ -1140,7 +1144,7 @@ footer p {
     body.printing-invoice .show-in-print .invoice-details { font-size: 8.5pt !important; line-height: 1.3 !important; margin-top: 4px !important; }
     body.printing-invoice .show-in-print .invoice-details strong { display: block !important; margin-bottom: 2px !important; font-size: 10.5pt !important; }
     body.printing-invoice .show-in-print .invoice-title { text-align: right !important; }
-    body.printing-invoice .show-in-print .invoice-title h2 { margin: 0 !important; font-size: 15pt !important; font-weight: bold !important; color: #000 !important; }
+    body.printing-invoice .show-in-inprint .invoice-title h2 { margin: 0 !important; font-size: 15pt !important; font-weight: bold !important; color: #000 !important; }
     body.printing-invoice .show-in-print .invoice-title .invoice-details { margin-top: 4px !important; text-align: right !important; font-size: 8.5pt !important; line-height: 1.3 !important; }
     body.printing-invoice .show-in-print .invoice-client-details { margin-bottom: 12px !important; font-size: 9pt !important; line-height: 1.3 !important; text-align: left !important; margin-top: 12px !important; }
     body.printing-invoice .show-in-print .invoice-items table { width: 100% !important; border-collapse: collapse !important; margin-bottom: 12px !important; font-size: 9pt !important; page-break-inside: auto !important; }
@@ -1157,7 +1161,6 @@ footer p {
       body.printing-invoice .show-in-print .invoice-summary hr { border: none !important; border-top: 1px solid #999 !important; margin: 4px 0 !important; height: 1px !important; }
       body.printing-invoice .show-in-print .invoice-summary br { display: block; content: ""; margin-top: 5px; }
     body.printing-invoice .show-in-print .invoice-footer { margin-top: 30px !important; padding-top: 8px !important; border-top: 1px solid #ccc !important; font-size: 7.5pt !important; text-align: center !important; color: #444 !important; page-break-before: auto !important; }
-    /* START: Updated selector for Invoice signature block */
     body.printing-invoice .show-in-print .invoice-signature {
         margin-top: 40px !important;
         padding-top: 10px !important;
@@ -1172,11 +1175,12 @@ footer p {
     #materiel-electrique-details-container.show-in-print::after,
     #expenses-details-container.show-in-print::after,
     #others-details-container.show-in-print::after,
-    #equipment-details-container.show-in-print::after { /* Added equipment */
+    #equipment-details-container.show-in-print::after,
+    #piece-en-ligne-details-container.show-in-print::after,
+    #wifi-zone-details-container.show-in-print::after
+    {
         /* Use \A for line breaks, white-space: pre handles spacing. Adjust spaces as needed. */
-        /* START MODIFICATION: Swapped signature names */
         content: "\A\ASignature                                                         signature\A\A\A\ANom et prénom de l'employé                                     Modeste KODA MICHEL";
-        /* END MODIFICATION */
         white-space: pre; /* Crucial for preserving spacing and line breaks */
         display: block;
         margin-top: 40px; /* Space after table */
@@ -1203,5 +1207,4 @@ footer p {
 .printing-invoice-header {
     /* Uses general .invoice-header styles defined within @media print */
 }
-
 /* No device-specific print changes needed; @media print handles the output format. */
