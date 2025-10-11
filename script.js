@@ -36,10 +36,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const database = firebase.database();
     const dataRef = database.ref('gestionnaireData');
     const invoiceCounterRef = database.ref('gestionnaireSettings/invoiceCounter');
+    const generatedInvoicesRef = database.ref('generatedInvoices'); // NEW: Firebase reference for generated invoices
     let firebaseListenerHandle = null;
 
     // --- Constants ---
-    const ESTABLISHMENT_NAME = "LA CHARITÉ MODESTE";
+    const ESTABLISHMENT_NAME = "ETS LA CHARITÉ MODESTE"; // MODIFIED: Changed name to ETS
     const COMPANY_INFO_PRINT = `TOUS TRAVAUX DE SECRETARIAT : Photocopie-Saisie, Tirage, Plastification-Vente Des<br> fournitures scolaires – Vente des ampoules électriques Etc.....<br> N°RCCM: RB / PK 0/A5519 /IFU 0201810420946<br> PARAKOU (Rép Du Bénin) - Tél: 61 71 36 92 / 64 41 58 95 `;
     const LOGO_PATH = 'logo.jpg';
 
@@ -82,6 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const showCreditorsSectionButton = document.getElementById('show-creditors-section');
     const showDebtSectionButton = document.getElementById('show-debt-section');
     const generateInvoiceButton = document.getElementById('generate-invoice-button');
+    const showInvoiceHistorySectionButton = document.getElementById('show-invoice-history-section'); // NEW BUTTON
     const showReportSectionButton = document.getElementById('show-report-section');
     const showAdminSectionButton = document.getElementById('show-admin-section');
     const showEquipmentSectionButton = document.getElementById('show-equipment-section');
@@ -97,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const debtSection = document.getElementById('debt-section');
     const reportSection = document.getElementById('report-section');
     const invoiceGeneratorSection = document.getElementById('invoice-generator-section');
+    const invoiceHistorySection = document.getElementById('invoice-history-section'); // NEW SECTION
     const adminSection = document.getElementById('admin-section');
     const equipmentSection = document.getElementById('equipment-section');
     const pieceEnLigneSection = document.getElementById('piece-en-ligne-section');
@@ -124,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const equipmentTable = document.getElementById('equipment-table')?.querySelector('tbody');
     const pieceEnLigneTable = document.getElementById('piece-en-ligne-table')?.querySelector('tbody');
     const wifiZoneTable = document.getElementById('wifi-zone-table')?.querySelector('tbody');
+    const invoiceHistoryTable = document.getElementById('invoice-history-table')?.querySelector('tbody'); // NEW TABLE
 
 
     // --- Boutons Afficher/Masquer Détails ---
@@ -170,6 +174,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const equipmentDetailsContainer = document.getElementById('equipment-details-container');
     const pieceEnLigneDetailsContainer = document.getElementById('piece-en-ligne-details-container');
     const wifiZoneDetailsContainer = document.getElementById('wifi-zone-details-container');
+    const invoiceHistoryDetailsContainer = document.getElementById('invoice-history-section'); // NEW: For invoice history section itself
+
 
     // --- Boutons Print/Export ---
     const printSupplyButton = document.getElementById('print-supply');
@@ -192,6 +198,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const printEquipmentButton = document.getElementById('print-equipment');
     const printPieceEnLigneButton = document.getElementById('print-piece-en-ligne');
     const printWifiZoneButton = document.getElementById('print-wifi-zone');
+    const printInvoiceHistoryButton = document.getElementById('print-invoice-history'); // NEW
 
     const exportSupplyExcelButton = document.getElementById('export-supply-excel');
     const exportStockExcelButton = document.getElementById('export-stock-excel');
@@ -213,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const exportEquipmentExcelButton = document.getElementById('export-equipment-excel');
     const exportPieceEnLigneExcelButton = document.getElementById('export-piece-en-ligne-excel');
     const exportWifiZoneExcelButton = document.getElementById('export-wifi-zone-excel');
+    const exportInvoiceHistoryExcelButton = document.getElementById('export-invoice-history-excel'); // NEW
 
     const exportSupplyPdfButton = document.getElementById('export-supply-pdf');
     const exportStockPdfButton = document.getElementById('export-stock-pdf');
@@ -234,6 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const exportEquipmentPdfButton = document.getElementById('export-equipment-pdf');
     const exportPieceEnLignePdfButton = document.getElementById('export-piece-en-ligne-pdf');
     const exportWifiZonePdfButton = document.getElementById('export-wifi-zone-pdf');
+    const exportInvoiceHistoryPdfButton = document.getElementById('export-invoice-history-pdf'); // NEW
 
 
     // --- Champs Formulaire ---
@@ -346,13 +355,23 @@ document.addEventListener('DOMContentLoaded', function () {
     const creditorDateInput = document.getElementById('creditor-date');
     const creditorNameSelect = document.getElementById('creditor-name');
     const creditorUserConnectedInput = document.getElementById('creditor-user-connected');
-    const creditorDesignationInput = document.getElementById('creditor-designation');
+    const creditorDesignationSelect = document.getElementById('creditor-designation'); // MODIFIED: Changed to select
+    const creditorCustomDesignationInput = document.getElementById('creditor-custom-designation'); // NEW
     const creditorQuantityInput = document.getElementById('creditor-quantity');
     const creditorUnitPriceInput = document.getElementById('creditor-unit-price');
     const creditorTotalAmountDueInput = document.getElementById('creditor-total-amount-due');
     const creditorAmountPaidInput = document.getElementById('creditor-amount-paid');
     const creditorDueDateInput = document.getElementById('creditor-due-date');
     const creditorContactInput = document.getElementById('creditor-contact');
+
+    // NEW: Creditor Summary Display Elements
+    const selectedClientSummaryDiv = document.getElementById('selected-client-summary');
+    const clientSummaryTotalDueSpan = document.getElementById('client-summary-total-due');
+    const clientSummaryTotalPaidSpan = document.getElementById('client-summary-total-paid');
+    const clientSummaryRemainingSpan = document.getElementById('client-summary-remaining');
+    const clientSummaryDesignationsList = document.getElementById('client-summary-designations-list');
+
+
     const debtDateInput = document.getElementById('debt-date');
     const debtTypeSelect = document.getElementById('debt-type');
     const debtNameInput = document.getElementById('debt-name');
@@ -385,6 +404,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const invoiceGenTotalWordsInput = document.getElementById('invoice-gen-total-words');
     const previewPrintInvoiceButton = document.getElementById('preview-print-invoice-button');
     const exportInvoicePdfButton = document.getElementById('export-invoice-pdf-button');
+    const saveUpdateInvoiceButton = document.getElementById('save-update-invoice-button'); // NEW BUTTON
     const adminUsernameInput = document.getElementById('admin-username');
     const adminPostInput = document.getElementById('admin-post');
     const adminPasswordInput = document.getElementById('admin-password');
@@ -422,16 +442,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const mobileMoneyEditIndexInput = document.getElementById('mobile-money-edit-index');
     const mmFournisseurEditKeyInput = document.getElementById('mm-fournisseur-edit-key');
     const clientProfileEditKeyInput = document.getElementById('client-profile-edit-key');
+    const creditorEditIndexInput = document.getElementById('creditor-edit-index'); // NEW: Hidden field for editing transactions
     const debtEditIndexInput = document.getElementById('debt-edit-index');
     const adminEditKeyInput = document.getElementById('admin-edit-key');
     const equipmentEditIndexInput = document.getElementById('equipment-edit-index');
     const pieceEnLigneEditIndexInput = document.getElementById('piece-en-ligne-edit-index');
     const wifiZoneEditIndexInput = document.getElementById('wifi-zone-edit-index');
+    const invoiceEditIdInput = document.getElementById('invoice-edit-id'); // NEW: Hidden field for editing invoices
 
 
     // Invoice Counter
-    let invoiceItemIndex = 1;
-    let localInvoiceCounter = 1;
+    let invoiceItemIndex = 1; // Used for unique IDs for invoice item rows in the generator form
+    let localInvoiceCounter = 1; // The counter stored in Firebase for new invoice numbers
 
     // --- Global Data Variables ---
     let salesData = [];
@@ -453,6 +475,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let equipmentData = [];
     let pieceEnLigneData = [];
     let wifiZoneData = [];
+    let generatedInvoicesData = []; // NEW: Array to hold generated invoice objects
 
 
     // --- Login State ---
@@ -507,6 +530,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (clientProfileEditKeyInput) clientProfileEditKeyInput.value = '';
         if (clientProfileForm) clientProfileForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Profil';
 
+        if (creditorEditIndexInput) creditorEditIndexInput.value = ''; // NEW: Reset creditor edit index
+        if (creditorForm) creditorForm.querySelector('button[type="submit"]').textContent = 'Ajouter Paiement / Créer Crédit'; // NEW: Reset creditor button text
+
         if (debtEditIndexInput) debtEditIndexInput.value = '';
         if (debtForm) debtForm.querySelector('button[type="submit"]').textContent = 'Ajouter Dette/Prêt';
 
@@ -528,6 +554,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // When showing invoice section, initialize the form (this generates the next invoice number)
         if (invoiceGeneratorSection && sectionToShow === invoiceGeneratorSection) {
             initializeInvoiceForm();
+        }
+        // NEW: Clear invoice edit ID when navigating away from invoice generator or history
+        if (invoiceEditIdInput && sectionToShow !== invoiceGeneratorSection && sectionToShow !== invoiceHistorySection) {
+            invoiceEditIdInput.value = '';
         }
     }
     function handleOperationTypeChange() {
@@ -675,9 +705,10 @@ document.addEventListener('DOMContentLoaded', function () {
             window.removeEventListener('afterprint', afterPrintHandler);
             window.removeEventListener('unload', afterPrintHandler);
 
-            if (isInvoice && printInitiated) {
-                 incrementAndSaveInvoiceCounter();
-            }
+            // Invoice counter is now handled by saveInvoiceToFirebase
+            // if (isInvoice && printInitiated) {
+            //      incrementAndSaveInvoiceCounter();
+            // }
         };
         window.addEventListener('afterprint', afterPrintHandler);
         window.addEventListener('unload', afterPrintHandler);
@@ -848,7 +879,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const logoX = margin;
             const textHeaderX = logoX + logoWidth + 10;
             const headerCenter = pageWidth / 2;
-
             if (logoDataUrl) {
                  doc.addImage(logoDataUrl, 'JPEG', logoX, currentY, logoWidth, logoHeight);
                  currentY += 5;
@@ -868,9 +898,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 html: `#${tableId}`,
                 startY: currentY,
                 theme: 'grid',
-                headStyles: { fillColor: [26, 58, 109], textColor: 255, fontStyle: 'bold', halign: 'center' },
-                styles: { fontSize: orientation === "landscape" ? 8 : 9, cellPadding: 4, overflow: 'linebreak', lineWidth: 0.5, lineColor: [222, 226, 230] },
-                alternateRowStyles: { fillColor: [248, 249, 250] },
+                headStyles: { fillColor: [26, 58, 109], textColor: 255, fontStyle: 'bold', halign: 'center' }, // Corrected fillColor
+                styles: { fontSize: orientation === "landscape" ? 8 : 9, cellPadding: 4, overflow: 'linebreak', lineWidth: 0.5, lineColor: [222, 226, 230] }, // Corrected lineColor
+                alternateRowStyles: { fillColor: [248, 249, 250] }, // Corrected fillColor
                 margin: { top: currentY, right: margin, bottom: 40, left: margin },
                 tableWidth: 'auto',
                 columns: allHeaders.map((_, index) => index).filter(index => index !== actionHeaderIndex),
@@ -883,8 +913,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             if (['unit-price-col', 'salary-col', 'amount-col', 'total-cost-col', 'balance-col', 'credit-col', 'remaining-salary-col'].some(cls => headerClasses.contains(cls))) { data.cell.styles.halign = 'right'; }
                             else if (['quantity-col', 'supply-col', 'sold-col', 'remaining-col', 'age-col', 'interest-col', 'time-col'].some(cls => headerClasses.contains(cls))) { data.cell.styles.halign = 'center'; }
                             else { data.cell.styles.halign = 'left'; }
-                            if (headerClasses.contains('user-col')) { data.cell.styles.fontStyle = 'italic'; data.cell.styles.fontSize = (data.cell.styles.fontSize || 9) * 0.9; data.cell.styles.textColor = [100, 100, 100]; }
-                            if (['category-col', 'piece-designation-col', 'wifi-designation-col'].some(cls => headerClasses.contains(cls))) { data.cell.styles.halign = 'left'; }
+                            if (headerClasses.contains('user-col')) { data.cell.styles.fontStyle = 'italic'; data.cell.styles.fontSize = (data.cell.styles.fontSize || 9) * 0.9; data.cell.styles.textColor = [100, 100, 100]; } // Corrected textColor
+                            if (['category-col', 'piece-designation-col', 'wifi-designation-col', 'invoice-number-col', 'invoice-client-col'].some(cls => headerClasses.contains(cls))) { data.cell.styles.halign = 'left'; } // NEW
                         }
                     }
                 }
@@ -951,24 +981,22 @@ document.addEventListener('DOMContentLoaded', function () {
         updateMobileMoneyTable();
         updateMmFournisseursTable();
         updateClientProfilesTable();
-        populateClientSelect();
+        populateClientSelect(); // IMPORTANT: This must be called after clientProfilesData is loaded
         updateCreditorsTable();
         updateDebtTable();
         updateEquipmentTable();
         updatePieceEnLigneTable();
         updateWifiZoneTable();
         updateAdminTable();
+        updateInvoiceHistoryTable(); // NEW
         handleOperationTypeChange();
 
         if (!currentUser) {
-            const allSections = [supplySection, salesSection, employeesSection, learnersSection, mobileMoneySection, creditorsSection, debtSection, reportSection, invoiceGeneratorSection, adminSection, equipmentSection, pieceEnLigneSection, wifiZoneSection].filter(Boolean);
+            const allSections = [supplySection, salesSection, employeesSection, learnersSection, mobileMoneySection, creditorsSection, debtSection, reportSection, invoiceGeneratorSection, invoiceHistorySection, adminSection, equipmentSection, pieceEnLigneSection, wifiZoneSection].filter(Boolean); // MODIFIED
             allSections.forEach(section => { if(section) section.classList.add('hidden'); });
         }
 
-        const nonToggleDetails = [
-            reportDetailsContainer, reportFilters, showReportDetailsButton,
-            document.getElementById('invoice-print-area')
-        ].filter(Boolean);
+        const nonToggleDetails = [ reportDetailsContainer, reportFilters, showReportDetailsButton, document.getElementById('invoice-print-area') ].filter(Boolean);
         nonToggleDetails.forEach(container => container.classList.add('hidden'));
 
         updateConnectedUserFields();
@@ -980,6 +1008,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (userInfoUsernameSpan) userInfoUsernameSpan.textContent = currentUser.username;
             if (userInfoStatusSpan) userInfoStatusSpan.textContent = currentUser.status;
             checkAndShowPaymentAlert(); // Call the new payment alert function
+            checkAndShowSubscriptionRenewalAlert(); // NEW: Call the subscription renewal alert
         } else {
              if (userInfoUsernameSpan) userInfoUsernameSpan.textContent = '';
              if (userInfoStatusSpan) userInfoStatusSpan.textContent = '';
@@ -994,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- Role-Based Restrictions (RBAC) ---
     function applyRoleRestrictions() { //
-        const allSections = [supplySection, salesSection, employeesSection, learnersSection, mobileMoneySection, creditorsSection, debtSection, reportSection, invoiceGeneratorSection, adminSection, equipmentSection, pieceEnLigneSection, wifiZoneSection].filter(Boolean);
+        const allSections = [supplySection, salesSection, employeesSection, learnersSection, mobileMoneySection, creditorsSection, debtSection, reportSection, invoiceGeneratorSection, invoiceHistorySection, adminSection, equipmentSection, pieceEnLigneSection, wifiZoneSection].filter(Boolean); // MODIFIED
 
         if (!currentUser) {
             document.querySelectorAll('.main-buttons button').forEach(el => el.style.display = 'none');
@@ -1004,6 +1033,7 @@ document.addEventListener('DOMContentLoaded', function () {
              if (addInvoiceItemButton) addInvoiceItemButton.disabled = true;
              if (previewPrintInvoiceButton) previewPrintInvoiceButton.disabled = true;
              if (exportInvoicePdfButton) exportInvoicePdfButton.disabled = true;
+             if (saveUpdateInvoiceButton) saveUpdateInvoiceButton.disabled = true; // NEW
              if (generateReportButton) generateReportButton.disabled = true;
             return;
         }
@@ -1034,6 +1064,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (addInvoiceItemButton) addInvoiceItemButton.disabled = true;
         if (previewPrintInvoiceButton) previewPrintInvoiceButton.disabled = true;
         if (exportInvoicePdfButton) exportInvoicePdfButton.disabled = true;
+        if (saveUpdateInvoiceButton) saveUpdateInvoiceButton.disabled = true; // NEW
         if (generateReportButton) generateReportButton.disabled = true;
         reportPrintExportBtns.forEach(btn => btn.disabled = true);
         allPrintExportButtons.forEach(btn => btn.disabled = true);
@@ -1047,6 +1078,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (addInvoiceItemButton) addInvoiceItemButton.disabled = false;
             if (previewPrintInvoiceButton) previewPrintInvoiceButton.disabled = false;
             if (exportInvoicePdfButton) exportInvoicePdfButton.disabled = false;
+            if (saveUpdateInvoiceButton) saveUpdateInvoiceButton.disabled = false; // NEW
             document.querySelectorAll('.remove-invoice-item-btn').forEach(btn => btn.disabled = false);
 
             if (generateReportButton) generateReportButton.disabled = false;
@@ -1064,9 +1096,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (showCreditorsSectionButton) showCreditorsSectionButton.style.display = '';
             // if (showDebtSectionButton) showDebtSectionButton.style.display = ''; // Hidden for Editor
             if (showEquipmentSectionButton) showEquipmentSectionButton.style.display = '';
-            // if (showPieceEnLigneSectionButton) showPieceEnLigneSectionButton.style.display = ''; // NEW: Hidden for Editor
+            if (showPieceEnLigneSectionButton) showPieceEnLigneSectionButton.style.display = ''; // MODIFIED: Visible for Editor
             // if (showWifiZoneSectionButton) showWifiZoneSectionButton.style.display = ''; // NEW: Hidden for Editor
             if (generateInvoiceButton) generateInvoiceButton.style.display = '';
+            if (showInvoiceHistorySectionButton) showInvoiceHistorySectionButton.style.display = ''; // NEW: Visible for Editor
             // if (showReportSectionButton) showReportSectionButton.style.display = ''; // Hidden for Editor
             // if (showAdminSectionButton) showAdminSectionButton.style.display = ''; // Hidden for Editor
 
@@ -1081,15 +1114,15 @@ document.addEventListener('DOMContentLoaded', function () {
             if (equipmentForm) equipmentForm.querySelector('button[type="submit"]').disabled = false;
             // if (permissionEmployeeForm) permissionEmployeeForm.querySelector('button[type="submit"]').disabled = false; // Disabled
             // if (permissionLearnerForm) permissionLearnerForm.querySelector('button[type="submit"]').disabled = false; // Disabled
-            // if (pieceEnLigneForm) pieceEnLigneForm.querySelector('button[type="submit"]').disabled = false; // NEW: Disabled for Editor
-            // if (wifiZoneForm) wifiZoneForm.querySelector('button[type="submit"]').disabled = false; // NEW: Disabled for Editor
+            if (pieceEnLigneForm) pieceEnLigneForm.querySelector('button[type="submit"]').disabled = false; // MODIFIED: Enabled for Editor
+            // if (wifiZoneForm) wifiZoneForm.querySelector('button[type="submit"]').disabled = true; // NEW: Disabled for Editor
 
 
             if (mobileMoneyForm) mobileMoneyForm.querySelector('button[type="submit"]').disabled = true;
             if (mmFournisseurForm) mmFournisseurForm.querySelector('button[type="submit"]').disabled = true;
             if (debtForm) debtForm.querySelector('button[type="submit"]').disabled = true;
             if (adminForm) adminForm.querySelector('button[type="submit"]').disabled = true;
-            if (pieceEnLigneForm) pieceEnLigneForm.querySelector('button[type="submit"]').disabled = true; // NEW
+            // if (pieceEnLigneForm) pieceEnLigneForm.querySelector('button[type="submit"]').disabled = true; // NEW
             if (wifiZoneForm) wifiZoneForm.querySelector('button[type="submit"]').disabled = true; // NEW
 
 
@@ -1097,6 +1130,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.remove-invoice-item-btn').forEach(btn => btn.disabled = false);
             if (previewPrintInvoiceButton) previewPrintInvoiceButton.disabled = false;
             if (exportInvoicePdfButton) exportInvoicePdfButton.disabled = false;
+            if (saveUpdateInvoiceButton) saveUpdateInvoiceButton.disabled = false; // NEW
 
             if (generateReportButton) generateReportButton.disabled = true;
             reportPrintExportBtns.forEach(btn => btn.disabled = true);
@@ -1117,7 +1151,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('#client-profiles-container .print-export-btn').forEach(btn => btn.disabled = false);
             document.querySelectorAll('#creditors-details-container .print-export-btn').forEach(btn => btn.disabled = false);
             document.querySelectorAll('#equipment-details-container .print-export-btn').forEach(btn => btn.disabled = false);
-            // document.querySelectorAll('#piece-en-ligne-details-container .print-export-btn').forEach(btn => btn.disabled = false); // NEW: Disabled for Editor
+            document.querySelectorAll('#piece-en-ligne-details-container .print-export-btn').forEach(btn => btn.disabled = false); // MODIFIED: Enabled for Editor
+            document.querySelectorAll('#invoice-history-section .print-export-btn').forEach(btn => btn.disabled = false); // NEW: Enabled for Editor
             // document.querySelectorAll('#wifi-zone-details-container .print-export-btn').forEach(btn => btn.disabled = false); // NEW: Disabled for Editor
 
             updateAllTablesForPermissions(); // Re-render tables with correct action button states
@@ -1126,6 +1161,14 @@ document.addEventListener('DOMContentLoaded', function () {
             allDeleteButtons.forEach(btn => btn.disabled = true);
             allPayButtons.forEach(btn => btn.disabled = true);
             allPermissionButtons.forEach(btn => btn.disabled = true);
+
+            // Enable edit/delete for piece-en-ligne for Editor
+            document.querySelectorAll('#piece-en-ligne-table .edit-btn').forEach(btn => btn.disabled = false);
+            document.querySelectorAll('#piece-en-ligne-table .delete-btn').forEach(btn => btn.disabled = false);
+
+            // Enable edit/delete for invoice history for Editor
+            document.querySelectorAll('#invoice-history-table .edit-btn').forEach(btn => btn.disabled = false); // NEW
+            document.querySelectorAll('#invoice-history-table .delete-btn').forEach(btn => btn.disabled = false); // NEW
 
 
         } else if (isRéseau) { // NEW ROLE 'Réseau'
@@ -1152,9 +1195,17 @@ document.addEventListener('DOMContentLoaded', function () {
             allPayButtons.forEach(btn => btn.disabled = true);
             allPermissionButtons.forEach(btn => btn.disabled = true);
 
+            // Enable edit/delete for Mobile Money and Wifi Zone for Réseau
+            document.querySelectorAll('#mobile-money-table .edit-btn').forEach(btn => btn.disabled = false);
+            document.querySelectorAll('#mobile-money-table .delete-btn').forEach(btn => btn.disabled = false);
+            document.querySelectorAll('#mm-fournisseurs-table .edit-btn').forEach(btn => btn.disabled = false);
+            document.querySelectorAll('#mm-fournisseurs-table .delete-btn').forEach(btn => btn.disabled = false);
+            document.querySelectorAll('#wifi-zone-table .edit-btn').forEach(btn => btn.disabled = false);
+            document.querySelectorAll('#wifi-zone-table .delete-btn').forEach(btn => btn.disabled = false);
 
         } else if (isLecteur) {
             if (showReportSectionButton) showReportSectionButton.style.display = '';
+            if (showInvoiceHistorySectionButton) showInvoiceHistorySectionButton.style.display = ''; // NEW: Visible for Lecteur
 
             if (generateReportButton) generateReportButton.disabled = false;
 
@@ -1162,6 +1213,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             allInvoicePrintButtons.forEach(btn => btn.disabled = true);
             if (exportInvoicePdfButton) exportInvoicePdfButton.disabled = true;
+            if (saveUpdateInvoiceButton) saveUpdateInvoiceButton.disabled = true; // NEW
+
+            // Enable print/export for allowed sections
+            document.querySelectorAll('#report-details-container .print-export-btn').forEach(btn => btn.disabled = false);
+            document.querySelectorAll('#invoice-history-section .print-export-btn').forEach(btn => btn.disabled = false); // NEW: Enabled for Lecteur
 
             updateAllTablesForPermissions();
         }
@@ -1171,6 +1227,8 @@ document.addEventListener('DOMContentLoaded', function () {
             let sectionId;
             if (btn.id === 'generate-invoice-button') {
                 sectionId = 'invoice-generator-section';
+            } else if (btn.id === 'show-invoice-history-section') { // NEW
+                sectionId = 'invoice-history-section';
             } else {
                 sectionId = btn.id.replace('show-', '').replace('-button', '') + '-section';
             }
@@ -1182,6 +1240,7 @@ document.addEventListener('DOMContentLoaded', function () {
                      if (otherBtn.style.display !== 'none') {
                          let otherSectionId;
                          if (otherBtn.id === 'generate-invoice-button') otherSectionId = 'invoice-generator-section';
+                         else if (otherBtn.id === 'show-invoice-history-section') otherSectionId = 'invoice-history-section'; // NEW
                          else otherSectionId = otherBtn.id.replace('show-', '').replace('-button', '') + '-section';
                          if (otherSectionId === sectionId) {
                              shouldBeVisible = true;
@@ -1206,6 +1265,7 @@ document.addEventListener('DOMContentLoaded', function () {
         updatePieceEnLigneTable();
         updateWifiZoneTable();
         updateAdminTable();
+        updateInvoiceHistoryTable(); // NEW
     }
 
     /** Handles data updates from Firebase */
@@ -1232,6 +1292,7 @@ document.addEventListener('DOMContentLoaded', function () {
             equipmentData = getData('equipmentData');
             pieceEnLigneData = getData('pieceEnLigneData');
             wifiZoneData = getData('wifiZoneData');
+            generatedInvoicesData = getData('generatedInvoices'); // NEW
 
 
             if (currentUser) {
@@ -1262,7 +1323,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!supplyTable) return;
         supplyTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; // Editor cannot edit/delete supply
         dataToDisplay.forEach((supply) => {
             const originalIndex = supplyData.findIndex(item => item === supply);
             const row = supplyTable.insertRow();
@@ -1285,7 +1346,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!salesTable) return;
         salesTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; //
         dataToDisplay.forEach((sale) => {
             const originalIndex = salesData.findIndex(item => item === sale);
             const row = salesTable.insertRow();
@@ -1307,7 +1368,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!materielElectriqueTable) return;
         materielElectriqueTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; //
         dataToDisplay.forEach((sale) => {
             const originalIndex = materielElectriqueData.findIndex(item => item === sale);
             const row = materielElectriqueTable.insertRow();
@@ -1329,7 +1390,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!expensesTable) return;
         expensesTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; //
         dataToDisplay.forEach((expense) => {
             const originalIndex = expensesData.findIndex(item => item === expense);
             const row = expensesTable.insertRow();
@@ -1350,7 +1411,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!othersTable) return;
         othersTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; //
         dataToDisplay.forEach((other) => {
             const originalIndex = othersData.findIndex(item => item === other);
             const row = othersTable.insertRow();
@@ -1373,7 +1434,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!employeesTable) return;
         employeesTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; //
         const canEdit = isAdmin; // Only Admin can edit employee records
         const canPay = isAdmin; // Only Admin can record salary payments
         const canDelete = isAdmin; // Only Admin can delete employee records
@@ -1417,7 +1478,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!learnersTable) return;
         learnersTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; //
         const canEdit = isAdmin; // Only Admin can edit learner records
         const canPay = isAdmin; // Only Admin can record tranche payments
         const canDelete = isAdmin; // Only Admin can delete learner records
@@ -1486,7 +1547,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const actionCell = row.insertCell(); actionCell.classList.add('actions-cell', 'no-print', 'no-export');
             actionCell.innerHTML = `
                 <button class="action-btn edit-btn" aria-label="Modifier Point MM" title="Modifier" onclick="editMobileMoney(${originalIndex})" ${originalIndex === -1 || !canEdit ? 'disabled' : ''}>✏️</button>
-                <button class="action-btn delete-btn" aria-label="Supprimer Point MM" title="Supprimer" onclick="deleteMobileMoney(${originalIndex})" ${originalIndex === -1 || !canDelete ? 'disabled' : ''}>❌</button>
+                <button class="action-btn delete-btn" aria-label="Supprimer Point MM" title="Supprimer" onclick="deleteMobileMoney(${originalIndex})" ${originalIndex === -1 || !isAdmin ? 'disabled' : ''}>❌</button>
             `;
         });
     }
@@ -1531,9 +1592,9 @@ document.addEventListener('DOMContentLoaded', function () {
         clientProfilesTable.innerHTML = '';
         const sortedProfiles = [...dataToDisplay].sort((a, b) => { const nc = (a.nom || '').localeCompare(b.nom || ''); return nc !== 0 ? nc : (a.prenom || '').localeCompare(b.prenom || ''); });
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
-        const canEdit = isAdmin; // Only Admin can edit MM suppliers
-        const canDelete = isAdmin; // Only Admin can delete MM suppliers
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        const canEdit = isAdmin; // Only Admin can edit client profiles
+        const canDelete = isAdmin; // Only Admin can delete client profiles
 
         sortedProfiles.forEach(p => {
             const key = `${p.nom}_${p.prenom}`;
@@ -1553,12 +1614,179 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
         });
     }
-    function populateClientSelect() { if (!creditorNameSelect) return; const previousValue = creditorNameSelect.value; creditorNameSelect.innerHTML = '<option value="">-- Choisir Client --</option>'; const sortedProfiles = [...clientProfilesData].sort((a, b) => { const nameCompare = (a.nom || '').localeCompare(b.nom || ''); return nameCompare !== 0 ? nameCompare : (a.prenom || '').localeCompare(b.prenom || ''); }); sortedProfiles.forEach(profile => { const option = document.createElement('option'); const fullName = `${profile.nom || ''} ${profile.prenom || ''}`.trim(); option.value = fullName; option.textContent = fullName + (profile.contact ? ` (${profile.contact})` : ''); option.dataset.contact = profile.contact || ''; creditorNameSelect.appendChild(option); }); if (Array.from(creditorNameSelect.options).some(opt => opt.value === previousValue)) { creditorNameSelect.value = previousValue; } else { creditorNameSelect.selectedIndex = 0; } creditorNameSelect.dispatchEvent(new Event('change')); }
+
+    // MODIFIED: populateClientSelect function
+    function populateClientSelect() {
+        if (!creditorNameSelect) return;
+        const previousValue = creditorNameSelect.value;
+        creditorNameSelect.innerHTML = '<option value="">-- Choisir Client --</option>';
+        const sortedProfiles = [...clientProfilesData].sort((a, b) => {
+            const nameCompare = (a.nom || '').localeCompare(b.nom || '');
+            return nameCompare !== 0 ? nameCompare : (a.prenom || '').localeCompare(b.prenom || '');
+        });
+        sortedProfiles.forEach(profile => {
+            const option = document.createElement('option');
+            const fullName = `${profile.nom || ''} ${profile.prenom || ''}`.trim();
+            option.value = fullName;
+            option.textContent = fullName + (profile.contact ? ` (${profile.contact})` : '');
+            option.dataset.contact = profile.contact || '';
+            creditorNameSelect.appendChild(option);
+        });
+
+        if (Array.from(creditorNameSelect.options).some(opt => opt.value === previousValue)) {
+            creditorNameSelect.value = previousValue;
+        } else {
+            creditorNameSelect.selectedIndex = 0;
+        }
+        // Trigger change to update other fields
+        creditorNameSelect.dispatchEvent(new Event('change'));
+    }
+
+    // NEW: Function to populate creditor designation dropdown and summary
+    function updateCreditorFormForClient() {
+        if (!creditorNameSelect || !creditorDesignationSelect || !creditorQuantityInput || !creditorUnitPriceInput || !creditorTotalAmountDueInput || !creditorAmountPaidInput || !creditorDueDateInput || !creditorContactInput || !selectedClientSummaryDiv) return;
+
+        const selectedClientFullName = creditorNameSelect.value;
+        // const clientHasOutstandingCredit = creditorsData.some(c => c.name === selectedClientFullName && (c.totalAmountDue - c.amountPaidTotal > 0.005)); // Not directly used here
+
+        // Update Contact field directly from selected client's profile
+        const selectedOption = creditorNameSelect.options[creditorNameSelect.selectedIndex];
+        creditorContactInput.value = selectedOption?.dataset?.contact || '';
+
+        // Reset fields and hide custom designation input
+        creditorDesignationSelect.innerHTML = '<option value="">-- Choisir ou Saisir --</option>';
+        creditorCustomDesignationInput.classList.add('hidden');
+        creditorCustomDesignationInput.value = '';
+        creditorQuantityInput.value = '';
+        creditorUnitPriceInput.value = '';
+        creditorTotalAmountDueInput.value = '';
+        creditorDueDateInput.value = '';
+        creditorAmountPaidInput.value = '';
+        creditorQuantityInput.readOnly = false;
+        creditorUnitPriceInput.readOnly = false;
+        creditorTotalAmountDueInput.readOnly = false;
+        creditorDueDateInput.readOnly = false;
+
+        if (selectedClientFullName === "") {
+            selectedClientSummaryDiv.style.display = 'none';
+            return;
+        }
+
+        selectedClientSummaryDiv.style.display = 'block';
+
+        const clientCredits = creditorsData.filter(c => c.name === selectedClientFullName);
+        let totalDueForClient = 0;
+        let totalPaidForClient = 0;
+        let outstandingDesignations = [];
+
+        clientCredits.forEach(c => {
+            const remaining = (c.totalAmountDue || 0) - (c.amountPaidTotal || 0);
+            totalDueForClient += (c.totalAmountDue || 0);
+            totalPaidForClient += (c.amountPaidTotal || 0);
+            if (remaining > 0.005) {
+                outstandingDesignations.push({
+                    designation: c.designation,
+                    remaining: remaining,
+                    originalIndex: creditorsData.findIndex(item => item === c),
+                    quantity: c.quantity,
+                    unitPrice: c.unitPrice,
+                    totalAmountDue: c.totalAmountDue,
+                    dueDate: c.dueDate
+                });
+                const option = document.createElement('option');
+                option.value = c.designation;
+                option.textContent = `${c.designation} (Reste: ${formatAmount(remaining)})`;
+                creditorDesignationSelect.appendChild(option);
+            }
+        });
+
+        creditorDesignationSelect.innerHTML += '<option value="Autre">Autre (nouvelle transaction)</option>';
+
+        clientSummaryTotalDueSpan.textContent = formatAmount(totalDueForClient) + ' FCFA';
+        clientSummaryTotalPaidSpan.textContent = formatAmount(totalPaidForClient) + ' FCFA';
+        const clientRemaining = totalDueForClient - totalPaidForClient;
+        clientSummaryRemainingSpan.textContent = formatAmount(clientRemaining) + ' FCFA';
+        clientSummaryRemainingSpan.style.color = clientRemaining > 0.005 ? 'var(--color-danger)' : 'var(--color-success)';
+
+        if (outstandingDesignations.length > 0) {
+            clientSummaryDesignationsList.innerHTML = '<strong>Articles en cours :</strong><br>' +
+                outstandingDesignations.map(item => `- ${item.designation} (Reste: ${formatAmount(item.remaining)})`).join('<br>');
+        } else {
+            clientSummaryDesignationsList.textContent = 'Aucun crédit en cours.';
+        }
+
+        // Auto-fill logic if only one outstanding item AND not currently in edit mode for a specific transaction
+        if (outstandingDesignations.length === 1 && !creditorEditIndexInput.value) { // Ensure not in client profile edit mode
+            const singleOutstanding = outstandingDesignations[0];
+            // No need to find originalCredit, it's in singleOutstanding
+            creditorDesignationSelect.value = singleOutstanding.designation;
+            creditorQuantityInput.value = singleOutstanding.quantity || '';
+            creditorUnitPriceInput.value = singleOutstanding.unitPrice || '';
+            creditorTotalAmountDueInput.value = formatAmount(singleOutstanding.totalAmountDue);
+            creditorDueDateInput.value = singleOutstanding.dueDate || '';
+            creditorAmountPaidInput.value = formatAmount(singleOutstanding.remaining); // Pre-fill with remaining amount
+
+            // Make fields read-only as it's an existing item
+            creditorQuantityInput.readOnly = true;
+            creditorUnitPriceInput.readOnly = true;
+            creditorTotalAmountDueInput.readOnly = true;
+            creditorDueDateInput.readOnly = true;
+        } else {
+            // Default to "Autre" if multiple outstanding or none
+            creditorDesignationSelect.value = "Autre";
+            creditorCustomDesignationInput.classList.remove('hidden');
+        }
+    }
+
+
+    // MODIFIED: creditorDesignationSelect change listener
+    if(creditorDesignationSelect && !creditorDesignationSelect._hasChangeListener) {
+        creditorDesignationSelect.addEventListener('change', function() {
+            const selectedDesignation = this.value;
+            if (selectedDesignation === "Autre") {
+                creditorCustomDesignationInput.classList.remove('hidden');
+                creditorCustomDesignationInput.focus();
+                // Clear fields and make them editable for a new transaction
+                creditorQuantityInput.value = '';
+                creditorUnitPriceInput.value = '';
+                creditorTotalAmountDueInput.value = '';
+                creditorDueDateInput.value = '';
+                creditorAmountPaidInput.value = ''; // Don't pre-fill for new
+                creditorQuantityInput.readOnly = false;
+                creditorUnitPriceInput.readOnly = false;
+                creditorTotalAmountDueInput.readOnly = false;
+                creditorDueDateInput.readOnly = false;
+            } else {
+                creditorCustomDesignationInput.classList.add('hidden');
+                creditorCustomDesignationInput.value = '';
+                // Fill fields with existing credit data
+                const selectedClientFullName = creditorNameSelect.value;
+                const existingCredit = creditorsData.find(c => c.name === selectedClientFullName && c.designation === selectedDesignation && (c.totalAmountDue - c.amountPaidTotal > 0.005));
+
+                if (existingCredit) {
+                    creditorQuantityInput.value = existingCredit.quantity || '';
+                    creditorUnitPriceInput.value = existingCredit.unitPrice || '';
+                    creditorTotalAmountDueInput.value = formatAmount(existingCredit.totalAmountDue);
+                    creditorDueDateInput.value = existingCredit.dueDate || '';
+                    creditorAmountPaidInput.value = formatAmount((existingCredit.totalAmountDue || 0) - (existingCredit.amountPaidTotal || 0)); // Pre-fill with remaining
+                    // Make fields read-only for existing items
+                    creditorQuantityInput.readOnly = true;
+                    creditorUnitPriceInput.readOnly = true;
+                    creditorTotalAmountDueInput.readOnly = true;
+                    creditorDueDateInput.readOnly = true;
+                }
+            }
+        });
+        creditorDesignationSelect._hasChangeListener = true;
+    }
+
+
     function updateCreditorsTable(dataToDisplay = creditorsData) { //
         if (!creditorsTable) return;
         creditorsTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
         const isEditor = currentUser && currentUser.status === 'Editeur'; //
+            const canEdit = isAdmin || isEditor; // NEW: Admin or Editor can edit transactions
             const canDelete = isAdmin; // Only Admin can delete
             const canPrintInvoice = isAdmin || isEditor; // Admin or Editor can print invoices
 
@@ -1589,6 +1817,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (isSolde) { row.classList.add('solde'); } else if (amountPaid > 0) { row.classList.add('partiel'); }
                 const actionCell = row.insertCell(); actionCell.classList.add('actions-cell', 'no-print', 'no-export');
                 actionCell.innerHTML = `
+                    <button class="action-btn edit-btn" aria-label="Modifier Transaction Crédit" title="Modifier Transaction" onclick="editCreditor(${originalIndex})" ${originalIndex === -1 || !canEdit ? 'disabled' : ''}>✏️</button>
                     <button class="action-btn invoice-btn" aria-label="Imprimer Relevé Crédit" title="Imprimer Relevé" onclick="printCreditReceipt(${originalIndex})" ${originalIndex === -1 || !canPrintInvoice ? 'disabled' : ''}>🧾</button>
                     <button class="action-btn delete-btn" aria-label="Supprimer Transaction Crédit" title="Supprimer Transaction" onclick="deleteCreditor(${originalIndex})" ${originalIndex === -1 || !canDelete ? 'disabled' : ''}>❌</button>
                 `;
@@ -1598,7 +1827,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!debtTable) return;
         debtTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; //
         const canEdit = isAdmin;
         const canDelete = isAdmin;
         dataToDisplay.forEach((debt) => {
@@ -1628,7 +1857,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!employeePermissionsTable) return;
         employeePermissionsTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; //
         const canUpdateStatus = isAdmin; // Only Admin can update status
         const canDelete = isAdmin; // Only Admin can delete
         dataToDisplay.forEach((perm) => {
@@ -1656,7 +1885,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!learnerPermissionsTable) return;
         learnerPermissionsTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; //
         const canUpdateStatus = isAdmin; // Only Admin can update status
         const canDelete = isAdmin; // Only Admin can delete
         dataToDisplay.forEach((perm) => {
@@ -1713,7 +1942,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!equipmentTable) return;
         equipmentTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
+        // const isEditor = currentUser && currentUser.status === 'Editeur'; //
         const canEdit = isAdmin;
         const canDelete = isAdmin;
         dataToDisplay.forEach((item) => {
@@ -1738,9 +1967,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!pieceEnLigneTable) return;
         pieceEnLigneTable.innerHTML = '';
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
-        const isEditor = currentUser && currentUser.status === 'Editeur'; //
-        const canEdit = isAdmin;
-        const canDelete = isAdmin;
+        const isEditor = currentUser && currentUser.status === 'Editeur'; // MODIFIED: Editor can access piece en ligne
+        const canEdit = isAdmin || isEditor;
+        const canDelete = isAdmin || isEditor; // MODIFIED: Editor can delete piece en ligne
         dataToDisplay.forEach((piece) => {
             const originalIndex = pieceEnLigneData.findIndex(item => item === piece);
             const row = pieceEnLigneTable.insertRow();
@@ -1764,7 +1993,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const isAdmin = currentUser && currentUser.status === 'Administrateur';
         const isRéseau = currentUser && currentUser.status === 'Réseau'; //
         const canEdit = isAdmin || isRéseau; // Admin or Réseau can edit MM
-        const canDelete = isAdmin; // Only Admin can delete MM
+        const canDelete = isAdmin || isRéseau; // MODIFIED: Réseau can delete Wifi Zone
         dataToDisplay.forEach((wifi) => {
             const originalIndex = wifiZoneData.findIndex(item => item === wifi);
             const row = wifiZoneTable.insertRow();
@@ -1783,10 +2012,49 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // NEW: Update Invoice History Table
+    function updateInvoiceHistoryTable(dataToDisplay = generatedInvoicesData) {
+        if (!invoiceHistoryTable) return;
+        invoiceHistoryTable.innerHTML = '';
+        const isAdmin = currentUser && currentUser.status === 'Administrateur';
+        const isEditor = currentUser && currentUser.status === 'Editeur';
+        const canEdit = isAdmin || isEditor;
+        const canDelete = isAdmin || isEditor;
+
+        // Sort invoices by date, newest first
+        const sortedInvoices = [...dataToDisplay].sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return dateB.getTime() - dateA.getTime();
+        });
+
+        sortedInvoices.forEach(invoice => {
+            // Find the original index to allow proper deletion/modification later
+            // Firebase uses unique keys, so 'id' is the direct reference
+            const row = invoiceHistoryTable.insertRow();
+            row.dataset.invoiceId = invoice.id;
+
+            row.insertCell().textContent = invoice.date || '-'; row.cells[row.cells.length-1].classList.add('date-col');
+            row.insertCell().textContent = invoice.number || '-'; row.cells[row.cells.length-1].classList.add('invoice-number-col');
+            row.insertCell().textContent = invoice.clientName || '-'; row.cells[row.cells.length-1].classList.add('invoice-client-col');
+            row.insertCell().textContent = formatAmount(invoice.totalAmount); row.cells[row.cells.length-1].classList.add('amount-col');
+            row.insertCell().textContent = invoice.generatedBy || '-'; row.cells[row.cells.length-1].classList.add('user-col');
+
+            const actionCell = row.insertCell();
+            actionCell.classList.add('actions-cell', 'no-print', 'no-export');
+            actionCell.innerHTML = `
+                <button class="action-btn edit-btn" aria-label="Modifier Facture" title="Modifier Facture" onclick="editInvoice('${invoice.id}')" ${!canEdit ? 'disabled' : ''}>✏️</button>
+                <button class="action-btn delete-btn" aria-label="Supprimer Facture" title="Supprimer Facture" onclick="deleteInvoice('${invoice.id}')" ${!canDelete ? 'disabled' : ''}>❌</button>
+            `;
+        });
+    }
+
+
     // --- NEW: Per-Table Search Filtering Function ---
     function filterSpecificTable(inputElement) { if (!inputElement) return; const searchTerm = inputElement.value.toLowerCase().trim(); const tableId = inputElement.dataset.tableId; const columnClasses = (inputElement.dataset.columnClass || '').split(',').map(c => c.trim()).filter(c => c); const table = document.getElementById(tableId); const tbody = table?.querySelector('tbody'); if (!tbody || columnClasses.length === 0) { return; } const rows = tbody.querySelectorAll('tr'); rows.forEach(row => { let matchFound = false; if (searchTerm === '') { matchFound = true; } else { for (const colClass of columnClasses) { const cells = row.querySelectorAll(`td.${colClass}`); for (const cell of cells) { if (cell && cell.textContent.toLowerCase().includes(searchTerm)) { matchFound = true; break; } } if (matchFound) break; } } row.style.display = matchFound ? '' : 'none'; }); }
     // --- Search Filtering Function (Global) ---
-    function filterTablesByDesignation() { if (!globalSearchInput) return; const searchTerm = globalSearchInput.value.toLowerCase().trim(); const tablesToFilter = [ { tbody: supplyTable, columnClass: 'designation-col' }, { tbody: stockTable, columnClass: 'designation-col' }, { tbody: salesTable, columnClass: 'designation-col' }, { tbody: materielElectriqueTable, columnClass: 'designation-col' }, { tbody: expensesTable, columnClass: 'reason-col' }, { tbody: othersTable, columnClass: 'designation-col' }, { tbody: creditorsTable, columnClass: 'designation-col' }, { tbody: debtTable, columnClass: 'description-col' }, { tbody: equipmentTable, columnClass: 'equipment-name-col' }, { tbody: pieceEnLigneTable, columnClass: 'piece-designation-col' }, { tbody: wifiZoneTable, columnClass: 'wifi-designation-col' } ]; tablesToFilter.forEach(config => { if (!config.tbody) { return; } const rows = config.tbody.querySelectorAll('tr'); rows.forEach(row => { const cell = row.querySelector(`td.${config.columnClass}`); if (cell) { const cellText = cell.textContent.toLowerCase(); if (searchTerm === '' || cellText.includes(searchTerm)) { row.style.display = ''; } else { row.style.display = 'none'; } } }); }); }
+    function filterTablesByDesignation() { if (!globalSearchInput) return; const searchTerm = globalSearchInput.value.toLowerCase().trim(); const tablesToFilter = [ { tbody: supplyTable, columnClass: 'designation-col' }, { tbody: stockTable, columnClass: 'designation-col' }, { tbody: salesTable, columnClass: 'designation-col' }, { tbody: materielElectriqueTable, columnClass: 'designation-col' }, { tbody: expensesTable, columnClass: 'reason-col' }, { tbody: othersTable, columnClass: 'designation-col' }, { tbody: creditorsTable, columnClass: 'designation-col' }, { tbody: debtTable, columnClass: 'description-col' }, { tbody: equipmentTable, columnClass: 'equipment-name-col' }, { tbody: pieceEnLigneTable, columnClass: 'piece-designation-col' }, { tbody: wifiZoneTable, columnClass: 'wifi-designation-col' }, { tbody: invoiceHistoryTable, columnClass: 'invoice-number-col,invoice-client-col' } ]; // MODIFIED
+ tablesToFilter.forEach(config => { if (!config.tbody) { return; } const rows = config.tbody.querySelectorAll('tr'); rows.forEach(row => { const cell = row.querySelector(`td.${config.columnClass}`); if (cell) { const cellText = cell.textContent.toLowerCase(); if (searchTerm === '' || cellText.includes(searchTerm)) { row.style.display = ''; } else { row.style.display = 'none'; } } }); }); }
 
     // --- Form Submit Handlers ---
     if (supplyForm) supplyForm.addEventListener('submit', function (event) { //
@@ -2053,24 +2321,173 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(error => { /* Error handled */ });
     });
+
+    // MODIFIED: Creditor Form Submit
     if (creditorForm) creditorForm.addEventListener('submit', function (event) { //
         event.preventDefault();
          if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) {
             alert("Accès Refusé: Permissions insuffisantes."); return;
         }
-        if (!creditorDateInput || !creditorNameSelect || !creditorDesignationInput || !creditorAmountPaidInput) { alert("Erreur interne: Champs Transaction Crédit manquants."); return; } const date = creditorDateInput.value; const name = creditorNameSelect.value; const designation = creditorDesignationInput.value.trim(); const quantity = creditorQuantityInput?.value ? (parseFloat(creditorQuantityInput.value) || null) : null; const unitPrice = creditorUnitPriceInput?.value ? (parseFloat(creditorUnitPriceInput.value) || null) : null; const totalAmountDueEntered = parseFloat(creditorTotalAmountDueInput.value); const amountPaidNow = parseFloat(creditorAmountPaidInput.value); const dueDate = creditorDueDateInput?.value || ''; const recordedBy = currentUser?.username || 'N/A'; if (!date || !name || !designation) { alert("Date, Client et Désignation requis."); return; } if (isNaN(amountPaidNow) || amountPaidNow < 0) { alert("Montant Payé doit être un nombre positif ou zéro."); return; } let tempLocalData = [...creditorsData]; let dataChanged = false; try { const existingCreditorIndex = creditorsData.findIndex(c => c.name === name && c.designation === designation && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005) ); if (existingCreditorIndex > -1) { const existingCreditorInCopy = tempLocalData[existingCreditorIndex]; if (!existingCreditorInCopy) throw new Error("Incohérence interne: crédit non trouvé dans la copie locale."); const currentRemaining = (existingCreditorInCopy.totalAmountDue || 0) - (existingCreditorInCopy.amountPaidTotal || 0); if (!isNaN(totalAmountDueEntered) && totalAmountDueEntered > 0 && Math.abs(totalAmountDueEntered - existingCreditorInCopy.totalAmountDue) > 0.01) { console.warn(`Montant Total Dû entré (${formatAmount(totalAmountDueEntered)}) ignoré pour paiement.`); } if (amountPaidNow > currentRemaining + 0.005) { throw new Error(`Paiement (${formatAmount(amountPaidNow)}) dépasse le solde restant (${formatAmount(currentRemaining)}).`); } existingCreditorInCopy.amountPaidTotal = (existingCreditorInCopy.amountPaidTotal || 0) + amountPaidNow; existingCreditorInCopy.lastPaymentDate = date; existingCreditorInCopy.lastPaymentBy = recordedBy; if (dueDate && dueDate !== existingCreditorInCopy.dueDate) existingCreditorInCopy.dueDate = dueDate; if (!existingCreditorInCopy.paymentHistory) existingCreditorInCopy.paymentHistory = []; existingCreditorInCopy.paymentHistory.push({ date, amount: amountPaidNow, recordedBy }); alert(`Paiement de ${formatAmount(amountPaidNow)} enregistré (préparation sauvegarde) pour ${name} - ${designation}.\nNouveau solde: ${formatAmount(existingCreditorInCopy.totalAmountDue - existingCreditorInCopy.amountPaidTotal)}`); dataChanged = true; } else { let finalTotalDue; if ((isNaN(totalAmountDueEntered) || totalAmountDueEntered <= 0) && quantity !== null && unitPrice !== null && quantity > 0 && unitPrice >= 0) { finalTotalDue = quantity * unitPrice; if (finalTotalDue <= 0) throw new Error("Montant Total Dû calculé doit être > 0."); creditorTotalAmountDueInput.value = formatAmount(finalTotalDue); } else if (!isNaN(totalAmountDueEntered) && totalAmountDueEntered > 0) { finalTotalDue = totalAmountDueEntered; if (quantity !== null && unitPrice !== null && quantity > 0 && unitPrice >= 0) { const calculatedTotal = quantity * unitPrice; if (Math.abs(calculatedTotal - finalTotalDue) > 0.01) { if (!confirm(`Total Dû entré (${formatAmount(finalTotalDue)}) est différent du calcul Qté*PU (${formatAmount(calculatedTotal)}). Continuer avec ${formatAmount(finalTotalDue)} ?`)) return; } } } else { throw new Error("Montant Total Dû > 0 requis (entré directement ou via Qté*PU) pour nouvelle transaction."); } if (amountPaidNow > finalTotalDue + 0.005) { throw new Error(`Montant Payé (${formatAmount(amountPaidNow)}) dépasse le Total Dû (${formatAmount(finalTotalDue)}).`); } const similarSoldCreditorExists = creditorsData.some(c => c.name === name && c.designation === designation && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) <= 0.005) ); if (similarSoldCreditorExists) { if (!confirm(`Un crédit similaire déjà soldé existe pour ${name} - "${designation}". Voulez-vous créer une NOUVELLE transaction de crédit ?`)) { return; } } const newCreditor = { date, name, designation, quantity, unitPrice, totalAmountDue: finalTotalDue, amountPaidTotal: amountPaidNow, lastPaymentDate: date, dueDate: dueDate || null, recordedBy: recordedBy, paymentHistory: [{ date, amount: amountPaidNow, recordedBy }] }; tempLocalData.push(newCreditor); alert(`Nouveau crédit créé (préparation sauvegarde) pour ${name} - "${designation}".\nDû: ${formatAmount(finalTotalDue)}, Payé: ${formatAmount(amountPaidNow)}, Restant: ${formatAmount(finalTotalDue - amountPaidNow)}`); dataChanged = true; } if (dataChanged) {
+        if (!creditorDateInput || !creditorNameSelect || !creditorAmountPaidInput) { alert("Erreur interne: Champs Transaction Crédit manquants."); return; }
+        
+        const date = creditorDateInput.value;
+        const name = creditorNameSelect.value;
+        const designationSource = creditorDesignationSelect.value; // Can be an existing item or "Autre"
+        const customDesignation = creditorCustomDesignationInput.value.trim();
+        let designation;
+
+        if (designationSource === "Autre") {
+            if (!customDesignation) { alert("Veuillez saisir la nouvelle désignation."); return; }
+            designation = customDesignation;
+        } else if (!designationSource) {
+            alert("Veuillez choisir une désignation ou 'Autre' pour une nouvelle."); return;
+        } else {
+            designation = designationSource;
+        }
+
+        const quantity = creditorQuantityInput?.value ? (parseFloat(creditorQuantityInput.value) || null) : null;
+        const unitPrice = creditorUnitPriceInput?.value ? (parseFloat(creditorUnitPriceInput.value) || null) : null;
+        const totalAmountDueEntered = parseFloat(creditorTotalAmountDueInput.value);
+        const amountPaidNow = parseFloat(creditorAmountPaidInput.value);
+        const dueDate = creditorDueDateInput?.value || '';
+        const recordedBy = currentUser?.username || 'N/A';
+
+        if (!date || !name || !designation) { alert("Date, Client et Désignation requis."); return; }
+        if (isNaN(amountPaidNow) || amountPaidNow < 0) { alert("Montant Payé doit être un nombre positif ou zéro."); return; }
+
+        let tempLocalData = [...creditorsData];
+        let dataChanged = false;
+
+        // Check if we are editing an existing transaction or adding a new payment/transaction
+        const editIndex = creditorEditIndexInput ? parseInt(creditorEditIndexInput.value, 10) : -1;
+        const isEditingTransaction = editIndex > -1;
+
+        if (isEditingTransaction) {
+            // Logic for editing an existing transaction (full record modification)
+            if (!isAdmin) { alert("Accès Refusé: Seuls les administrateurs peuvent modifier une transaction de crédit."); return; } // Only Admin can fully edit transaction
+            if (editIndex >= tempLocalData.length) { alert("Erreur: Index de transaction crédit invalide."); return; }
+            const originalTransaction = JSON.parse(JSON.stringify(tempLocalData[editIndex]));
+
+            // If changing designation, ensure it doesn't conflict with another active one
+            if (designation !== originalTransaction.designation) {
+                const existingConflict = tempLocalData.some((c, idx) =>
+                    idx !== editIndex && c.name === name && c.designation === designation &&
+                    ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005)
+                );
+                if (existingConflict) {
+                    alert(`Impossible de renommer: la désignation "${designation}" existe déjà pour un crédit en cours pour ce client.`);
+                    return;
+                }
+            }
+
+            // Update all fields of the existing transaction
+            tempLocalData[editIndex] = {
+                ...originalTransaction, // Keep history and recordedBy etc.
+                date: date,
+                name: name,
+                designation: designation,
+                quantity: quantity,
+                unitPrice: unitPrice,
+                totalAmountDue: totalAmountDueEntered, // Direct update of totalAmountDue when editing the transaction
+                amountPaidTotal: amountPaidNow, // Update the total paid amount for the edited transaction
+                dueDate: dueDate || null,
+                lastModifiedBy: recordedBy,
+                lastModifiedDate: new Date().toISOString()
+            };
+
+            alert(`Transaction crédit pour ${name} - "${designation}" mise à jour.`);
+            dataChanged = true;
+
+        } else {
+            // Logic for adding a payment or creating a new credit
+            const existingOutstandingCreditorIndex = creditorsData.findIndex(c => c.name === name && c.designation === designation && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005) );
+
+            if (existingOutstandingCreditorIndex > -1) {
+                // Paying for an existing outstanding credit
+                const existingCreditorInCopy = tempLocalData[existingOutstandingCreditorIndex];
+                if (!existingCreditorInCopy) throw new Error("Incohérence interne: crédit non trouvé dans la copie locale.");
+
+                const currentRemaining = (existingCreditorInCopy.totalAmountDue || 0) - (existingCreditorInCopy.amountPaidTotal || 0);
+
+                // User should not manually set totalAmountDue when paying an existing item
+                if (!isNaN(totalAmountDueEntered) && totalAmountDueEntered > 0 && Math.abs(totalAmountDueEntered - existingCreditorInCopy.totalAmountDue) > 0.01) {
+                    // console.warn(`Montant Total Dû entré (${formatAmount(totalAmountDueEntered)}) ignoré pour paiement car un crédit existant est sélectionné.`);
+                    // This is just a payment, not an edit of the original total due amount.
+                }
+
+                if (amountPaidNow > currentRemaining + 0.005) {
+                    throw new Error(`Paiement (${formatAmount(amountPaidNow)}) dépasse le solde restant (${formatAmount(currentRemaining)}).`);
+                }
+
+                existingCreditorInCopy.amountPaidTotal = (existingCreditorInCopy.amountPaidTotal || 0) + amountPaidNow;
+                existingCreditorInCopy.lastPaymentDate = date;
+                existingCreditorInCopy.lastPaymentBy = recordedBy;
+                if (dueDate && dueDate !== existingCreditorInCopy.dueDate) existingCreditorInCopy.dueDate = dueDate;
+
+                if (!existingCreditorInCopy.paymentHistory) existingCreditorInCopy.paymentHistory = [];
+                existingCreditorInCopy.paymentHistory.push({ date, amount: amountPaidNow, recordedBy });
+
+                alert(`Paiement de ${formatAmount(amountPaidNow)} enregistré (préparation sauvegarde) pour ${name} - ${designation}.\nNouveau solde: ${formatAmount(existingCreditorInCopy.totalAmountDue - existingCreditorInCopy.amountPaidTotal)}`);
+                dataChanged = true;
+
+            } else {
+                // Creating a new credit transaction
+                if (designationSource !== "Autre" && !confirm(`La désignation "${designation}" n'a pas de crédit en cours pour ce client. Voulez-vous créer une NOUVELLE transaction de crédit avec cette désignation ?`)) {
+                    return;
+                }
+
+                let finalTotalDue;
+                if ((isNaN(totalAmountDueEntered) || totalAmountDueEntered <= 0) && quantity !== null && unitPrice !== null && quantity > 0 && unitPrice >= 0) {
+                    finalTotalDue = quantity * unitPrice;
+                    if (finalTotalDue <= 0) throw new Error("Montant Total Dû calculé doit être > 0.");
+                    creditorTotalAmountDueInput.value = formatAmount(finalTotalDue); // Update display
+                } else if (!isNaN(totalAmountDueEntered) && totalAmountDueEntered > 0) {
+                    finalTotalDue = totalAmountDueEntered;
+                    if (quantity !== null && unitPrice !== null && quantity > 0 && unitPrice >= 0) {
+                        const calculatedTotal = quantity * unitPrice;
+                        if (Math.abs(calculatedTotal - finalTotalDue) > 0.01) {
+                            if (!confirm(`Total Dû entré (${formatAmount(finalTotalDue)}) est différent du calcul Qté*PU (${formatAmount(calculatedTotal)}). Continuer avec ${formatAmount(finalTotalDue)} ?`)) return;
+                        }
+                    }
+                } else {
+                    throw new Error("Montant Total Dû > 0 requis (entré directement ou via Qté*PU) pour nouvelle transaction.");
+                }
+
+                if (amountPaidNow > finalTotalDue + 0.005) {
+                    throw new Error(`Montant Payé (${formatAmount(amountPaidNow)}) dépasse le Total Dû (${formatAmount(finalTotalDue)}).`);
+                }
+
+                const newCreditor = {
+                    date, name, designation, quantity, unitPrice,
+                    totalAmountDue: finalTotalDue,
+                    amountPaidTotal: amountPaidNow,
+                    lastPaymentDate: date,
+                    dueDate: dueDate || null,
+                    recordedBy: recordedBy,
+                    paymentHistory: [{ date, amount: amountPaidNow, recordedBy }]
+                };
+                tempLocalData.push(newCreditor);
+                alert(`Nouveau crédit créé (préparation sauvegarde) pour ${name} - "${designation}".\nDû: ${formatAmount(finalTotalDue)}, Payé: ${formatAmount(amountPaidNow)}, Restant: ${formatAmount(finalTotalDue - amountPaidNow)}`);
+                dataChanged = true;
+            }
+        }
+
+        if (dataChanged) {
             saveDataToFirebase('creditorsData', tempLocalData)
                 .then(() => {
                     console.log('Creditor data saved to Firebase.');
                     creditorForm.reset();
-                    populateClientSelect();
+                    updateCreditorFormForClient(); // Repopulate to reflect new totals/outstanding
                     setTodaysDate();
                     updateConnectedUserFields();
+                    if (creditorEditIndexInput) creditorEditIndexInput.value = ''; // Clear edit index
+                    creditorForm.querySelector('button[type="submit"]').textContent = 'Ajouter Paiement / Créer Crédit'; // Reset button text
                     creditorsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 })
                 .catch(error => { /* Error handled */ });
-        } } catch (error) { alert(`Erreur Gestion Crédit Client : ${error.message}`); }
+        }
     });
+
     if (debtForm) debtForm.addEventListener('submit', function (event) { //
         event.preventDefault();
         if (!currentUser || currentUser.status !== 'Administrateur') {
@@ -2210,13 +2627,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (pieceEnLigneForm) pieceEnLigneForm.addEventListener('submit', function (event) { //
         event.preventDefault();
+        // MODIFIED: Editor can submit this form
         if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) {
             alert("Accès Refusé: Permissions insuffisantes."); return;
         }
         const editIndex = pieceEnLigneEditIndexInput ? parseInt(pieceEnLigneEditIndexInput.value, 10) : -1;
         const isEditing = editIndex > -1;
-        if (isEditing && currentUser.status !== 'Administrateur') { // Only Admin can edit
-            alert("Accès Refusé: Seuls les administrateurs peuvent modifier."); return;
+        // MODIFIED: Editor can edit this section
+        if (isEditing && !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) {
+            alert("Accès Refusé: Seuls les administrateurs ou éditeurs peuvent modifier."); return;
         }
 
         if (!pieceEnLigneDateInput || !pieceEnLigneDesignationSelect || !pieceEnLigneUnitPriceInput || !pieceEnLigneQuantityInput || !pieceEnLigneTotalAmountInput) {
@@ -2268,7 +2687,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         const editIndex = wifiZoneEditIndexInput ? parseInt(wifiZoneEditIndexInput.value, 10) : -1;
         const isEditing = editIndex > -1;
-        if (isEditing && currentUser.status !== 'Administrateur' && currentUser.status !== 'Réseau') { // Only Admin or Réseau can edit
+        if (isEditing && !(currentUser.status === 'Administrateur' || currentUser.status === 'Réseau')) { // Only Admin or Réseau can edit
             alert("Accès Refusé: Seuls les administrateurs ou Réseau peuvent modifier."); return;
         }
 
@@ -2320,391 +2739,342 @@ document.addEventListener('DOMContentLoaded', function () {
     addToggleListener(showSupplyListButton, supplyListContainer); addToggleListener(showStockDetailsButton, stockDetailsContainer); addToggleListener(showEmployeesDetailsButton, employeesDetailsContainer); addToggleListener(showLearnersDetailsButton, learnersDetailsContainer); addToggleListener(showMobileMoneyDetailsButton, mobileMoneyDetailsContainer); addToggleListener(showMmFournisseursDetailsButton, mmFournisseursDetailsContainer); addToggleListener(showClientProfilesButton, clientProfilesContainer); addToggleListener(showCreditorsDetailsButton, creditorsDetailsContainer); addToggleListener(showDebtDetailsButton, debtDetailsContainer); addToggleListener(showReportDetailsButton, reportDetailsContainer); addToggleListener(showEmployeePermissionsButton, employeePermissionsContainer); addToggleListener(showLearnerPermissionsButton, learnerPermissionsContainer); addToggleListener(showAdminUsersButton, adminUsersContainer); addToggleListener(showEquipmentDetailsButton, equipmentDetailsContainer);
     addToggleListener(showPieceEnLigneDetailsButton, pieceEnLigneDetailsContainer);
     addToggleListener(showWifiZoneDetailsButton, wifiZoneDetailsContainer);
+    // NEW: Invoice History
+    addToggleListener(document.getElementById('show-invoice-history-list-button'), invoiceHistoryDetailsContainer); // Assuming a separate button for invoice history list itself
+    document.addEventListener('DOMContentLoaded', () => { // Initial setup for invoice history button
+        const showInvoiceHistorySectionButton = document.getElementById('show-invoice-history-section');
+        if (showInvoiceHistorySectionButton && invoiceHistorySection) {
+            showInvoiceHistorySectionButton.addEventListener('click', () => {
+                setSectionVisibility(invoiceHistorySection, allMainSections.filter(s => s !== invoiceHistorySection));
+                updateInvoiceHistoryTable(); // Make sure the table is updated when the section is shown
+            });
+        }
+    });
+
 
     const addSalesToggleListener = (button, container) => { if(button && container) { if (!button._hasSalesToggleListener) { button.addEventListener('click', () => toggleSalesSubSectionVisibility(container)); button._hasSalesToggleListener = true; } } };
     addSalesToggleListener(showSalesDetailsButton, salesDetailsContainer); addSalesToggleListener(showMaterielElectriqueDetailsButton, materielElectriqueDetailsContainer); addSalesToggleListener(showExpensesDetailsButton, expensesDetailsContainer); addSalesToggleListener(showOthersDetailsButton, othersDetailsContainer);
 
     // --- Event Listeners for Main Section Visibility ---
-    const allMainSections = [supplySection, salesSection, employeesSection, learnersSection, mobileMoneySection, creditorsSection, debtSection, reportSection, invoiceGeneratorSection, adminSection, equipmentSection, pieceEnLigneSection, wifiZoneSection].filter(Boolean);
+    const allMainSections = [supplySection, salesSection, employeesSection, learnersSection, mobileMoneySection, creditorsSection, debtSection, reportSection, invoiceGeneratorSection, invoiceHistorySection, adminSection, equipmentSection, pieceEnLigneSection, wifiZoneSection].filter(Boolean); // MODIFIED
     const addSectionToggleListener = (button, sectionToShow) => { if (button) { if (!button._hasSectionToggleListener) { button.addEventListener('click', () => { if (button.style.display === 'none') { console.warn(`Tentative d'accès à une section non autorisée (${sectionToShow?.id}) via un bouton caché.`); return; } setSectionVisibility(sectionToShow, allMainSections.filter(s => s !== sectionToShow)); }); button._hasSectionToggleListener = true; } } };
     addSectionToggleListener(showSupplySectionButton, supplySection); addSectionToggleListener(showSalesSectionButton, salesSection); addSectionToggleListener(showEmployeesSectionButton, employeesSection); addSectionToggleListener(showLearnersSectionButton, learnersSection); addSectionToggleListener(showMobileMoneySectionButton, mobileMoneySection); addSectionToggleListener(showCreditorsSectionButton, creditorsSection); addSectionToggleListener(showDebtSectionButton, debtSection); addSectionToggleListener(showAdminSectionButton, adminSection); addSectionToggleListener(showReportSectionButton, reportSection); addSectionToggleListener(generateInvoiceButton, invoiceGeneratorSection); addSectionToggleListener(showEquipmentSectionButton, equipmentSection);
     addSectionToggleListener(showPieceEnLigneSectionButton, pieceEnLigneSection);
     addSectionToggleListener(showWifiZoneSectionButton, wifiZoneSection);
-
+    addSectionToggleListener(showInvoiceHistorySectionButton, invoiceHistorySection); // NEW
 
     // --- Event Listeners for Auto Calculations ---
     const addCalculationListener = (input, func) => { if (input && !input._hasCalcListener) { input.addEventListener('input', func); input._hasCalcListener = true; } };
-    addCalculationListener(supplyQuantityInput, () => calculateTotalAmount(supplyQuantityInput, supplyUnitPriceInput, supplyTotalAmountInput)); addCalculationListener(supplyUnitPriceInput, () => calculateTotalAmount(supplyQuantityInput, supplyUnitPriceInput, supplyTotalAmountInput)); addCalculationListener(saleQuantityInput, () => calculateTotalAmount(saleQuantityInput, saleUnitPriceInput, saleTotalAmountInput)); addCalculationListener(saleUnitPriceInput, () => calculateTotalAmount(saleQuantityInput, saleUnitPriceInput, saleTotalAmountInput)); addCalculationListener(meQuantityInput, () => calculateTotalAmount(meQuantityInput, meUnitPriceInput, meTotalAmountInput)); addCalculationListener(meUnitPriceInput, () => calculateTotalAmount(meQuantityInput, meUnitPriceInput, meTotalAmountInput)); addCalculationListener(creditorQuantityInput, calculateCreditorTotalAmount); addCalculationListener(creditorUnitPriceInput, calculateCreditorTotalAmount);
+    addCalculationListener(supplyQuantityInput, () => calculateTotalAmount(supplyQuantityInput, supplyUnitPriceInput, supplyTotalAmountInput)); addCalculationListener(supplyUnitPriceInput, () => calculateTotalAmount(supplyQuantityInput, supplyUnitPriceInput, supplyTotalAmountInput)); addCalculationListener(saleQuantityInput, () => calculateTotalAmount(saleQuantityInput, saleUnitPriceInput, saleTotalAmountInput)); addCalculationListener(saleUnitPriceInput, () => calculateTotalAmount(saleQuantityInput, saleUnitPriceInput, saleTotalAmountInput)); addCalculationListener(meQuantityInput, () => calculateTotalAmount(meQuantityInput, meUnitPriceInput, meTotalAmountInput)); addCalculationListener(meUnitPriceInput, () => calculateTotalAmount(meQuantityInput, meUnitPriceInput, meTotalAmountInput));
+    // MODIFIED: Re-add for initial calculation if "Autre" selected
+    addCalculationListener(creditorQuantityInput, () => {
+        if (creditorDesignationSelect.value === 'Autre') {
+            calculateCreditorTotalAmount();
+        }
+    });
+    addCalculationListener(creditorUnitPriceInput, () => {
+        if (creditorDesignationSelect.value === 'Autre') {
+            calculateCreditorTotalAmount();
+        }
+    });
+
     addCalculationListener(pieceEnLigneQuantityInput, () => calculateTotalAmount(pieceEnLigneQuantityInput, pieceEnLigneUnitPriceInput, pieceEnLigneTotalAmountInput));
     addCalculationListener(pieceEnLigneUnitPriceInput, () => calculateTotalAmount(pieceEnLigneQuantityInput, pieceEnLigneUnitPriceInput, pieceEnLigneTotalAmountInput));
     addCalculationListener(wifiZoneQuantityInput, () => calculateTotalAmount(wifiZoneQuantityInput, wifiZoneUnitPriceInput, wifiZoneTotalAmountInput));
     addCalculationListener(wifiZoneUnitPriceInput, () => calculateTotalAmount(wifiZoneQuantityInput, wifiZoneUnitPriceInput, wifiZoneTotalAmountInput));
 
     if(operationTypeSelect && !operationTypeSelect._hasChangeListener) { operationTypeSelect.addEventListener('change', handleOperationTypeChange); operationTypeSelect._hasChangeListener = true; }
-    if(creditorNameSelect && !creditorNameSelect._hasChangeListener) { creditorNameSelect.addEventListener('change', function() { const selectedOption = this.options[this.selectedIndex]; if (creditorContactInput) { creditorContactInput.value = selectedOption?.dataset?.contact || ''; } }); creditorNameSelect._hasChangeListener = true; }
+    
+    // MODIFIED: Creditor Name Select Listener
+    if(creditorNameSelect && !creditorNameSelect._hasChangeListener) {
+        creditorNameSelect.addEventListener('change', function() {
+            updateCreditorFormForClient();
+        });
+        creditorNameSelect._hasChangeListener = true;
+    }
+    // MODIFIED: Creditor Quantity/UnitPrice/TotalAmountDue listener for new transaction calculation
+    if (creditorQuantityInput && !creditorQuantityInput._hasCalcListener) {
+        creditorQuantityInput.addEventListener('input', () => {
+            if (creditorDesignationSelect.value === 'Autre') {
+                calculateCreditorTotalAmount();
+            }
+        });
+        creditorQuantityInput._hasCalcListener = true;
+    }
+    if (creditorUnitPriceInput && !creditorUnitPriceInput._hasCalcListener) {
+        creditorUnitPriceInput.addEventListener('input', () => {
+            if (creditorDesignationSelect.value === 'Autre') {
+                calculateCreditorTotalAmount();
+            }
+        });
+        creditorUnitPriceInput._hasCalcListener = true;
+    }
+    if (creditorTotalAmountDueInput && !creditorTotalAmountDueInput._hasCalcListener) {
+        creditorTotalAmountDueInput.addEventListener('input', () => {
+            // If user manually enters Total Due, don't auto-calculate from Qty/Price
+            if (creditorTotalAmountDueInput.value) {
+                creditorQuantityInput.readOnly = true;
+                creditorUnitPriceInput.readOnly = true;
+            } else {
+                creditorQuantityInput.readOnly = false;
+                creditorUnitPriceInput.readOnly = false;
+            }
+        });
+        creditorTotalAmountDueInput._hasCalcListener = true;
+    }
+
 
     // --- Multi-Item Invoice Calculation & Item Management ---
     function calculateInvoiceTotal() { if (!invoiceItemsContainer || !invoiceGenTotalAmountInput || !invoiceGenTotalWordsInput) return; let grandTotal = 0; const itemRows = invoiceItemsContainer.querySelectorAll('.invoice-item-row'); itemRows.forEach(row => { const quantityInput = row.querySelector('.item-quantity'); const unitPriceInput = row.querySelector('.item-unit-price'); const quantity = parseFloat(quantityInput?.value) || 0; const unitPrice = parseFloat(unitPriceInput?.value) || 0; grandTotal += quantity * unitPrice; }); invoiceGenTotalAmountInput.value = formatAmount(grandTotal); invoiceGenTotalWordsInput.value = numberToWordsFrench(grandTotal); }
-    function addInvoiceItemRow() { if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) return; if (!invoiceItemsContainer) return; const newRow = document.createElement('div'); newRow.classList.add('form-row', 'invoice-item-row'); const currentIndex = invoiceItemIndex++; newRow.innerHTML = ` <div style="flex-basis: 40%;"> <label for="invoice-gen-designation-${currentIndex}">Désignation:</label> <input type="text" id="invoice-gen-designation-${currentIndex}" class="item-designation" required> </div> <div> <label for="invoice-gen-quantity-${currentIndex}">Quantité:</label> <input type="number" id="invoice-gen-quantity-${currentIndex}" class="item-quantity" min="0" step="any" required> </div> <div> <label for="invoice-gen-unit-price-${currentIndex}">Prix Unitaire:</label> <input type="number" id="invoice-gen-unit-price-${currentIndex}" class="item-unit-price" min="0" step="any" required> </div> <div style="display: flex; align-items: flex-end;"> <button type="button" class="action-btn delete-btn remove-invoice-item-btn" title="Supprimer Ligne" style="margin-bottom: 2px;">❌</button> </div>`; invoiceItemsContainer.appendChild(newRow); const addedInputs = newRow.querySelectorAll('.item-quantity, .item-unit-price'); addedInputs.forEach(input => input.addEventListener('input', calculateInvoiceTotal)); calculateInvoiceTotal(); newRow.querySelector('.item-designation')?.focus(); const removeBtn = newRow.querySelector('.remove-invoice-item-btn'); if (removeBtn && currentUser && (currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { removeBtn.disabled = false; } }
-    if (addInvoiceItemButton && !addInvoiceItemButton._hasClickListener) { addInvoiceItemButton.addEventListener('click', addInvoiceItemRow); addInvoiceItemButton._hasClickListener = true; }
+    function addInvoiceItemRow(designation = '', quantity = '', unitPrice = '') { // MODIFIED: Add parameters for pre-filling
+        if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) return;
+        if (!invoiceItemsContainer) return;
+        const newRow = document.createElement('div');
+        newRow.classList.add('form-row', 'invoice-item-row');
+        const currentIndex = invoiceItemIndex++; // Ensure unique ID even when editing
+        newRow.innerHTML = `
+            <div style="flex-basis: 40%;">
+                <label for="invoice-gen-designation-${currentIndex}">Désignation:</label>
+                <input type="text" id="invoice-gen-designation-${currentIndex}" class="item-designation" value="${designation}" required>
+            </div>
+            <div>
+                <label for="invoice-gen-quantity-${currentIndex}">Quantité:</label>
+                <input type="number" id="invoice-gen-quantity-${currentIndex}" class="item-quantity" min="0" step="any" value="${quantity}" required>
+            </div>
+            <div>
+                <label for="invoice-gen-unit-price-${currentIndex}">Prix Unitaire:</label>
+                <input type="number" id="invoice-gen-unit-price-${currentIndex}" class="item-unit-price" min="0" step="any" value="${unitPrice}" required>
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button type="button" class="action-btn delete-btn remove-invoice-item-btn" title="Supprimer Ligne" style="margin-bottom: 2px;">❌</button>
+            </div>`;
+        invoiceItemsContainer.appendChild(newRow);
+        const addedInputs = newRow.querySelectorAll('.item-quantity, .item-unit-price');
+        addedInputs.forEach(input => input.addEventListener('input', calculateInvoiceTotal));
+        calculateInvoiceTotal();
+        newRow.querySelector('.item-designation')?.focus();
+        const removeBtn = newRow.querySelector('.remove-invoice-item-btn');
+        if (removeBtn && currentUser && (currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) {
+            removeBtn.disabled = false;
+        } else if (removeBtn) {
+            removeBtn.disabled = true;
+        }
+    }
+    if (addInvoiceItemButton && !addInvoiceItemButton._hasClickListener) { addInvoiceItemButton.addEventListener('click', () => addInvoiceItemRow()); addInvoiceItemButton._hasClickListener = true; } // MODIFIED to call with no args for new empty row
     if (invoiceItemsContainer && !invoiceItemsContainer._hasClickListener) { invoiceItemsContainer.addEventListener('click', function(event) { if (event.target.classList.contains('remove-invoice-item-btn')) { if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) return; const rowToRemove = event.target.closest('.invoice-item-row'); if (invoiceItemsContainer.querySelectorAll('.invoice-item-row').length <= 1) { alert("Vous devez avoir au moins une ligne d'article."); return; } if (rowToRemove) { rowToRemove.remove(); calculateInvoiceTotal(); } } }); invoiceItemsContainer.addEventListener('input', function(event) { if (event.target.classList.contains('item-quantity') || event.target.classList.contains('item-unit-price')) { calculateInvoiceTotal(); } }); invoiceItemsContainer._hasClickListener = true; }
     function initializeInvoiceForm() {
         if (invoiceItemsContainer) {
             invoiceItemsContainer.innerHTML = '';
-            addInvoiceItemRow();
+            addInvoiceItemRow(); // Add an empty row for a new invoice
         } else {
             console.error("Invoice items container not found.");
             return;
         }
-        if(invoiceGenDateInput && !invoiceGenDateInput.value) {
+        if(invoiceGenDateInput) { // Always set date, even if it has a value, to ensure consistency
             invoiceGenDateInput.value = new Date().toISOString().split('T')[0];
         }
         if(invoiceGenNumberInput) {
             invoiceGenNumberInput.value = generateInvoiceNumber();
+            invoiceGenNumberInput.readOnly = true; // NEW: Make invoice number read-only
         }
+        if (invoiceGenClientNameInput) invoiceGenClientNameInput.value = '';
+        if (invoiceGenClientContactInput) invoiceGenClientContactInput.value = '';
+
+        if (invoiceEditIdInput) invoiceEditIdInput.value = ''; // NEW: Clear edit ID
         calculateInvoiceTotal();
+        if (saveUpdateInvoiceButton) saveUpdateInvoiceButton.textContent = 'Enregistrer Facture'; // NEW: Default button text
     }
 
-    // --- Event Listeners for Print/Export ---
-    const addPrintListener = (button, containerId) => { if (button && !button._hasPrintListener) { button.addEventListener('click', () => printSpecificTable(containerId)); button._hasPrintListener = true; } };
-    addPrintListener(printSupplyButton, 'supply-list-container'); addPrintListener(printStockButton, 'stock-details-container'); addPrintListener(printSalesButton, 'sales-details-container'); addPrintListener(printMaterielElectriqueButton, 'materiel-electrique-details-container'); addPrintListener(printExpensesButton, 'expenses-details-container'); addPrintListener(printOthersButton, 'others-details-container'); addPrintListener(printEmployeesButton, 'employees-details-container'); addPrintListener(printLearnersButton, 'learners-details-container'); addPrintListener(printMobileMoneyButton, 'mobile-money-details-container'); addPrintListener(printMmFournisseursButton, 'mm-fournisseurs-details-container'); addPrintListener(printClientProfilesButton, 'client-profiles-container'); addPrintListener(printCreditorsButton, 'creditors-details-container'); addPrintListener(printDebtButton, 'debt-details-container'); addPrintListener(printReportButton, 'report-details-container'); addPrintListener(printEmployeePermissionsButton, 'employee-permissions-container'); addPrintListener(printLearnerPermissionsButton, 'learner-permissions-container'); addPrintListener(printAdminUsersButton, 'admin-users-container'); addPrintListener(printEquipmentButton, 'equipment-details-container');
-    addPrintListener(printPieceEnLigneButton, 'piece-en-ligne-details-container');
-    addPrintListener(printWifiZoneButton, 'wifi-zone-details-container');
-
-    const addExcelListener = (button, tableId, fileName) => { if (button && !button._hasExcelListener) { button.addEventListener('click', () => exportToExcel(tableId, fileName)); button._hasExcelListener = true; } else if (button && !document.getElementById(tableId)) { console.warn(`Excel export button found, but table #${tableId} not found.`); } };
-    addExcelListener(exportSupplyExcelButton, 'supply-table', 'Approvisionnements.xlsx'); addExcelListener(exportStockExcelButton, 'stock-table', 'Etat_Stocks.xlsx'); addExcelListener(exportSalesExcelButton, 'sales-table', 'Ventes_Papeterie.xlsx'); addExcelListener(exportMaterielElectriqueExcelButton, 'materiel-electrique-table', 'Ventes_Mat_Electrique.xlsx'); addExcelListener(exportExpensesExcelButton, 'expenses-table', 'Depenses.xlsx'); addExcelListener(exportOthersExcelButton, 'others-table', 'Operations_Diverses.xlsx'); addExcelListener(exportEmployeesExcelButton, 'employees-table', 'Employes.xlsx'); addExcelListener(exportLearnersExcelButton, 'learners-table', 'Apprenants.xlsx'); addExcelListener(exportMobileMoneyExcelButton, 'mobile-money-table', 'Mobile_Money_Points.xlsx'); addExcelListener(exportMmFournisseursExcelButton, 'mm-fournisseurs-table', 'Mobile_Money_Fournisseurs.xlsx'); addExcelListener(exportClientProfilesExcelButton, 'client-profiles-table', 'Profils_Clients.xlsx'); addExcelListener(exportCreditorsExcelButton, 'creditors-table', 'Credits_Clients_Transactions.xlsx'); addExcelListener(exportDebtExcelButton, 'debt-table', 'Dettes_Prets_Entreprise.xlsx'); addExcelListener(exportReportExcelButton, 'report-table', 'Bilan_Genere.xlsx'); addExcelListener(exportEmployeePermissionsExcelButton, 'employee-permissions-table', 'Permissions_Employes.xlsx');     addExcelListener(exportLearnerPermissionsExcelButton, 'learner-permissions-table', 'Permissions_Apprenants.xlsx'); addExcelListener(exportAdminUsersExcelButton, 'admin-table', 'Utilisateurs.xlsx'); addExcelListener(exportEquipmentExcelButton, 'equipment-table', 'Appareils_Confies.xlsx');
-    addExcelListener(exportPieceEnLigneExcelButton, 'piece-en-ligne-table', 'Pieces_En_Ligne.xlsx');
-    addExcelListener(exportWifiZoneExcelButton, 'wifi-zone-table', 'Wifi_Zone.xlsx');
-
-    const addPdfListener = (button, tableId, fileName) => {
-        if (button && !button._hasPdfListener) {
-            button.addEventListener('click', () => exportToPdf(tableId, fileName));
-            button._hasPdfListener = true;
-        } else if (button && !document.getElementById(tableId)) {
-             console.warn(`PDF export button found, but table #${tableId} not found.`);
+    // NEW: Save/Update Invoice to Firebase
+    async function saveInvoiceToFirebase(options = { print: false, exportPdf: false }) {
+        if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) {
+            alert("Accès Refusé: Permissions insuffisantes."); return;
         }
-    };
-    addPdfListener(exportSupplyPdfButton, 'supply-table', 'Approvisionnements.pdf');
-    addPdfListener(exportStockPdfButton, 'stock-table', 'Etat_Stocks.pdf');
-    addPdfListener(exportSalesPdfButton, 'sales-table', 'Ventes_Papeterie.pdf');
-    addPdfListener(exportMaterielElectriquePdfButton, 'materiel-electrique-table', 'Ventes_Mat_Electrique.pdf');
-    addPdfListener(exportExpensesPdfButton, 'expenses-table', 'Depenses.pdf');
-    addPdfListener(exportOthersPdfButton, 'others-table', 'Operations_Diverses.pdf');
-    addPdfListener(exportEmployeesPdfButton, 'employees-table', 'Employes.pdf');
-    addPdfListener(exportLearnersPdfButton, 'learners-table', 'Apprenants.pdf');
-    addPdfListener(exportMobileMoneyPdfButton, 'mobile-money-table', 'Mobile_Money_Points.pdf');
-    addPdfListener(exportMmFournisseursPdfButton, 'mm-fournisseurs-table', 'Mobile_Money_Fournisseurs.pdf');
-    addPdfListener(exportClientProfilesPdfButton, 'client-profiles-table', 'Profils_Clients.pdf');
-    addPdfListener(exportCreditorsPdfButton, 'creditors-table', 'Credits_Clients_Transactions.pdf');
-    addPdfListener(exportDebtPdfButton, 'debt-table', 'Dettes_Prets_Entreprise.pdf');
-    addPdfListener(exportReportPdfButton, 'report-table', 'Bilan_Genere.pdf');
-    addPdfListener(exportEmployeePermissionsPdfButton, 'employee-permissions-table', 'Permissions_Employes.pdf');
-    addPdfListener(exportLearnerPermissionsPdfButton, 'learner-permissions-table', 'Permissions_Apprenants.pdf');
-    addPdfListener(exportAdminUsersPdfButton, 'admin-table', 'Utilisateurs.pdf');
-    addPdfListener(exportEquipmentPdfButton, 'equipment-table', 'Appareils_Confies.pdf');
-    addPdfListener(exportPieceEnLignePdfButton, 'piece-en-ligne-table', 'Pieces_En_Ligne.pdf');
-    addPdfListener(exportWifiZonePdfButton, 'wifi-zone-table', 'Wifi_Zone.pdf');
 
-    // --- Report Generation Event Listeners ---
-    const showReportFilters = (showDaily, showWeekly, showMonthly, showYearly) => { if (reportFilters) reportFilters.classList.remove('hidden'); if (dailyFilter) dailyFilter.classList.toggle('hidden', !showDaily); if (weeklyFilter) weeklyFilter.classList.toggle('hidden', !showWeekly); if (monthlyFilter) monthlyFilter.classList.toggle('hidden', !showMonthly); if (yearlyFilter) yearlyFilter.classList.toggle('hidden', !showYearly); if (reportDetailsContainer) reportDetailsContainer.classList.add('hidden'); if (showReportDetailsButton) showReportDetailsButton.classList.add('hidden'); setTodaysDate(); };
-    const addReportTypeListener = (button, daily, weekly, monthly, yearly) => { if (button && !button._hasReportTypeListener) { button.addEventListener('click', () => showReportFilters(daily, weekly, monthly, yearly)); button._hasReportTypeListener = true; } };
-    addReportTypeListener(dailyReportButton, true, false, false, false); addReportTypeListener(weeklyReportButton, false, true, false, false); addReportTypeListener(monthlyReportButton, false, false, true, false); addReportTypeListener(yearlyReportButton, false, false, false, true);
-    if(generateReportButton && !generateReportButton._hasClickListener) { generateReportButton.addEventListener('click', function () { if (!currentUser) { alert("Accès refusé."); return; } let selectedDate = null, selectedWeek = null, selectedMonth = null, selectedYear = null; let filterType = '', filterLabel = ''; if (!dailyFilter?.classList.contains('hidden')) { selectedDate = reportDateInput?.value; filterType = 'day'; filterLabel = selectedDate ? `Jour: ${selectedDate}` : 'Journalier'; } else if (!weeklyFilter?.classList.contains('hidden')) { selectedWeek = reportWeekInput?.value; filterType = 'week'; filterLabel = selectedWeek ? `Semaine: ${selectedWeek}` : 'Hebdomadaire'; } else if (!monthlyFilter?.classList.contains('hidden')) { selectedMonth = reportMonthInput?.value; filterType = 'month'; filterLabel = selectedMonth ? `Mois: ${selectedMonth}` : 'Mensuel'; } else if (!yearlyFilter?.classList.contains('hidden')) { selectedYear = reportYearInput?.value; filterType = 'year'; filterLabel = selectedYear ? `Année: ${selectedYear}` : 'Annuel'; } else { alert("Choisissez d'abord un type de bilan."); return; } if ((filterType === 'day' && !selectedDate) || (filterType === 'week' && !selectedWeek) || (filterType === 'month' && !selectedMonth) || (filterType === 'year' && !selectedYear)) { alert("Veuillez spécifier la période pour le bilan."); return; } const filterDataByDate = (data) => { if (!Array.isArray(data)) return []; return data.filter(item => { if (!item?.date) return false; const itemDateStr = item.date; try { if (filterType === 'day') { return itemDateStr === selectedDate; } if (filterType === 'month') { return itemDateStr.startsWith(selectedMonth); } if (filterType === 'year') { return itemDateStr.startsWith(selectedYear.toString()); } if (filterType === 'week') { if (!selectedWeek?.includes('-W')) return false; const [yW, wW] = selectedWeek.split('-W').map(Number); if (isNaN(yW) || isNaN(wW)) return false; const startOfWeek = getDateOfISOWeek(wW, yW); if (isNaN(startOfWeek.getTime())) return false; const endOfWeek = new Date(startOfWeek); endOfWeek.setUTCDate(endOfWeek.getUTCDate() + 6); endOfWeek.setUTCHours(23, 59, 59, 999); const itemDate = new Date(itemDateStr + 'T00:00:00Z'); if (isNaN(itemDate.getTime())) return false; return itemDate >= startOfWeek && itemDate <= endOfWeek; } return false; } catch (e) { console.error("Erreur filtre date:", item, filterType, e); return false; } }); }; const filteredSales = filterDataByDate(salesData); const filteredMESales = filterDataByDate(materielElectriqueData); const filteredExpenses = filterDataByDate(expensesData); const filteredOthers = filterDataByDate(othersData); const filteredSupplies = filterDataByDate(supplyData); const filteredMobileMoney = filterDataByDate(mobileMoneyData); const filteredPieceEnLigne = filterDataByDate(filterDataByDate(pieceEnLigneData));
-const filteredWifiZone = filterDataByDate(wifiZoneData);
- updateReportTable(filteredSales, filteredMESales, filteredExpenses, filteredOthers, filteredSupplies, filteredMobileMoney, filteredPieceEnLigne, filteredWifiZone, filterLabel);
- if (reportDetailsContainer) reportDetailsContainer.classList.remove('hidden'); if (showReportDetailsButton) showReportDetailsButton.classList.remove('hidden'); }); generateReportButton._hasClickListener = true; }
-    function updateReportTable(papeterieSales, meSales, expenses, others, supplies, mobileMoney, pieceEnLigne, wifiZone, filterLabel) { if (!reportTable) return; reportTable.innerHTML = ''; const reportTitleH3 = reportDetailsContainer?.querySelector('h3'); if (reportTitleH3) reportTitleH3.textContent = `Bilan Généré (${filterLabel})`; let totalPapeterieIncome = 0, totalMEIncome = 0, totalOthersIncome = 0, totalPieceEnLigneIncome = 0, totalWifiZoneIncome = 0;
-    let totalPapeterieExpense = 0, totalMEExpense = 0, totalOtherExpenses = 0, totalDiversExpense = 0; let totalMMCreditLoss = 0, totalMMTransferLoss = 0; const addRow = (type, detail, quantity, amount, isIncome = true) => { const row = reportTable.insertRow(); row.insertCell().textContent = type; row.cells[row.cells.length-1].classList.add('type-col'); row.insertCell().textContent = detail; row.cells[row.cells.length-1].classList.add('designation-col'); const qtyCell = row.insertCell(); qtyCell.textContent = quantity ?? '-'; qtyCell.classList.add('quantity-col'); const amountCell = row.insertCell(); amountCell.textContent = formatAmount(amount); amountCell.classList.add('amount-col'); amountCell.style.color = isIncome ? 'var(--color-success)' : 'var(--color-danger)'; }; papeterieSales.forEach(item => { const income = item.totalAmount || 0; addRow('Vente Papeterie', item.designation, item.quantity, income); totalPapeterieIncome += income; }); meSales.forEach(item => { const income = item.totalAmount || 0; addRow('Vente Mat. Elec.', item.designation, item.quantity, income); totalMEIncome += income; }); others.forEach(item => { const income = item.totalAmount || 0; addRow('Opération Diverse (Revenu)', item.designation, item.quantity, income); totalOthersIncome += income; }); pieceEnLigne.forEach(item => { const income = item.totalAmount || 0; addRow('Pièce en Ligne', item.designation, item.quantity, income); totalPieceEnLigneIncome += income; });
-    wifiZone.forEach(item => { const income = item.totalAmount || 0; addRow('WIFI ZONE', item.designation, item.quantity, income); totalWifiZoneIncome += income; });
-    expenses.forEach(item => { const expense = item.amount || 0; addRow('Dépense Directe', item.reason, item.quantity, expense, false); totalOtherExpenses += expense; }); supplies.forEach(item => { const expense = item.totalAmount || 0; const type = item.type === 'Papeterie' ? 'Appro. Papeterie' : (item.type === 'Matériels électrique' ? 'Appro. Mat. Elec.' : 'Appro. Divers'); addRow(type, item.designation, item.quantity, expense, false); if (item.type === 'Papeterie') totalPapeterieExpense += expense; else if (item.type === 'Matériels électrique') totalMEExpense += expense; else totalDiversExpense += expense; }); mobileMoney.forEach(item => { const creditLoss = item.perteCredit || 0; const transferLoss = item.perteTransfert || 0; if (creditLoss > 0) { addRow('Perte MM (Crédit)', `Agent: ${item.agent}`, '-', creditLoss, false); totalMMCreditLoss += creditLoss; } if (transferLoss > 0) { addRow('Perte MM (Transfert/Retrait)', `Agent: ${item.agent}`, '-', transferLoss, false); totalMMTransferLoss += transferLoss; } });
-        const totalIncome = totalPapeterieIncome + totalMEIncome + totalOthersIncome + totalPieceEnLigneIncome + totalWifiZoneIncome;
-        const totalExpense = totalPapeterieExpense + totalMEExpense + totalDiversExpense + totalOtherExpenses + totalMMCreditLoss + totalMMTransferLoss;
-        const netResult = totalIncome - totalExpense;
+        let isValid = true;
+        invoiceGeneratorForm?.querySelectorAll('.invalid-field').forEach(el => el.classList.remove('invalid-field'));
 
-        const summaryRow = reportTable.insertRow();
-        summaryRow.style.fontWeight = 'bold';
-        summaryRow.style.backgroundColor = '#e9ecef';
-        summaryRow.insertCell().textContent = 'TOTAL';
-        summaryRow.insertCell().textContent = 'Revenus: ' + formatAmount(totalIncome);
-        summaryRow.cells[1].style.color = 'var(--color-success)';
-        summaryRow.insertCell().textContent = 'Dépenses: ' + formatAmount(totalExpense);
-        summaryRow.cells[2].style.color = 'var(--color-danger)';
-        const netCell = summaryRow.insertCell();
-        netCell.textContent = formatAmount(netResult);
-        netCell.classList.add('amount-col');
-        netCell.style.color = netResult >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
-    }
+        if (!invoiceGenDateInput?.value) { isValid = false; invoiceGenDateInput?.classList.add('invalid-field'); }
+        if (!invoiceGenClientNameInput?.value.trim()) { isValid = false; invoiceGenClientNameInput?.classList.add('invalid-field'); }
+        if (!invoiceGenNumberInput?.value) { isValid = false; invoiceGenNumberInput?.classList.add('invalid-field'); }
 
-    /** Helper Function to Save Data to Firebase */
-    async function saveDataToFirebase(key, data) {
-        try {
-            const dataToSave = data === undefined || data === null ? [] : data;
-            await dataRef.child(key).set(dataToSave);
-            return Promise.resolve();
-        } catch (error) {
-            console.error(`Firebase save error for key [${key}]:`, error);
-            alert(`Erreur critique lors de la sauvegarde des données (${key}). Vos dernières modifications pourraient être perdues. Vérifiez votre connexion et réessayez.`);
-            throw error;
-        }
-    }
+        const items = [];
+        const itemRows = invoiceItemsContainer?.querySelectorAll('.invoice-item-row');
+        if (!itemRows || itemRows.length === 0) { alert("Ajoutez au moins une ligne d'article à la facture."); return; }
 
-    // --- Delete Functions ---
-    window.deleteSupply = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= supplyData.length) return; const item = supplyData[index]; if (confirm(`Supprimer appro ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...supplyData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('supplyData', tempLocalData); alert('Approvisionnement supprimé.'); supplySection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteSale = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= salesData.length) return; const item = salesData[index]; if (confirm(`Supprimer vente Papeterie ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...salesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('salesData', tempLocalData); alert('Vente Papeterie supprimée.'); salesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteMaterielElectriqueSale = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= materielElectriqueData.length) return; const item = materielElectriqueData[index]; if (confirm(`Supprimer vente Mat. Elec. ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?\nATTENTION: Affecte stock.`)) { let tempLocalData = [...materielElectriqueData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('materielElectriqueData', tempLocalData); alert('Vente Mat. Elec. supprimée.'); salesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteExpense = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= expensesData.length) return; const item = expensesData[index]; if (confirm(`Supprimer dépense du ${item.date || '?'} ("${item.reason || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...expensesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('expensesData', tempLocalData); alert('Dépense supprimée.'); salesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteOther = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= othersData.length) return; const item = othersData[index]; if (confirm(`Supprimer op. diverse du ${item.date || '?'} ("${item.designation || '?'}", Montant: ${formatAmount(item.totalAmount)}) ?`)) { let tempLocalData = [...othersData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('othersData', tempLocalData); alert('Opération diverse supprimée.'); salesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteEmployee = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= employeesData.length) return; const item = employeesData[index]; if (confirm(`Supprimer l'employé: ${item.nom || '?'} ${item.prenom || ''} ? Définitif.`)) { let tempLocalData = [...employeesData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('employeesData', tempLocalData); alert('Employé supprimé.'); employeesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteLearner = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= learnersData.length) return; const item = learnersData[index]; if (confirm(`Supprimer l'apprenant: ${item.nom || '?'} ${item.prenom || ''} (Filière: ${item.filiere || 'N/A'}) ? Définitif.`)) { let tempLocalData = [...learnersData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('learnersData', tempLocalData); alert('Apprenant supprimé.'); learnersSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteMobileMoney = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= mobileMoneyData.length) { alert("Index invalide."); return; } const item = mobileMoneyData[originalIndex]; if (confirm(`Supprimer Point MM du ${item.date || '?'} (Agent: ${item.agent || '?'}) ?`)) { let tempLocalData = [...mobileMoneyData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('mobileMoneyData', tempLocalData); alert('Point Mobile Money supprimé.'); mobileMoneySection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteMmFournisseur = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const fournisseurFullName = `${sN} ${sP}`.trim(); const initialLength = mmFournisseursData.length; let tempLocalData = mmFournisseursData.filter(f => !(f.nom === sN && f.prenom === sP)); if (tempLocalData.length < initialLength) { if (confirm(`Supprimer fournisseur MM : ${fournisseurFullName} ?`)) { try { await saveDataToFirebase('mmFournisseursData', tempLocalData); alert(`Fournisseur ${fournisseurFullName} supprimé.`); mobileMoneySection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } } else { alert(`Erreur : Fournisseur ${fournisseurFullName} non trouvé.`); } };
-    window.deleteClientProfile = async (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const clientFullName = `${sN} ${sP}`.trim(); const hasActiveCredit = creditorsData.some(c => c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) > 0.005) ); if (hasActiveCredit) { alert(`Impossible supprimer profil ${clientFullName}, crédits non soldés associés.`); return; } const profileIndex = clientProfilesData.findIndex(p => p.nom === sN && p.prenom === sP); if (profileIndex === -1) { alert(`Erreur : Profil ${clientFullName} non trouvé.`); return; } if (confirm(`Supprimer profil client : ${clientFullName} ?\nATTENTION : Ceci supprimera aussi crédits SOLDÉS associés.`)) { let tempProfilesData = [...clientProfilesData]; let tempCreditorsData = [...creditorsData]; let credRemovedCount = 0; tempProfilesData.splice(profileIndex, 1); const initialCreditorLength = tempCreditorsData.length; tempCreditorsData = tempCreditorsData.filter(c => !( c.name === clientFullName && ((c.totalAmountDue || 0) - (c.amountPaidTotal || 0) <= 0.005) )); credRemovedCount = initialCreditorLength - tempCreditorsData.length; try { const savePromises = [saveDataToFirebase('clientProfilesData', tempProfilesData)]; if (credRemovedCount > 0) { savePromises.push(saveDataToFirebase('creditorsData', tempCreditorsData)); } await Promise.all(savePromises); alert(`Profil ${clientFullName} supprimé.` + (credRemovedCount > 0 ? ` ${credRemovedCount} crédit(s) soldé(s) associé(s) supprimé(s).` : '')); if(clientProfileEditKeyInput?.value === `${sN}_${sP}`) { clientProfileForm.reset(); clientProfileEditKeyInput.value = ''; clientProfileForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Profil'; updateConnectedUserFields(); } creditorsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteCreditor = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= creditorsData.length) { alert("Index invalide."); return; } const item = creditorsData[originalIndex]; const remaining = (item.totalAmountDue || 0) - (item.amountPaidTotal || 0); if (confirm(`Supprimer TOUTE la transaction crédit pour ${item.name || '?'} ("${item.designation || '?'}")?\nSolde: ${formatAmount(remaining)}. IRREVERSIBLE.`)) { let tempLocalData = [...creditorsData]; tempLocalData.splice(originalIndex, 1); try { await saveDataToFirebase('creditorsData', tempLocalData); alert('Transaction crédit supprimée.'); creditorsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteDebt = async (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= debtData.length) { alert("Index invalide."); return; } const item = debtData[originalIndex]; if (confirm(`Supprimer ${item.type || 'entrée'} : ${item.name || '?'} ("${item.description || '?'}", Montant: ${formatAmount(item.amount)}) ?`)) { let tempLocalData = [...debtData]; tempLocalData.splice(originalIndex, 1);
-    try { await saveDataToFirebase('debtData', tempLocalData); alert(`${item.type || 'Entrée'} supprimé(e).`); debtSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deletePermission = async (type, index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } let dataArray, storageKey, itemType, targetForm; if (type === 'employee') { dataArray = employeePermissionsData; storageKey = 'employeePermissionsData'; itemType = 'employé'; targetForm = permissionEmployeeForm; } else if (type === 'learner') { dataArray = learnerPermissionsData; storageKey = 'learnerPermissionsData'; itemType = 'apprenant'; targetForm = permissionLearnerForm; } else { return; } if (index < 0 || index >= dataArray.length) { alert("Index invalide."); return; } const perm = dataArray[index]; if (confirm(`Supprimer demande permission pour ${perm.name || '?'} (${itemType}) du ${perm.requestDate || '?'} ?`)) { let tempLocalData = [...dataArray]; tempLocalData.splice(index, 1); try { await saveDataToFirebase(storageKey, tempLocalData); alert('Demande permission supprimée.'); targetForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteAdminUser = async (username) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const safeUsername = String(username || '').replace(/\\'/g, "'"); const userIndex = adminData.findIndex(u => u.username === safeUsername); if (userIndex === -1) { alert(`Utilisateur '${safeUsername}' non trouvé.`); return; } const userToDelete = adminData[userIndex]; if(currentUser && currentUser.username === safeUsername) { alert("Impossible supprimer votre propre compte."); return; } const adminCount = adminData.filter(u => u.status === 'Administrateur').length; if(userToDelete.status === 'Administrateur' && adminCount <= 1) { alert("Impossible supprimer le dernier administrateur."); return; } if (confirm(`Supprimer utilisateur '${safeUsername}' (${userToDelete.status || ''}) ? IRREVERSIBLE.`)) { let tempLocalData = [...adminData]; tempLocalData.splice(userIndex, 1); try { await saveDataToFirebase('adminData', tempLocalData); alert(`Utilisateur '${safeUsername}' supprimé.`); if (adminEditKeyInput?.value === safeUsername) { adminForm.reset(); updateConnectedUserFields(); adminEditKeyInput.value = ''; adminPasswordInput.placeholder = "Entrer pour définir/modifier"; adminForm.querySelector('button[type="submit"]').textContent = 'Ajouter / Mettre à Jour Utilisateur'; } adminSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
-    window.deleteEquipment = async (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= equipmentData.length) { alert("Index invalide."); return; } const item = equipmentData[index]; if (confirm(`Supprimer l'attribution de "${item.name || '?'}" (Qté: ${item.quantity || '?'}) à ${item.employeeName || '?'} du ${item.assignedDate || '?'} ?`)) { let tempLocalData = [...equipmentData]; tempLocalData.splice(index, 1); try { await saveDataToFirebase('equipmentData', tempLocalData); alert('Attribution appareil/outil supprimée.'); if (equipmentEditIndexInput?.value === String(index)) { equipmentForm.reset(); equipmentEditIndexInput.value = ''; equipmentForm.querySelector('button[type="submit"]').textContent = 'Ajouter Appareil Confié'; updateConnectedUserFields(); populateEmployeeSelect(equipmentEmployeeNameSelect); } equipmentSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* Error handled */ } } };
+        itemRows.forEach((row) => {
+            const designationInput = row.querySelector('.item-designation');
+            const quantityInput = row.querySelector('.item-quantity');
+            const unitPriceInput = row.querySelector('.item-unit-price');
 
-    window.deletePieceEnLigne = async (index) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        if (index < 0 || index >= pieceEnLigneData.length) {
-            alert("Index invalide."); return;
-        }
-        const item = pieceEnLigneData[index];
-        if (confirm(`Supprimer l'entrée Pièce en Ligne du ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?`)) {
-            let tempLocalData = [...pieceEnLigneData];
-            tempLocalData.splice(index, 1);
-            try {
-                await saveDataToFirebase('pieceEnLigneData', tempLocalData);
-                alert('Entrée Pièce en Ligne supprimée.');
-                pieceEnLigneSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } catch (e) { /* Error handled */ }
-        }
-    };
+            const designation = designationInput?.value.trim();
+            const quantity = parseFloat(quantityInput?.value);
+            const unitPrice = parseFloat(unitPriceInput?.value);
 
-    window.deleteWifiZone = async (index) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        if (index < 0 || index >= wifiZoneData.length) {
-            alert("Index invalide."); return;
-        }
-        const item = wifiZoneData[index];
-        if (confirm(`Supprimer l'entrée WIFI ZONE du ${item.date || '?'} pour "${item.designation || '?'}" (Qté: ${item.quantity || '?'}) ?`)) {
-            let tempLocalData = [...wifiZoneData];
-            tempLocalData.splice(index, 1);
-            try {
-                await saveDataToFirebase('wifiZoneData', tempLocalData);
-                alert('Entrée WIFI ZONE supprimée.');
-                wifiZoneSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } catch (e) { /* Error handled */ }
-        }
-    };
+            let rowIsValid = true;
+            if (!designation) { isValid = false; rowIsValid = false; designationInput?.classList.add('invalid-field'); }
+            if (isNaN(quantity) || quantity < 0) { isValid = false; rowIsValid = false; quantityInput?.classList.add('invalid-field'); }
+            if (isNaN(unitPrice) || unitPrice < 0) { isValid = false; rowIsValid = false; unitPriceInput?.classList.add('invalid-field'); }
 
-    // START ADDITION: Table Sorting Logic
-    const tableConfigMap = { 'supply-table': { data: () => supplyData, updateFn: updateSupplyTable, dateProp: 'date' }, 'sales-table': { data: () => salesData, updateFn: updateSalesTable, dateProp: 'date' }, 'materiel-electrique-table': { data: () => materielElectriqueData, updateFn: updateMaterielElectriqueTable, dateProp: 'date' }, 'expenses-table': { data: () => expensesData, updateFn: updateExpensesTable, dateProp: 'date' }, 'others-table': { data: () => othersData, updateFn: updateOthersTable, dateProp: 'date' }, 'employees-table': { data: () => employeesData, updateFn: updateEmployeesTable, dateProp: 'hireDate' }, 'mobile-money-table': { data: () => mobileMoneyData, updateFn: updateMobileMoneyTable, dateProp: 'date' }, 'creditors-table': { data: () => creditorsData, updateFn: updateCreditorsTable, dateProp: 'lastPaymentDate' }, 'debt-table': { data: () => debtData, updateFn: updateDebtTable, dateProp: 'date' }, 'employee-permissions-table': { data: () => employeePermissionsData, updateFn: updateEmployeePermissionsTable, dateProp: 'requestDate' }, 'learner-permissions-table': { data: () => learnerPermissionsData, updateFn: updateLearnerPermissionsTable, dateProp: 'requestDate' }, 'equipment-table': { data: () => equipmentData, updateFn: updateEquipmentTable, dateProp: 'assignedDate' },
-        'piece-en-ligne-table': { data: () => pieceEnLigneData, updateFn: updatePieceEnLigneTable, dateProp: 'date' },
-        'wifi-zone-table': { data: () => wifiZoneData, updateFn: updateWifiZoneTable, dateProp: 'date' }
-    };
-    function sortTableByDateColumn(event) { const th = event.currentTarget; const table = th.closest('table'); const tableId = table?.id; if (!tableId || !tableConfigMap[tableId]) { console.warn("Sort clicked on unconfigured table:", tableId); return; } const config = tableConfigMap[tableId]; const originalDataArray = config.data(); const updateFunction = config.updateFn; const dateProperty = config.dateProp; if (!dateProperty) { console.warn(`Date property not defined for sorting table ${tableId}`); return; } const currentDirection = th.classList.contains('sort-asc') ? 'asc' : (th.classList.contains('sort-desc') ? 'desc' : 'none'); const newDirection = currentDirection === 'asc' ? 'desc' : 'asc'; th.parentNode.querySelectorAll('th.sortable-header').forEach(header => { header.classList.remove('sort-asc', 'sort-desc'); }); th.classList.add(newDirection === 'asc' ? 'sort-asc' : 'sort-desc'); const dataToSort = [...originalDataArray]; dataToSort.sort((a, b) => { const dateAStr = a[dateProperty] || ''; const dateBStr = b[dateProperty] || ''; if (!dateAStr && !dateBStr) return 0; if (!dateAStr) return 1; if (!dateBStr) return -1; try { const dateA = new Date(dateAStr); const dateB = new Date(dateBStr); const timeA = dateA.getTime(); const timeB = dateB.getTime(); const aValid = !isNaN(timeA); const bValid = !isNaN(timeB); if (!aValid && !bValid) return dateAStr.localeCompare(dateBStr); if (!aValid) return 1; if (!bValid) return -1; return newDirection === 'asc' ? timeA - timeB : timeB - timeA; } catch (e) { console.warn(`Date parsing error during sort for ${dateAStr} or ${dateBStr}, falling back to string compare.`); return dateAStr.localeCompare(dateBStr) * (newDirection === 'asc' ? 1 : -1); } }); updateFunction(dataToSort); const searchInput = document.querySelector(`.table-search-container input[data-table-id="${tableId}"]`); if (searchInput) { filterSpecificTable(searchInput); } }
-    function addDateSortListeners() { const dateHeaders = document.querySelectorAll('th.date-col.sortable-header'); dateHeaders.forEach(header => { header.removeEventListener('click', sortTableByDateColumn); header.addEventListener('click', sortTableByDateColumn); }); }
-    // END ADDITION: Table Sorting Logic
-
-    // --- Edit Functions ---
-    window.editSupply = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= supplyData.length) return; const item = supplyData[index]; if (!supplyForm || !supplyEditIndexInput || !supplyDateInput || !supplyTypeSelect || !supplyDesignationInput || !supplyQuantityInput || !supplyUnitPriceInput || !supplyTotalAmountInput || !supplyUserConnectedInput) { alert("Erreur interne: Formulaire approvisionnement incomplet."); return; } supplyForm.reset(); supplyDateInput.value = item.date || ''; supplyTypeSelect.value = item.type || ''; supplyDesignationInput.value = item.designation || ''; supplyQuantityInput.value = item.quantity || ''; supplyUnitPriceInput.value = item.unitPrice !== null ? item.unitPrice : ''; calculateTotalAmount(supplyQuantityInput, supplyUnitPriceInput, supplyTotalAmountInput); updateConnectedUserFields(); supplyEditIndexInput.value = index; supplyForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Approvisionnement'; supplySection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editSaleMisc = (typeKey, originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } let dataArray, item, formToReset = salesForm, operationTypeValue = ''; try { if (typeKey === 'Papeterie') { dataArray = salesData; operationTypeValue = 'Papeterie'; } else if (typeKey === 'MatElec') { dataArray = materielElectriqueData; operationTypeValue = 'Matériels électrique'; } else if (typeKey === 'Depenses') { dataArray = expensesData; operationTypeValue = 'Dépenses'; } else if (typeKey === 'Divers') { dataArray = othersData; operationTypeValue = 'Divers'; } else throw new Error("Type invalide pour modif."); if (originalIndex < 0 || originalIndex >= dataArray.length) throw new Error("Index invalide."); item = dataArray[originalIndex]; } catch (error) { alert(`Erreur prépa modif : ${error.message}`); return; } if (!item) { alert("Erreur: Enregistrement introuvable."); return; } formToReset.reset(); if(saleDateInput) saleDateInput.value = item.date || ''; if (operationTypeSelect) { operationTypeSelect.value = operationTypeValue; handleOperationTypeChange(); } else { alert("Erreur interne: Sélecteur type op. introuvable."); return; } if (typeKey === 'Papeterie' && papeterieDetailsForm) { if(saleDesignationSelect) { updateProductDesignationsForCategory('Papeterie'); const exists = Array.from(saleDesignationSelect.options).some(opt => opt.value === item.designation); if (!exists && item.designation) { saleDesignationSelect.add(new Option(item.designation, item.designation, true, true)); } saleDesignationSelect.value = item.designation || ''; } if(saleQuantityInput) saleQuantityInput.value = item.quantity || ''; if(saleUnitPriceInput) saleUnitPriceInput.value = item.unitPrice ?? ''; calculateTotalAmount(saleQuantityInput, saleUnitPriceInput, saleTotalAmountInput); } else if (typeKey === 'MatElec' && materielElectriqueDetailsForm) { if(meDesignationSelect) { updateProductDesignationsForCategory('Matériels électrique'); const exists = Array.from(meDesignationSelect.options).some(opt => opt.value === item.designation); if (!exists && item.designation) { meDesignationSelect.add(new Option(item.designation, item.designation, true, true)); } meDesignationSelect.value = item.designation || ''; } if(meQuantityInput) meQuantityInput.value = item.quantity || ''; if(meUnitPriceInput) meUnitPriceInput.value = item.unitPrice ?? ''; calculateTotalAmount(meQuantityInput, meUnitPriceInput, meTotalAmountInput); } else if (typeKey === 'Depenses' && depensesDetailsForm) { if(expenseReasonInput) expenseReasonInput.value = item.reason || ''; if(expenseQuantityInput) expenseQuantityInput.value = item.quantity ?? ''; if(expenseAmountInput) expenseAmountInput.value = item.amount || ''; } else if (typeKey === 'Divers' && diversDetailsForm) { if(otherDesignationInput) otherDesignationInput.value = item.designation || ''; if(otherQuantityInput) otherQuantityInput.value = item.quantity ?? ''; if(otherTotalAmountInput) otherTotalAmountInput.value = item.totalAmount || ''; } else { console.warn(`Modif type '${typeKey}' mais form non trouvé.`); } updateConnectedUserFields(); if (salesEditIndexInput) salesEditIndexInput.value = originalIndex; if (salesEditTypeInput) salesEditTypeInput.value = operationTypeValue; const submitButton = formToReset.querySelector('button[type="submit"]'); if (submitButton) submitButton.textContent = 'Mettre à Jour Opération'; salesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editEmployee = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= employeesData.length) return; const emp = employeesData[index]; if (!employeeForm || !employeeEditIndexInput || !employeeUserConnectedInput) { alert("Erreur: Formulaire employé introuvable."); return; } employeeForm.reset(); if(employeeNomInput) employeeNomInput.value = emp.nom || ''; if(employeePrenomInput) employeePrenomInput.value = emp.prenom || ''; if(employeeRoleInput) employeeRoleInput.value = emp.statut || ''; if(employeeAdresseInput) employeeAdresseInput.value = emp.adresse || ''; if(employeeTelephoneInput) employeeTelephoneInput.value = emp.telephone || ''; if(employeeLieuResidenceInput) employeeLieuResidenceInput.value = emp.lieuResidence || ''; if(employeeJoursTravailInput) employeeJoursTravailInput.value = emp.joursTravail || ''; if(employeeHeureArriveeInput) employeeHeureArriveeInput.value = emp.heureArrivee || ''; if(employeeHeureDepartInput) employeeHeureDepartInput.value = emp.heureDepart || ''; if(employeeSalaryInput) employeeSalaryInput.value = emp.salary ?? ''; if(employeePaidAmountInput) employeePaidAmountInput.value = emp.paidAmount || ''; if(employeeHireDateInput) employeeHireDateInput.value = emp.hireDate || ''; if(employeeContactPersonNomInput) employeeContactPersonNomInput.value = emp.contactPersonNom || ''; if(employeeContactPersonPrenomInput) employeeContactPersonPrenomInput.value = emp.contactPersonPrenom || ''; if(employeeContactPersonAdresseInput) employeeContactPersonAdresseInput.value = emp.contactPersonAdresse || ''; if(employeeContactPersonTelephoneInput) employeeContactPersonTelephoneInput.value = emp.contactPersonTelephone || ''; if(employeeContactPersonLieuResidenceInput) employeeContactPersonLieuResidenceInput.value = emp.contactPersonLieuResidence || ''; updateConnectedUserFields(); employeeEditIndexInput.value = index; employeeForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Employé'; employeesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editLearner = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= learnersData.length) return; const lrn = learnersData[index]; if (!learnerForm || !learnerEditIndexInput || !learnerUserConnectedInput) { alert("Erreur: Formulaire apprenant introuvable."); return; } learnerForm.reset(); if(learnerNomInput) learnerNomInput.value = lrn.nom || ''; if(learnerPrenomInput) learnerPrenomInput.value = lrn.prenom || ''; if(learnerAgeInput) learnerAgeInput.value = lrn.age ?? ''; if(learnerAdresseInput) learnerAdresseInput.value = lrn.adresse || ''; if(learnerLieuResidenceInput) learnerLieuResidenceInput.value = lrn.lieuResidence || ''; if(learnerNiveauEtudesInput) learnerNiveauEtudesInput.value = lrn.niveauEtudes || ''; if(learnerSituationMatrimonialeSelect) learnerSituationMatrimonialeSelect.value = lrn.situationMatrimoniale || ''; if(learnerPereNomInput) learnerPereNomInput.value = lrn.pereNom || ''; if(learnerPerePrenomInput) learnerPerePrenomInput.value = lrn.perePrenom || ''; if(learnerMereNomInput) learnerMereNomInput.value = lrn.mereNom || ''; if(learnerMerePrenomInput) learnerMerePrenomInput.value = lrn.merePrenom || ''; if(learnerFiliereInput) learnerFiliereInput.value = lrn.filiere || ''; if(learnerDureeFormationInput) learnerDureeFormationInput.value = lrn.dureeFormation || ''; if(learnerFraisDocumentsInput) learnerFraisDocumentsInput.value = lrn.fraisDocuments || ''; if(learnerTranche1Input) learnerTranche1Input.value = lrn.tranche1 || ''; if(learnerTranche2Input) learnerTranche2Input.value = lrn.tranche2 || ''; if(learnerTranche3Input) learnerTranche3Input.value = lrn.tranche3 || ''; if(learnerTranche4Input) learnerTranche4Input.value = lrn.tranche4 || ''; if(learnerGarantNomInput) learnerGarantNomInput.value = lrn.garantNom || ''; if(learnerGarantPrenomInput) learnerGarantPrenomInput.value = lrn.garantPrenom || ''; if(learnerGarantTelephoneInput) learnerGarantTelephoneInput.value = lrn.garantTelephone || ''; if(learnerGarantAdresseInput) learnerGarantAdresseInput.value = lrn.garantAdresse || ''; updateConnectedUserFields(); learnerEditIndexInput.value = index; learnerForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Apprenant'; learnersSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editMobileMoney = (originalIndex) => { if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Réseau')) { alert("Accès Refusé: Admin ou Réseau seulement."); return; } if (originalIndex < 0 || originalIndex >= mobileMoneyData.length) { alert("Index invalide."); return; } const item = mobileMoneyData[originalIndex]; if (!mobileMoneyForm || !mobileMoneyEditIndexInput || !mmPointUserConnectedInput) { alert("Erreur: Formulaire MM introuvable."); return; } mobileMoneyForm.reset(); if(mmDateInput) mmDateInput.value = item.date || ''; if(mmAgentInput) mmAgentInput.value = item.agent || ''; if(mmBalanceMoovInput) mmBalanceMoovInput.value = item.balanceMoov || ''; if(mmBalanceMtnInput) mmBalanceMtnInput.value = item.balanceMTN || ''; if(mmBalanceCelttisInput) mmBalanceCelttisInput.value = item.balanceCelttis || ''; if(mmBalanceCashInput) mmBalanceCashInput.value = item.balanceCash || ''; if(mmCreditMoovInput) mmCreditMoovInput.value = item.creditMoov || ''; if(mmCreditMtnInput) mmCreditMtnInput.value = item.creditMTN || ''; if(mmCreditCelttisInput) mmCreditCelttisInput.value = item.creditCelttis || ''; if(mmPerteTransfertInput) mmPerteTransfertInput.value = item.perteTransfert || ''; if(mmPerteCreditInput) mmPerteCreditInput.value = item.perteCredit || ''; updateConnectedUserFields(); mobileMoneyEditIndexInput.value = originalIndex; mobileMoneyForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Point MM'; mobileMoneySection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editMmFournisseur = (nom, prenom) => { if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Réseau')) { alert("Accès Refusé: Admin ou Réseau seulement."); return; } const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const key = `${sN}_${sP}`; const f = mmFournisseursData.find(f => f.nom === sN && f.prenom === sP); if (f && mmFournisseurForm && mmFournisseurEditKeyInput && mmFournisseurUserConnectedInput) { mmFournisseurForm.reset(); if(mmFournisseurNomInput) mmFournisseurNomInput.value = f.nom || ''; if(mmFournisseurPrenomInput) mmFournisseurPrenomInput.value = f.prenom || ''; if(mmFournisseurContactInput) mmFournisseurContactInput.value = f.contact || ''; if(mmFournisseurMontantInput) mmFournisseurMontantInput.value = f.montantFourni || ''; if(mmFournisseurInteretInput) mmFournisseurInteretInput.value = f.interet ?? ''; if(mmFournisseurVenduInput) mmFournisseurVenduInput.value = f.creditVendu || ''; updateConnectedUserFields(); mmFournisseurEditKeyInput.value = key; mmFournisseurForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Fournisseur'; mobileMoneySection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } else { alert(`Fournisseur ${sN} ${sP} non trouvé ou form incomplet.`); if(mmFournisseurEditKeyInput) mmFournisseurEditKeyInput.value = ''; } };
-    window.editClientProfile = (nom, prenom) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const sN = String(nom || '').replace(/\\'/g, "'"); const sP = String(prenom || '').replace(/\\'/g, "'"); const key = `${sN}_${sP}`; const p = clientProfilesData.find(p => p.nom === sN && p.prenom === sP); if (p && clientProfileForm && clientProfileEditKeyInput && clientUserConnectedInput) { clientProfileForm.reset(); if(clientProfileNomInput) clientProfileNomInput.value = p.nom || ''; if(clientProfilePrenomInput) clientProfilePrenomInput.value = p.prenom || ''; if(clientProfileAdresseInput) clientProfileAdresseInput.value = p.adresse || ''; if(clientProfileContactInput) clientProfileContactInput.value = p.contact || ''; if(clientProfileStatutInput) clientProfileStatutInput.value = p.statut || ''; updateConnectedUserFields(); clientProfileEditKeyInput.value = key; clientProfileForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Profil'; creditorsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } else { alert(`Profil ${sN} ${sP} non trouvé ou form incomplet.`); if(clientProfileEditKeyInput) clientProfileEditKeyInput.value = ''; } };
-    window.editDebt = (originalIndex) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (originalIndex < 0 || originalIndex >= debtData.length) { alert("Index invalide."); return; } const item = debtData[originalIndex]; if (!debtForm || !debtEditIndexInput || !debtUserConnectedInput) { alert("Erreur: Formulaire Dette/Prêt introuvable."); return; } debtForm.reset(); if(debtDateInput) debtDateInput.value = item.date || ''; if(debtTypeSelect) debtTypeSelect.value = item.type || ''; if(debtNameInput) debtNameInput.value = item.name || ''; if(debtDescriptionInput) debtDescriptionInput.value = item.description || ''; if(debtAmountInput) debtAmountInput.value = item.amount || ''; if(debtDueDateInput) debtDueDateInput.value = item.dueDate || ''; if(debtStatusSelect) debtStatusSelect.value = item.status || ''; updateConnectedUserFields(); debtEditIndexInput.value = originalIndex; debtForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Dette/Prêt'; debtSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editAdminUser = (username) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } const safeUsername = String(username || '').replace(/\\'/g, "'"); const user = adminData.find(u => u.username === safeUsername); if (!user) { alert(`Utilisateur '${safeUsername}' non trouvé.`); return; } if (!adminForm || !adminEditKeyInput || !adminUsernameInput || !adminPostInput || !adminPasswordInput || !adminStatusSelect || !adminOpUserConnectedInput) { alert("Erreur interne: Form Admin incomplet."); return; } if(currentUser && currentUser.username === safeUsername) { alert("Modif impossible : propre compte."); return; } adminForm.reset(); adminUsernameInput.value = user.username || ''; adminPostInput.value = user.post || ''; adminStatusSelect.value = user.status || 'Lecteur'; adminPasswordInput.value = ''; adminPasswordInput.placeholder = "Laisser vide si inchangé"; updateConnectedUserFields(); adminEditKeyInput.value = user.username; adminForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Utilisateur'; adminSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-    window.editEquipment = (index) => { if (!currentUser || currentUser.status !== 'Administrateur') { alert("Accès Refusé: Admin seulement."); return; } if (index < 0 || index >= equipmentData.length) { alert("Index invalide."); return; } const item = equipmentData[index]; if (!equipmentForm || !equipmentEditIndexInput || !equipmentUserConnectedInput) { alert("Erreur: Formulaire équipement introuvable."); return; } equipmentForm.reset(); if (equipmentNameInput) equipmentNameInput.value = item.name || ''; if (equipmentQuantityInput) equipmentQuantityInput.value = item.quantity || ''; if (equipmentAssignedDateInput) equipmentAssignedDateInput.value = item.assignedDate || ''; if (equipmentAccessoriesInput) equipmentAccessoriesInput.value = item.accessories || ''; if (equipmentEmployeeNameSelect) { populateEmployeeSelect(equipmentEmployeeNameSelect); equipmentEmployeeNameSelect.value = item.employeeName || ''; } if (equipmentOtherInfoTextarea) equipmentOtherInfoTextarea.value = item.otherInfo || ''; updateConnectedUserFields(); equipmentEditIndexInput.value = index; equipmentForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Appareil'; equipmentSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-
-    window.editPieceEnLigne = (index) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        if (index < 0 || index >= pieceEnLigneData.length) { alert("Index invalide."); return; }
-        const item = pieceEnLigneData[index];
-        if (!pieceEnLigneForm || !pieceEnLigneEditIndexInput || !pieceEnLigneDateInput || !pieceEnLigneDesignationSelect || !pieceEnLigneUnitPriceInput || !pieceEnLigneQuantityInput || !pieceEnLigneTotalAmountInput || !pieceEnLigneUserConnectedInput) {
-            alert("Erreur interne: Formulaire Pièce en Ligne incomplet."); return;
-        }
-        pieceEnLigneForm.reset();
-        pieceEnLigneDateInput.value = item.date || '';
-        pieceEnLigneDesignationSelect.value = item.designation || '';
-        pieceEnLigneUnitPriceInput.value = item.unitPrice !== null ? item.unitPrice : '';
-        pieceEnLigneQuantityInput.value = item.quantity || '';
-        calculateTotalAmount(pieceEnLigneQuantityInput, pieceEnLigneUnitPriceInput, pieceEnLigneTotalAmountInput);
-        updateConnectedUserFields();
-        pieceEnLigneEditIndexInput.value = index;
-        pieceEnLigneForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Pièce en Ligne';
-        pieceEnLigneSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    window.editWifiZone = (index) => {
-        if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Réseau')) { // Admin or Réseau can edit
-            alert("Accès Refusé: Admin ou Réseau seulement."); return;
-        }
-        if (index < 0 || index >= wifiZoneData.length) { alert("Index invalide."); return; }
-        const item = wifiZoneData[index];
-        if (!wifiZoneForm || !wifiZoneEditIndexInput || !wifiZoneDateInput || !wifiZoneDesignationSelect || !wifiZoneUnitPriceInput || !wifiZoneQuantityInput || !wifiZoneTotalAmountInput || !wifiZoneUserConnectedInput) {
-            alert("Erreur interne: Formulaire WIFI ZONE incomplet."); return;
-        }
-        wifiZoneForm.reset();
-        wifiZoneDateInput.value = item.date || '';
-        wifiZoneDesignationSelect.value = item.designation || '';
-        wifiZoneUnitPriceInput.value = item.unitPrice !== null ? item.unitPrice : '';
-        wifiZoneQuantityInput.value = item.quantity || '';
-        calculateTotalAmount(wifiZoneQuantityInput, wifiZoneUnitPriceInput, wifiZoneTotalAmountInput);
-        updateConnectedUserFields();
-        wifiZoneEditIndexInput.value = index;
-        wifiZoneForm.querySelector('button[type="submit"]').textContent = 'Mettre à Jour Entrée WIFI';
-        wifiZoneSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-
-    // --- Permission Status Update Function ---
-    window.updatePermissionStatus = async (type, index, newStatus) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        let dataArray, storageKey, itemType, targetForm;
-        if (type === 'employee') { dataArray = employeePermissionsData; storageKey = 'employeePermissionsData'; itemType = 'employé'; targetForm = permissionEmployeeForm; }
-        else if (type === 'learner') { dataArray = learnerPermissionsData; storageKey = 'learnerPermissionsData'; itemType = 'apprenant'; targetForm = permissionLearnerForm; }
-        else { return; }
-        if (index < 0 || index >= dataArray.length) { alert("Index invalide."); return; }
-        let tempLocalData = [...dataArray];
-        tempLocalData[index].status = newStatus;
-        tempLocalData[index].statusUpdatedBy = currentUser?.username || 'N/A';
-        tempLocalData[index].statusUpdateDate = new Date().toISOString().split('T')[0];
-        try { await saveDataToFirebase(storageKey, tempLocalData); alert(`Statut demande mis à jour à "${newStatus}".`); targetForm?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-        catch(e) { /* Error handled by saveDataToFirebase */ }
-    };
-
-    // --- Payment Recording Functions ---
-    window.recordSalaryPayment = async (index) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        if (index < 0 || index >= employeesData.length) return;
-        const emp = employeesData[index];
-        const salary = emp.salary !== null ? parseFloat(emp.salary) : 0;
-        const totalPaid = emp.paidAmount || 0;
-        const remaining = salary - totalPaid;
-        const paymentDate = prompt("Date paiement (AAAA-MM-JJ) :", new Date().toISOString().split('T')[0]);
-        if (!paymentDate || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) { if (paymentDate !== null) alert("Format date invalide."); return; }
-        const amountStr = prompt(`Employé: ${emp.nom || ''} ${emp.prenom || ''}\nSalaire Base: ${formatAmount(salary)}\nDéjà Payé: ${formatAmount(totalPaid)}\nRestant Dû: ${formatAmount(remaining)}\n\nMontant payé ce jour :`, remaining > 0 ? formatAmount(remaining) : '0.00');
-        if (amountStr === null) return;
-        const amountPaidThisTime = parseFloat(amountStr);
-        if (isNaN(amountPaidThisTime) || amountPaidThisTime < 0) { alert("Montant invalide."); return; }
-        if (amountPaidThisTime === 0) { alert("Aucun paiement enregistré (montant = 0)."); return; }
-        if (amountPaidThisTime > remaining + 0.005) { alert(`Montant payé (${formatAmount(amountPaidThisTime)}) dépasse solde restant (${formatAmount(remaining)}).`); return; }
-        let tempLocalData = [...employeesData];
-        const empInCopy = tempLocalData[index];
-        empInCopy.paidAmount = (empInCopy.paidAmount || 0) + amountPaidThisTime;
-        if (!empInCopy.paymentHistory) empInCopy.paymentHistory = [];
-        empInCopy.paymentHistory.push({ date: paymentDate, amount: amountPaidThisTime, recordedBy: currentUser?.username || 'N/A' });
-        empInCopy.lastModifiedBy = currentUser?.username || 'N/A';
-        empInCopy.lastModifiedDate = new Date().toISOString();
-        try {
-            await saveDataToFirebase('employeesData', tempLocalData);
-            alert(`Paiement de ${formatAmount(amountPaidThisTime)} enregistré pour ${emp.nom} ${emp.prenom} le ${paymentDate}.`);
-            employeesSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            if (confirm('Imprimer reçu ?')) { printSalaryInvoice(index, paymentDate, amountPaidThisTime); }
-        } catch(e) { /* Error handled */ }
-    };
-    window.recordTranchePayment = async (index) => {
-        if (!currentUser || currentUser.status !== 'Administrateur') {
-            alert("Accès Refusé: Admin seulement."); return;
-        }
-        if (index < 0 || index >= learnersData.length) return;
-        const lrn = learnersData[index];
-        const paymentDate = prompt("Date paiement (AAAA-MM-JJ) :", new Date().toISOString().split('T')[0]);
-        if (!paymentDate || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) { if (paymentDate !== null) alert("Format date invalide."); return; }
-        const paymentReason = prompt(`Paiement pour ${lrn.nom} ${lrn.prenom}.\nMotif (Ex: Tranche 1, Frais Docs):`, "Paiement Tranche Formation");
-        if (!paymentReason) return;
-        const amountStr = prompt("Montant payé :");
-        if (amountStr === null) return;
-        const amountPaidThisTime = parseFloat(amountStr);
-        if (isNaN(amountPaidThisTime) || amountPaidThisTime <= 0) { alert("Montant invalide."); return; }
-        const trancheChoice = prompt( `Ligne à créditer pour ${formatAmount(amountPaidThisTime)} ?\n` + `1. Frais Docs (${formatAmount(lrn.fraisDocuments)})\n` + `2. Tranche 1 (${formatAmount(lrn.tranche1)})\n` + `3. Tranche 2 (${formatAmount(lrn.tranche2)})\n` + `4. Tranche 3 (${formatAmount(lrn.tranche3)})\n` + `5. Tranche 4 (${formatAmount(lrn.tranche4)})\n` + `Entrez (1-5). MONTANT SERA AJOUTÉ.` );
-        if (!trancheChoice) return;
-        const choice = parseInt(trancheChoice);
-        if (isNaN(choice) || choice < 1 || choice > 5) { alert("Choix invalide."); return; }
-        let tempLocalData = [...learnersData];
-        const lrnInCopy = tempLocalData[index];
-        let updated = false; let appliedTo = '';
-        switch (choice) { case 1: lrnInCopy.fraisDocuments = (lrnInCopy.fraisDocuments || 0) + amountPaidThisTime; appliedTo = 'Frais Docs'; updated = true; break; case 2: lrnInCopy.tranche1 = (lrnInCopy.tranche1 || 0) + amountPaidThisTime; appliedTo = 'Tranche 1'; updated = true; break; case 3: lrnInCopy.tranche2 = (lrnInCopy.tranche2 || 0) + amountPaidThisTime; appliedTo = 'Tranche 2'; updated = true; break; case 4: lrnInCopy.tranche3 = (lrnInCopy.tranche3 || 0) + amountPaidThisTime; appliedTo = 'Tranche 3'; updated = true; break; case 5: lrnInCopy.tranche4 = (lrnInCopy.tranche4 || 0) + amountPaidThisTime; appliedTo = 'Tranche 4'; updated = true; break; }
-        if (!lrnInCopy.paymentHistory) lrnInCopy.paymentHistory = [];
-        lrnInCopy.paymentHistory.push({ date: paymentDate, amount: amountPaidThisTime, reason: paymentReason, appliedTo, recordedBy: currentUser?.username || 'N/A' });
-        lrnInCopy.lastModifiedBy = currentUser?.username || 'N/A';
-        lrnInCopy.lastModifiedDate = new Date().toISOString();
-        if (updated) {
-             try { await saveDataToFirebase('learnersData', tempLocalData); alert(`Paiement de ${formatAmount(amountPaidThisTime)} pour "${paymentReason}" enregistré pour ${lrn.nom} ${lrn.prenom} le ${paymentDate}.`); learnersSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (confirm('Imprimer reçu ?')) { printLearnerInvoice(index, paymentDate, paymentReason, amountPaidThisTime); } }
-             catch (e) { /* Error handled */ }
-        }
-    };
-
-    // --- Invoice Printing Functions ---
-    function printSalaryInvoice(employeeIndex, paymentDate, amountPaidThisTime) { if (employeeIndex < 0 || employeeIndex >= employeesData.length) return; const emp = employeesData[employeeIndex]; const invoiceArea = document.getElementById('invoice-print-area'); if (!invoiceArea) { alert("Zone d'impression introuvable."); return; } const html = `<div style="border: 1px solid #ccc; padding: 20px; width: 80%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;"><div style="text-align: center; margin-bottom: 20px;"><img src="${LOGO_PATH}" alt="Logo" style="max-height: 60px; border-radius: 50%; display: block; margin: 0 auto 10px auto;"><h2 style="margin: 0;">REÇU DE PAIEMENT DE SALAIRE</h2><strong>${ESTABLISHMENT_NAME}</strong><br><small>${COMPANY_INFO_PRINT}</small></div><hr><p><strong>Date de Paiement :</strong> ${paymentDate}</p><p><strong>Employé :</strong> ${emp.nom || ''} ${emp.prenom || ''}</p><p><strong>Poste :</strong> ${emp.statut || 'N/A'}</p><hr><p><strong>Montant Payé :</strong> ${formatAmount(amountPaidThisTime)} FCFA</p><p><strong>En Lettres :</strong> ${numberToWordsFrench(amountPaidThisTime)}</p><hr><div style="margin-top: 30px; display: flex; justify-content: space-between;"><p><strong>Signature Employé :</strong><br><br>_________________________</p><p><strong>Signature Employeur :</strong><br><br>_________________________</p></div><p style="text-align: center; font-size: 0.8em; margin-top: 40px;">Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}</p></div>`; invoiceArea.innerHTML = html; printElement('invoice-print-area'); }
-    function printLearnerInvoice(learnerIndex, paymentDate, paymentReason, amountPaidThisTime) { if (learnerIndex < 0 || learnerIndex >= learnersData.length) return; const lrn = learnersData[learnerIndex]; const invoiceArea = document.getElementById('invoice-print-area'); if (!invoiceArea) { alert("Zone d'impression introuvable."); return; } const html = `<div style="border: 1px solid #ccc; padding: 20px; width: 80%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;"><div style="text-align: center; margin-bottom: 20px;"><img src="${LOGO_PATH}" alt="Logo" style="max-height: 60px; border-radius: 50%; display: block; margin: 0 auto 10px auto;"><h2 style="margin: 0;">REÇU DE PAIEMENT FRAIS FORMATION</h2><strong>${ESTABLISHMENT_NAME}</strong><br><small>${COMPANY_INFO_PRINT}</small></div><hr><p><strong>Date de Paiement :</strong> ${paymentDate}</p><p><strong>Apprenant :</strong> ${lrn.nom || ''} ${lrn.prenom || ''}</p><p><strong>Filière :</strong> ${lrn.filiere || 'N/A'}</p><hr><p><strong>Motif Paiement :</strong> ${paymentReason || 'N/A'}</p><p><strong>Montant Payé :</strong> ${formatAmount(amountPaidThisTime)} FCFA</p><p><strong>En Lettres :</strong> ${numberToWordsFrench(amountPaidThisTime)}</p><hr><div style="margin-top: 30px; display: flex; justify-content: space-between;"><p><strong>Signature Apprenant/Parent :</strong><br><br>_________________________</p><p><strong>Signature Établissement :</strong><br><br>_________________________</p></div><p style="text-align: center; font-size: 0.8em; margin-top: 40px;">Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}</p></div>`; invoiceArea.innerHTML = html; printElement('invoice-print-area'); }
-    window.printCreditReceipt = (originalIndex) => { if (originalIndex < 0 || originalIndex >= creditorsData.length) return; const credit = creditorsData[originalIndex]; const clientProfile = clientProfilesData.find(p => `${p.nom || ''} ${p.prenom || ''}`.trim() === credit.name); const invoiceArea = document.getElementById('invoice-print-area'); if (!invoiceArea) { alert("Zone d'impression introuvable."); return; } const totalAmount = credit.totalAmountDue || 0; const totalPaid = credit.amountPaidTotal || 0; const remaining = totalAmount - totalPaid; let paymentHistoryHTML = '<h4>Historique Paiements :</h4><ul>'; if (credit.paymentHistory && credit.paymentHistory.length > 0) { credit.paymentHistory.forEach(p => { paymentHistoryHTML += `<li>${p.date}: ${formatAmount(p.amount)} FCFA (par ${p.recordedBy || 'N/A'})</li>`; }); } else { paymentHistoryHTML += '<li>Aucun paiement enregistré dans l\'historique détaillé.</li>'; } paymentHistoryHTML += '</ul>'; const html = `<div style="border: 1px solid #ccc; padding: 20px; width: 90%; margin: 20px auto; font-family: Arial, sans-serif; font-size: 10pt;"><div style="text-align: center; margin-bottom: 15px;"><img src="${LOGO_PATH}" alt="Logo" style="max-height: 50px; border-radius: 50%; display: block; margin: 0 auto 8px auto;"><h3 style="margin: 0;">RELEVÉ DE COMPTE CRÉDIT</h3><strong>${ESTABLISHMENT_NAME}</strong><br><small>${COMPANY_INFO_PRINT}</small></div><hr><p><strong>Date Relevé :</strong> ${new Date().toLocaleDateString('fr-FR')}</p><p><strong>Client :</strong> ${credit.name || ''}</p>${clientProfile?.contact ? `<p><strong>Contact Client :</strong> ${clientProfile.contact}</p>` : ''}<hr><p><strong>Désignation/Produit :</strong> ${credit.designation || 'N/A'}</p>${credit.quantity !== null ? `<p><strong>Quantité :</strong> ${credit.quantity}</p>` : ''}${credit.unitPrice !== null ? `<p><strong>Prix Unitaire :</strong> ${formatAmount(credit.unitPrice)}</p>` : ''}<p><strong>Date Initiale Transaction :</strong> ${credit.date || 'N/A'}</p><p><strong>Date Échéance :</strong> ${credit.dueDate || 'N/A'}</p><hr style="margin: 10px 0;"><p><strong>Montant Total Dû :</strong> ${formatAmount(totalAmount)} FCFA</p><p><strong>Montant Total Payé :</strong> ${formatAmount(totalPaid)} FCFA</p><p><strong>Montant Restant Dû : <span style="font-weight: bold; color: ${remaining > 0 ? 'red' : 'green'};">${formatAmount(remaining)} FCFA</span></strong></p><hr style="margin: 10px 0;">${paymentHistoryHTML}<hr style="margin: 10px 0;"><p style="text-align: center; font-size: 0.8em; margin-top: 20px;">Généré le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}</p></div>`; invoiceArea.innerHTML = html; printElement('invoice-print-area'); };
-
-    function generateInvoiceHTML(invoiceData) { const { date, number, clientName, clientContact, items, totalAmount, totalWords } = invoiceData; let itemsHTML = ''; items.forEach(item => { itemsHTML += `<tr><td style="border: 1px solid #ddd; padding: 6px;">${item.designation || ''}</td><td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${item.quantity || 0}</td><td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatAmount(item.unitPrice)}</td><td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatAmount(item.total)}</td></tr>`; }); const html = `<div class="invoice-wrapper" style="border: 1px solid #aaa; padding: 25px; margin: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10pt; background-color: #fff; color: #000;"><div class="invoice-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #333;"><div class="invoice-details"><img src="${LOGO_PATH}" alt="Logo La Charité Modeste" class="invoice-logo" style="max-height: 60px; margin-bottom: 10px;"><br><strong>${ESTABLISHMENT_NAME}</strong><br><small>${COMPANY_INFO_PRINT}</small></div><div class="invoice-title" style="text-align: right;"><h2 style="margin: 0 0 10px 0; font-size: 18pt;">FACTURE</h2><div class="invoice-details"><strong>N° Facture :</strong> ${number}<br><strong>Date :</strong> ${date}</div></div></div><div class="invoice-client-details" style="margin-bottom: 25px; text-align: left;"><strong>Client :</strong><br>${clientName}<br>${clientContact ? `Contact: ${clientContact}<br>` : ''}</div><div class="invoice-items"><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><thead><tr><th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: left;">Désignation</th><th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: center; width: 10%;">Quantité</th><th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: right; width: 20%;">Prix Unitaire</th><th style="border: 1px solid #bbb; padding: 8px; background-color: #eee; text-align: right; width: 20%;">Montant Total</th></tr></thead><tbody>${itemsHTML}</tbody></table></div><div class="invoice-summary" style="text-align: right; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 11pt;">Arrêté la présente facture à la somme de :<br><strong style="font-size: 10.5pt;">${totalWords}</strong><hr style="margin: 8px 0; border: none; border-top: 1px dashed #ccc;"><strong>MONTANT TOTAL :</strong> <strong style="display: inline-block; min-width: 120px; text-align: right; margin-left: 10px;">${formatAmount(totalAmount)} FCFA</strong></div><div class="invoice-signature" style="margin-top: 40px; padding-top: 10px; text-align: right;"><p><strong>Signature du Responsable :</strong></p><p style="margin-top: 30px;">_________________________</p><p><em>Modeste KODA MICHEL</em></p></div><div class="invoice-footer" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee; font-size: 8pt; text-align: center; color: #555;">Merci de votre confiance.<br></div></div>`; return html; }
-
-    // --- MODIFIED: previewPrintInvoiceButton listener triggers counter increment via printElement ---
-    if (previewPrintInvoiceButton && !previewPrintInvoiceButton._hasClickListener) { //
-        previewPrintInvoiceButton.addEventListener('click', () => {
-            if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) { alert("Accès Refusé."); return; }
-            let isValid = true; invoiceGeneratorForm?.querySelectorAll('.invalid-field').forEach(el => el.classList.remove('invalid-field')); if (!invoiceGenDateInput?.value) { isValid = false; invoiceGenDateInput?.classList.add('invalid-field'); } if (!invoiceGenClientNameInput?.value.trim()) { isValid = false; invoiceGenClientNameInput?.classList.add('invalid-field'); } if (!invoiceGenNumberInput?.value) { isValid = false; invoiceGenNumberInput?.classList.add('invalid-field'); } const items = []; const itemRows = invoiceItemsContainer?.querySelectorAll('.invoice-item-row'); if (!itemRows || itemRows.length === 0) { alert("Ajoutez au moins une ligne."); return; } itemRows.forEach((row) => { const designationInput = row.querySelector('.item-designation'); const quantityInput = row.querySelector('.item-quantity'); const unitPriceInput = row.querySelector('.item-unit-price'); const designation = designationInput?.value.trim(); const quantity = parseFloat(quantityInput?.value); const unitPrice = parseFloat(unitPriceInput?.value); let rowIsValid = true; if (!designation) { isValid = false; rowIsValid = false; designationInput?.classList.add('invalid-field'); } if (isNaN(quantity) || quantity < 0) { isValid = false; rowIsValid = false; quantityInput?.classList.add('invalid-field'); } if (isNaN(unitPrice) || unitPrice < 0) { isValid = false; rowIsValid = false; unitPriceInput?.classList.add('invalid-field'); } if (rowIsValid) { items.push({ designation, quantity, unitPrice, total: quantity * unitPrice }); } }); if (!isValid) { alert("Vérifiez champs en rouge."); const firstInvalid = invoiceGeneratorForm?.querySelector('.invalid-field'); firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' }); firstInvalid?.focus(); return; } calculateInvoiceTotal(); const finalTotalAmount = parseFloat(invoiceGenTotalAmountInput.value); const invoiceData = { date: invoiceGenDateInput.value, number: invoiceGenNumberInput.value, clientName: invoiceGenClientNameInput.value.trim(), clientContact: invoiceGenClientContactInput?.value.trim() || '', items: items, totalAmount: finalTotalAmount, totalWords: numberToWordsFrench(finalTotalAmount) }; const invoiceHTML = generateInvoiceHTML(invoiceData); const invoiceArea = document.getElementById('invoice-print-area');
-            if (invoiceArea) {
-                invoiceArea.innerHTML = invoiceHTML;
-                printElement('invoice-print-area');
-            } else {
-                alert("Erreur critique: Zone impression facture introuvable.");
+            if (rowIsValid) {
+                items.push({ designation, quantity, unitPrice, total: quantity * unitPrice });
             }
         });
+
+        if (!isValid) {
+            alert("Veuillez vérifier et corriger les champs marqués en rouge.");
+            const firstInvalid = invoiceGeneratorForm?.querySelector('.invalid-field');
+            firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstInvalid?.focus();
+            return;
+        }
+
+        calculateInvoiceTotal();
+        const finalTotalAmount = parseFloat(invoiceGenTotalAmountInput.value);
+
+        const isEditing = !!invoiceEditIdInput.value;
+        const invoiceId = isEditing ? invoiceEditIdInput.value : generatedInvoicesRef.push().key; // Get a new ID if not editing
+        const invoiceNumber = invoiceGenNumberInput.value;
+
+        const newInvoiceData = {
+            id: invoiceId, // Store the ID within the object
+            date: invoiceGenDateInput.value,
+            number: invoiceNumber,
+            clientName: invoiceGenClientNameInput.value.trim(),
+            clientContact: invoiceGenClientContactInput?.value.trim() || '',
+            items: items,
+            totalAmount: finalTotalAmount,
+            totalWords: numberToWordsFrench(finalTotalAmount),
+            generatedBy: currentUser?.username || 'N/A', // Assuming creator if new
+            generatedDate: new Date().toISOString()
+        };
+
+        if (isEditing) {
+            // Keep original generatedBy/Date if editing
+            const originalInvoice = generatedInvoicesData.find(inv => inv.id === invoiceId);
+            if (originalInvoice) {
+                newInvoiceData.generatedBy = originalInvoice.generatedBy;
+                newInvoiceData.generatedDate = originalInvoice.generatedDate;
+            }
+            newInvoiceData.lastModifiedBy = currentUser?.username || 'N/A';
+            newInvoiceData.lastModifiedDate = new Date().toISOString();
+        }
+
+        try {
+            await generatedInvoicesRef.child(invoiceId).set(newInvoiceData);
+            alert(`Facture ${invoiceNumber} ${isEditing ? 'mise à jour' : 'enregistrée'} avec succès.`);
+
+            if (!isEditing && (options.print || options.exportPdf)) {
+                await incrementAndSaveInvoiceCounter(); // Only increment counter for new invoices that are printed/exported
+            }
+
+            // Perform print/export actions after successful save
+            if (options.print) {
+                const invoiceHTML = generateInvoiceHTML(newInvoiceData);
+                const invoiceArea = document.getElementById('invoice-print-area');
+                if (invoiceArea) {
+                    invoiceArea.innerHTML = invoiceHTML;
+                    printElement('invoice-print-area');
+                } else {
+                    alert("Erreur critique: Zone impression facture introuvable.");
+                }
+            }
+            if (options.exportPdf) {
+                await exportInvoiceToPdf(newInvoiceData); // Use the saved invoice data for PDF
+            }
+
+            // Reset form after successful operation if it was a new invoice or if we are navigating away
+            if (!isEditing || (isEditing && (options.print || options.exportPdf))) { // If it was a new invoice OR an edited one that was printed/exported (implies finalization)
+                invoiceGeneratorForm.reset();
+                initializeInvoiceForm();
+                updateConnectedUserFields();
+            } else if (isEditing) { // If it was an edited invoice, but not printed/exported, just reset edit state but keep current invoice form filled
+                if (invoiceEditIdInput) invoiceEditIdInput.value = '';
+                if (saveUpdateInvoiceButton) saveUpdateInvoiceButton.textContent = 'Enregistrer Facture';
+                invoiceGenNumberInput.readOnly = false; // Allow new number generation
+                // The current form data is still valid, so no full reset
+            }
+
+        } catch (error) {
+            console.error("Erreur lors de l'enregistrement/mise à jour de la facture:", error);
+            alert(`Erreur lors de l'enregistrement/mise à jour de la facture: ${error.message}`);
+        }
+    }
+
+
+    // --- MODIFIED: previewPrintInvoiceButton listener triggers counter increment via saveInvoiceToFirebase ---
+    if (previewPrintInvoiceButton && !previewPrintInvoiceButton._hasClickListener) { //
+        previewPrintInvoiceButton.addEventListener('click', () => saveInvoiceToFirebase({ print: true, exportPdf: false }));
         previewPrintInvoiceButton._hasClickListener = true;
     }
 
-    // --- NEW: Invoice PDF Export Function ---
-    async function exportInvoiceToPdf(invoiceData) { try { if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined' || typeof window.jspdf.jsPDF.API?.autoTable === 'undefined') { throw new Error("Librairies PDF (jsPDF, jsPDF-AutoTable) non chargées."); } const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" }); const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight(); const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth(); const margin = 40; let currentY = margin; const contentWidth = pageWidth - 2 * margin; let logoDataUrl = null; try { logoDataUrl = await getBase64Image(LOGO_PATH); } catch (error) { console.warn("Impossible de charger/encoder le logo pour PDF:", error); } const logoHeight = 45; const logoWidth = 45; const logoX = margin; const headerTextX = logoDataUrl ? logoX + logoWidth + 10 : margin; if (logoDataUrl) { doc.addImage(logoDataUrl, 'JPEG', logoX, currentY, logoWidth, logoHeight); } doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.text(ESTABLISHMENT_NAME, headerTextX, currentY + 10); doc.setFontSize(8); doc.setFont(undefined, 'normal'); const companyInfoLines = COMPANY_INFO_PRINT.replace(/<br>/gi, '\n').split('\n'); doc.text(companyInfoLines, headerTextX, currentY + 22); let companyInfoHeight = doc.getTextDimensions(companyInfoLines.join('\n')).h; const rightColX = pageWidth - margin; doc.setFontSize(16); doc.setFont(undefined, 'bold'); doc.text("FACTURE", rightColX, currentY + 10, { align: 'right' }); doc.setFontSize(10); doc.setFont(undefined, 'normal'); doc.text(`N° Facture : ${invoiceData.number}`, rightColX, currentY + 25, { align: 'right' }); doc.text(`Date : ${invoiceData.date}`, rightColX, currentY + 37, { align: 'right' }); currentY += Math.max(logoHeight, companyInfoHeight) + 25; doc.setFontSize(10); doc.setFont(undefined, 'bold'); doc.text("Client :", margin, currentY); doc.setFont(undefined, 'normal'); doc.text(invoiceData.clientName, margin, currentY + 12); if (invoiceData.clientContact) { doc.text(`Contact: ${invoiceData.clientContact}`, margin, currentY + 24); currentY += 36; } else { currentY += 24; } currentY += 10; doc.autoTable({ startY: currentY, head: [['Désignation', 'Quantité', 'Prix Unitaire', 'Montant Total']], body: invoiceData.items.map(item => [ item.designation || '', item.quantity || 0, formatAmount(item.unitPrice), formatAmount(item.total) ]), theme: 'grid', headStyles: { fillColor: [230, 230, 230], textColor: 30, fontStyle: 'bold', halign: 'center' }, columnStyles: { 0: { halign: 'left' }, 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' } }, margin: { left: margin, right: margin } }); currentY = doc.lastAutoTable.finalY + 20; const totalLabel = "MONTANT TOTAL :"; const totalValue = `${formatAmount(invoiceData.totalAmount)} FCFA`; const totalLabelFontSize = 11; const totalValueFontSize = 11; const labelValueGap = 10; doc.setFontSize(10); doc.setFont(undefined, 'normal'); doc.text("Arrêté la présente facture à la somme de :", rightColX, currentY, { align: 'right', maxWidth: contentWidth }); doc.setFont(undefined, 'bold'); doc.text(invoiceData.totalWords, rightColX, currentY + 12, { align: 'right', maxWidth: contentWidth }); currentY += 30; doc.setLineDashPattern([2, 2], 0); doc.line(margin, currentY - 5, pageWidth - margin, currentY - 5); doc.setLineDashPattern([], 0); doc.setFontSize(totalLabelFontSize); doc.setFont(undefined, 'bold'); const totalLabelWidth = doc.getStringUnitWidth(totalLabel) * totalLabelFontSize / doc.internal.scaleFactor; doc.setFontSize(totalValueFontSize); doc.setFont(undefined, 'bold'); const totalValueWidth = doc.getStringUnitWidth(totalValue) * totalValueFontSize / doc.internal.scaleFactor; const totalX_Value = rightColX; const totalX_Label = rightColX - totalValueWidth - labelValueGap; doc.setFontSize(totalLabelFontSize); doc.setFont(undefined, 'bold'); doc.text(totalLabel, totalX_Label, currentY, { align: 'right'}); doc.setFontSize(totalValueFontSize); doc.setFont(undefined, 'bold'); doc.text(totalValue, totalX_Value, currentY, { align: 'right' }); currentY += 40; doc.setFontSize(10); doc.setFont(undefined, 'normal'); doc.text("Signature du Responsable :", rightColX, currentY, { align: 'right' }); doc.text("_________________________", rightColX, currentY + 35, { align: 'right' }); doc.setFont(undefined, 'italic'); doc.text("Modeste KODA MICHEL", rightColX, currentY + 48, { align: 'right' }); currentY += 70; doc.setFontSize(8); doc.setFont(undefined, 'normal'); doc.setTextColor(100); doc.text("Merci de votre confiance.", pageWidth / 2, currentY, { align: 'center' }); doc.save(`Facture_${invoiceData.number}_${invoiceData.clientName}.pdf`); } catch (error) { console.error("Erreur export facture PDF:", error); alert(`Erreur lors de l'export PDF de la facture: ${error.message}`); } }
-
-    // --- MODIFIED: Event Listener for Invoice PDF Export Button increments counter ---
+    // --- MODIFIED: Event Listener for Invoice PDF Export Button increments counter via saveInvoiceToFirebase ---
     if (exportInvoicePdfButton && !exportInvoicePdfButton._hasClickListener) { //
-        exportInvoicePdfButton.addEventListener('click', async () => {
-            if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) {
-                alert("Accès Refusé.");
-                return;
-            }
-            let isValid = true;
-            invoiceGeneratorForm?.querySelectorAll('.invalid-field').forEach(el => el.classList.remove('invalid-field'));
-            if (!invoiceGenDateInput?.value) { isValid = false; invoiceGenDateInput?.classList.add('invalid-field'); }
-            if (!invoiceGenClientNameInput?.value.trim()) { isValid = false; invoiceGenClientNameInput?.classList.add('invalid-field'); }
-            if (!invoiceGenNumberInput?.value) { isValid = false; invoiceGenNumberInput?.classList.add('invalid-field'); }
-            const items = [];
-            const itemRows = invoiceItemsContainer?.querySelectorAll('.invoice-item-row');
-            if (!itemRows || itemRows.length === 0) { alert("Ajoutez au moins une ligne d'article à la facture."); return; }
-            itemRows.forEach((row) => { const designationInput = row.querySelector('.item-designation'); const quantityInput = row.querySelector('.item-quantity'); const unitPriceInput = row.querySelector('.item-unit-price'); const designation = designationInput?.value.trim(); const quantity = parseFloat(quantityInput?.value); const unitPrice = parseFloat(unitPriceInput?.value); let rowIsValid = true; if (!designation) { isValid = false; rowIsValid = false; designationInput?.classList.add('invalid-field'); } if (isNaN(quantity) || quantity < 0) { isValid = false; rowIsValid = false; quantityInput?.classList.add('invalid-field'); } if (isNaN(unitPrice) || unitPrice < 0) { isValid = false; rowIsValid = false; unitPriceInput?.classList.add('invalid-field'); } if (rowIsValid) { items.push({ designation, quantity, unitPrice, total: quantity * unitPrice }); } });
-            if (!isValid) { alert("Veuillez vérifier et corriger les champs marqués en rouge."); const firstInvalid = invoiceGeneratorForm?.querySelector('.invalid-field'); firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' }); firstInvalid?.focus(); return; }
-            calculateInvoiceTotal();
-            const finalTotalAmount = parseFloat(invoiceGenTotalAmountInput.value);
-            const invoiceData = { date: invoiceGenDateInput.value, number: invoiceGenNumberInput.value, clientName: invoiceGenClientNameInput.value.trim(), clientContact: invoiceGenClientContactInput?.value.trim() || '', items: items, totalAmount: finalTotalAmount, totalWords: numberToWordsFrench(finalTotalAmount) };
-
-            try {
-                await exportInvoiceToPdf(invoiceData);
-                await incrementAndSaveInvoiceCounter();
-            } catch (error) {
-                 console.error("Erreur lors de l'export PDF ou sauvegarde compteur:", error);
-            }
-        });
+        exportInvoicePdfButton.addEventListener('click', () => saveInvoiceToFirebase({ print: false, exportPdf: true }));
         exportInvoicePdfButton._hasClickListener = true;
     }
+
+    // NEW: Save/Update Invoice button listener
+    if (saveUpdateInvoiceButton && !saveUpdateInvoiceButton._hasClickListener) {
+        saveUpdateInvoiceButton.addEventListener('click', () => saveInvoiceToFirebase({ print: false, exportPdf: false }));
+        saveUpdateInvoiceButton._hasClickListener = true;
+    }
+
+
+    // NEW: Edit Invoice function
+    window.editInvoice = (invoiceId) => {
+        if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) {
+            alert("Accès Refusé: Admin ou Éditeur seulement.");
+            return;
+        }
+
+        const invoiceToEdit = generatedInvoicesData.find(inv => inv.id === invoiceId);
+        if (!invoiceToEdit) {
+            alert("Facture non trouvée pour modification.");
+            return;
+        }
+
+        // Switch to invoice generator section
+        setSectionVisibility(invoiceGeneratorSection, allMainSections.filter(s => s !== invoiceGeneratorSection));
+
+        // Populate the form
+        if (invoiceGenDateInput) invoiceGenDateInput.value = invoiceToEdit.date || '';
+        if (invoiceGenClientNameInput) invoiceGenClientNameInput.value = invoiceToEdit.clientName || '';
+        if (invoiceGenClientContactInput) invoiceGenClientContactInput.value = invoiceToEdit.clientContact || '';
+        if (invoiceGenNumberInput) {
+            invoiceGenNumberInput.value = invoiceToEdit.number || '';
+            invoiceGenNumberInput.readOnly = true; // Keep existing invoice number read-only
+        }
+        if (invoiceEditIdInput) invoiceEditIdInput.value = invoiceToEdit.id; // Store ID for update
+
+        // Clear existing items and add from invoiceToEdit
+        if (invoiceItemsContainer) invoiceItemsContainer.innerHTML = '';
+        invoiceToEdit.items.forEach(item => {
+            addInvoiceItemRow(item.designation, item.quantity, item.unitPrice);
+        });
+        calculateInvoiceTotal(); // Recalculate total after populating items
+
+        if (saveUpdateInvoiceButton) saveUpdateInvoiceButton.textContent = 'Mettre à Jour Facture';
+        invoiceGeneratorSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    // NEW: Delete Invoice function
+    window.deleteInvoice = async (invoiceId) => {
+        if (!currentUser || !(currentUser.status === 'Administrateur' || currentUser.status === 'Editeur')) {
+            alert("Accès Refusé: Admin ou Éditeur seulement.");
+            return;
+        }
+        if (confirm(`Supprimer la facture N° ${invoiceId} ? Cette action est irréversible.`)) {
+            try {
+                await generatedInvoicesRef.child(invoiceId).remove();
+                alert(`Facture N° ${invoiceId} supprimée.`);
+                // No need to manually update generatedInvoicesData, Firebase listener will do it
+            } catch (error) {
+                console.error("Erreur suppression facture:", error);
+                alert(`Erreur lors de la suppression de la facture: ${error.message}`);
+            }
+        }
+    };
 
 
     // --- Login and Logout Logic ---
@@ -2752,7 +3122,7 @@ const filteredWifiZone = filterDataByDate(wifiZoneData);
              localInvoiceCounter = 1;
              if (mainAppContainer) mainAppContainer.classList.add('hidden');
              if (loginContainer) loginContainer.classList.remove('hidden');
-             const allSections = [supplySection, salesSection, employeesSection, learnersSection, mobileMoneySection, creditorsSection, debtSection, reportSection, invoiceGeneratorSection, adminSection, equipmentSection, pieceEnLigneSection, wifiZoneSection].filter(Boolean);
+             const allSections = [supplySection, salesSection, employeesSection, learnersSection, mobileMoneySection, creditorsSection, debtSection, reportSection, invoiceGeneratorSection, invoiceHistorySection, adminSection, equipmentSection, pieceEnLigneSection, wifiZoneSection].filter(Boolean); // MODIFIED
              allSections.forEach(section => { if(section) section.classList.add('hidden'); });
              if (userInfoUsernameSpan) userInfoUsernameSpan.textContent = '';
              if (userInfoStatusSpan) userInfoStatusSpan.textContent = '';
@@ -2793,6 +3163,24 @@ const filteredWifiZone = filterDataByDate(wifiZoneData);
         }
     }
 
+    // NEW: Subscription Renewal Alert Function for Administrators
+    function checkAndShowSubscriptionRenewalAlert() {
+        if (!currentUser || currentUser.status !== 'Administrateur') {
+            return;
+        }
+
+        const today = new Date();
+        const dayOfMonth = today.getDate();
+
+        // Define the renewal period: from 25th of current month to 1st of next month
+        const isRenewalPeriod = (dayOfMonth >= 25 && dayOfMonth <= 31) || (dayOfMonth === 1);
+
+        if (isRenewalPeriod) {
+            alert("Rappel Important : N'oubliez pas de renouveler l'abonnement mensuel de l'entreprise !");
+        }
+    }
+
+
     // --- Initialisation ---
     function attachFirebaseListener() {
         if (!firebaseListenerHandle) {
@@ -2812,7 +3200,7 @@ const filteredWifiZone = filterDataByDate(wifiZoneData);
                 if (counterVal !== null && counterVal !== undefined) {
                     localInvoiceCounter = counterVal;
                     console.log("Compteur facture mis à jour (listener):", localInvoiceCounter);
-                    if (invoiceGeneratorSection && !invoiceGeneratorSection.classList.contains('hidden') && invoiceGenNumberInput) {
+                    if (invoiceGeneratorSection && !invoiceGeneratorSection.classList.contains('hidden') && invoiceGenNumberInput && !invoiceEditIdInput.value) { // Only update if not editing an existing invoice
                          invoiceGenNumberInput.value = generateInvoiceNumber();
                     }
                 }
@@ -2820,6 +3208,19 @@ const filteredWifiZone = filterDataByDate(wifiZoneData);
                 console.error("Erreur écoute Firebase (invoiceCounterRef):", error);
             });
              console.log("Firebase listener (invoiceCounterRef) attaché.");
+
+            // NEW: Listener for generated invoices
+            generatedInvoicesRef.on('value', (snapshot) => {
+                const invoicesObj = snapshot.val() || {};
+                generatedInvoicesData = Object.keys(invoicesObj).map(key => ({ id: key, ...invoicesObj[key] }));
+                console.log("Factures générées chargées:", generatedInvoicesData);
+                if (invoiceHistorySection && !invoiceHistorySection.classList.contains('hidden')) {
+                    updateInvoiceHistoryTable(); // Update table if history section is visible
+                }
+            }, (error) => {
+                console.error("Erreur écoute Firebase (generatedInvoicesRef):", error);
+            });
+             console.log("Firebase listener (generatedInvoicesRef) attaché.");
 
         }
     }

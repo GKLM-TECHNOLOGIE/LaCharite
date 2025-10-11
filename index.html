@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestionnaire - La Charité Modeste</title>
+    <title>Gestionnaire - ETS La Charité Modeste</title>
     <link rel="icon" href="logo.jpg" type="image/jpeg">
     <link rel="preload" as="image" href="logo.jpg">
     <link rel="stylesheet" href="style.css">
@@ -15,7 +15,7 @@
 
     <div id="login-container">
         <form id="login-form">
-            <img src="logo.jpg" alt="Logo La Charité Modeste" class="login-logo">
+            <img src="logo.jpg" alt="Logo ETS La Charité Modeste" class="login-logo">
             <h2>Connexion Gestionnaire</h2>
             <div class="form-row-login">
                 <label for="login-username">Nom d'utilisateur:</label>
@@ -32,8 +32,8 @@
 
     <div id="printable-area" class="hidden">
         <header class="header-container">
-            <img src="logo.jpg" alt="Logo La Charité Modeste" class="logo">
-            <h1>Gestionnaire de La Charité Modeste</h1>
+            <img src="logo.jpg" alt="Logo ETS La Charité Modeste" class="logo">
+            <h1>Gestionnaire de ETS La Charité Modeste</h1>
             <div class="user-info">
                 Utilisateur: <span id="user-info-username"></span>
                 (<span id="user-info-status"></span>)
@@ -53,6 +53,7 @@
              <button id="show-piece-en-ligne-section">📄 <span>Pièce en Ligne</span></button> <!-- NEW BUTTON -->
              <button id="show-wifi-zone-section">📡 <span>WIFI ZONE</span></button> <!-- NEW BUTTON -->
              <button id="generate-invoice-button">📄 <span>Générer Facture</span></button>
+             <button id="show-invoice-history-section">📜 <span>Historique Factures</span></button> <!-- NEW BUTTON -->
              <button id="show-report-section">📊 <span>Bilans</span></button>
              <button id="show-admin-section">⚙️ <span>Administration</span></button>
         </nav>
@@ -593,7 +594,7 @@
                          <div> <label for="learner-garant-adresse">Adresse du Garant:</label> <input type="text" id="learner-garant-adresse"> </div>
                      </div>
                      <button type="submit">Ajouter Apprenant</button>
-                 </form>
+                </form>
 
                   <hr class="section-divider">
                   <h4>Demandes de Permission Apprenants</h4>
@@ -629,25 +630,25 @@
                              <label for="perm-lrn-user-connected">Demandé par (Utilisateur):</label>
                              <input type="text" id="perm-lrn-user-connected" class="user-connected-field" readonly>
                          </div>
-                     </div>
-                     <div class="form-row">
-                         <div style="flex-basis: 100%;">
-                             <label for="perm-lrn-reason">Motif:</label>
-                             <textarea id="perm-lrn-reason" rows="3" required></textarea>
-                         </div>
-                     </div>
-                     <button type="submit">Ajouter Demande Permission</button>
-                 </form>
+                    </div>
+                    <div class="form-row">
+                        <div style="flex-basis: 100%;">
+                            <label for="perm-lrn-reason">Motif:</label>
+                            <textarea id="perm-lrn-reason" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <button type="submit">Ajouter Demande Permission</button>
+                </form>
 
-                 <button id="show-learner-permissions-button" class="secondary-btn">Afficher/Masquer Permissions Apprenants</button>
-                 <div id="learner-permissions-container" class="printable-content hidden">
-                      <h3>Liste des Demandes de Permission (Apprenants)</h3>
-                      <!-- START: Added Table Search -->
-                      <div class="table-search-container">
-                          <label for="search-input-learner-permissions">Filtrer par Apprenant/Motif/Date:</label>
-                          <input type="search" id="search-input-learner-permissions" data-table-id="learner-permissions-table" data-column-class="name-col,reason-col,date-col" placeholder="Nom, motif ou Date (AAAA-MM-JJ)...">
-                      </div>
-                      <!-- END: Added Table Search -->
+                <button id="show-learner-permissions-button" class="secondary-btn">Afficher/Masquer Permissions Apprenants</button>
+                <div id="learner-permissions-container" class="printable-content hidden">
+                     <h3>Liste des Demandes de Permission (Apprenants)</h3>
+                     <!-- START: Added Table Search -->
+                     <div class="table-search-container">
+                         <label for="search-input-learner-permissions">Filtrer par Apprenant/Motif/Date:</label>
+                         <input type="search" id="search-input-learner-permissions" data-table-id="learner-permissions-table" data-column-class="name-col,reason-col,date-col" placeholder="Nom, motif ou Date (AAAA-MM-JJ)...">
+                     </div>
+                     <!-- END: Added Table Search -->
                      <div class="button-group">
                          <button id="print-learner-permissions" class="print-export-btn">Imprimer</button>
                          <button id="export-learner-permissions-excel" class="print-export-btn">Exporter Excel</button>
@@ -666,38 +667,38 @@
                                      <th class="user-col">Traitement (Utilisateur/Date)</th>
                                      <th class="actions-header no-print no-export">Actions</th>
                                  </tr>
-                             </thead>
-                             <tbody>
-                                 <!-- Rows generated by JS -->
-                             </tbody>
-                         </table>
-                     </div>
-                 </div>
+                            </thead>
+                            <tbody>
+                                <!-- Rows generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-                 <button id="show-learners-details-button" class="secondary-btn">Afficher/Masquer Liste Apprenants</button>
-                 <div id="learners-details-container" class="printable-content hidden">
-                      <h3>Liste des Apprenants</h3>
-                      <!-- START: Added Table Search -->
-                      <div class="table-search-container">
-                          <label for="search-input-learners">Filtrer par Nom/Prénom/Filière:</label>
-                          <input type="search" id="search-input-learners" data-table-id="learners-table" data-column-class="name-col,filiere-col" placeholder="Nom, prénom ou filière...">
-                      </div>
-                      <!-- END: Added Table Search -->
-                     <div class="button-group">
-                             <button id="print-learners" class="print-export-btn">Imprimer</button>
-                             <button id="export-learners-excel" class="print-export-btn">Exporter Excel</button>
-                             <button id="export-learners-pdf" class="print-export-btn">Exporter PDF</button>
+                <button id="show-learners-details-button" class="secondary-btn">Afficher/Masquer Liste Apprenants</button>
+                <div id="learners-details-container" class="printable-content hidden">
+                     <h3>Liste des Apprenants</h3>
+                     <!-- START: Added Table Search -->
+                     <div class="table-search-container">
+                         <label for="search-input-learners">Filtrer par Nom/Prénom/Filière:</label>
+                         <input type="search" id="search-input-learners" data-table-id="learners-table" data-column-class="name-col,filiere-col" placeholder="Nom, prénom ou filière...">
                      </div>
-                     <div class="table-container">
-                         <table id="learners-table">
-                             <thead> <tr> <th class="name-col">Nom</th> <th class="name-col">Prénom</th> <th class="age-col">Âge</th> <th>Adresse</th> <th>Lieu Résid.</th> <th>Niv. Études</th> <th>Sit. Matrim.</th> <th>Père</th> <th>Mère</th> <th class="filiere-col">Filière</th> <th>Durée Form.</th> <th class="amount-col">Frais Docs</th> <th class="amount-col">Tr. 1</th> <th class="amount-col">Tr. 2</th> <th class="amount-col">Tr. 3</th> <th class="amount-col">Tr. 4</th> <th>Garant</th> <th>Garant Tél</th> <th>Garant Adr.</th> <th class="actions-header no-print no-export">Actions</th> </tr> </thead>
-                             <tbody>
-                                 <!-- Rows generated by JS -->
-                             </tbody>
-                         </table>
-                     </div>
-                 </div>
-             </section>
+                     <!-- END: Added Table Search -->
+                    <div class="button-group">
+                            <button id="print-learners" class="print-export-btn">Imprimer</button>
+                            <button id="export-learners-excel" class="print-export-btn">Exporter Excel</button>
+                            <button id="export-learners-pdf" class="print-export-btn">Exporter PDF</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="learners-table">
+                            <thead> <tr> <th class="name-col">Nom</th> <th class="name-col">Prénom</th> <th class="age-col">Âge</th> <th>Adresse</th> <th>Lieu Résid.</th> <th>Niv. Études</th> <th>Sit. Matrim.</th> <th>Père</th> <th>Mère</th> <th class="filiere-col">Filière</th> <th>Durée Form.</th> <th class="amount-col">Frais Docs</th> <th class="amount-col">Tr. 1</th> <th class="amount-col">Tr. 2</th> <th class="amount-col">Tr. 3</th> <th class="amount-col">Tr. 4</th> <th>Garant</th> <th>Garant Tél</th> <th>Garant Adr.</th> <th class="actions-header no-print no-export">Actions</th> </tr> </thead>
+                            <tbody>
+                                <!-- Rows generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
              <!-- Section Mobile Money (Existing - Unchanged Structure) -->
              <section id="mobile-money-section" class="form-container hidden">
@@ -857,6 +858,7 @@
                  <hr class="section-divider">
 
                  <form id="creditor-form">
+                     <input type="hidden" id="creditor-edit-index" value=""> <!-- NEW: Hidden field for editing transactions -->
                      <h4>Ajouter Paiement / Nouvelle Transaction à Crédit</h4>
                      <div class="form-row">
                           <div> <label for="creditor-date">Date Transaction/Paiement:</label> <input type="date" id="creditor-date" required> </div>
@@ -871,8 +873,25 @@
                              <input type="text" id="creditor-user-connected" class="user-connected-field" readonly>
                          </div>
                      </div>
+
+                    <div id="selected-client-summary" style="margin-top: 20px; padding: 15px; border: 1px dashed var(--color-border); border-radius: 6px; background-color: var(--color-background); display: none;">
+                        <h5>Situation Actuelle du Client</h5>
+                        <p><strong>Total Dû Actuel :</strong> <span id="client-summary-total-due">0.00 FCFA</span></p>
+                        <p><strong>Total Payé (Historique) :</strong> <span id="client-summary-total-paid">0.00 FCFA</span></p>
+                        <p><strong>Solde Restant :</strong> <span id="client-summary-remaining" style="font-weight: bold;">0.00 FCFA</span></p>
+                        <p id="client-summary-designations-list" style="font-size: 0.9em; margin-top: 10px;"></p>
+                    </div>
+
                      <div class="form-row">
-                         <div> <label for="creditor-designation">Désignation (Produit/Service):</label> <input type="text" id="creditor-designation" required> </div>
+                        <div>
+                             <label for="creditor-designation">Désignation (Produit/Service):</label>
+                             <select id="creditor-designation" required>
+                                 <option value="">-- Choisir ou Saisir --</option>
+                                 <!-- Existing outstanding designations for the client will be populated here by JS -->
+                                 <option value="Autre">Autre (nouvelle transaction)</option>
+                             </select>
+                             <input type="text" id="creditor-custom-designation" class="hidden" placeholder="Saisir la nouvelle désignation" style="margin-top: 5px;">
+                         </div>
                          <div> <label for="creditor-quantity">Quantité:</label> <input type="number" id="creditor-quantity" min="0" step="any"> </div>
                          <div> <label for="creditor-unit-price">Prix Unitaire:</label> <input type="number" id="creditor-unit-price" min="0" step="any"> </div>
                       </div>
@@ -1268,6 +1287,7 @@
               <section id="invoice-generator-section" class="form-container hidden">
                  <h2>Générateur de Facture</h2>
                  <form id="invoice-generator-form">
+                     <input type="hidden" id="invoice-edit-id" value=""> <!-- NEW: Hidden field to store invoice ID for editing -->
                      <h4>Informations Générales</h4>
                      <div class="form-row">
                          <div>
@@ -1306,11 +1326,46 @@
                               <input type="number" id="invoice-gen-total-amount" readonly required>
                           </div>
                       </div>
-
-                     <button type="button" id="preview-print-invoice-button">Prévisualiser & Imprimer Facture</button>
-                     <button type="button" id="export-invoice-pdf-button">Exporter Facture PDF</button> <!-- NEW BUTTON -->
+                     <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;">
+                        <button type="button" id="preview-print-invoice-button">Prévisualiser & Imprimer Facture</button>
+                        <button type="button" id="export-invoice-pdf-button">Exporter Facture PDF</button>
+                        <button type="button" id="save-update-invoice-button">Enregistrer / Mettre à Jour Facture</button> <!-- NEW BUTTON -->
+                     </div>
                  </form>
              </section>
+
+             <!-- NEW: Section Invoice History -->
+             <section id="invoice-history-section" class="form-container hidden">
+                 <h2>Historique des Factures Générées</h2>
+                 <div class="table-search-container">
+                     <label for="search-input-invoice-history">Filtrer par N° Facture/Client/Date:</label>
+                     <input type="search" id="search-input-invoice-history" data-table-id="invoice-history-table" data-column-class="invoice-number-col,invoice-client-col,date-col" placeholder="N° facture, client ou date (AAAA-MM-JJ)...">
+                 </div>
+                 <div class="button-group">
+                    <button id="print-invoice-history" class="print-export-btn">Imprimer</button>
+                    <button id="export-invoice-history-excel" class="print-export-btn">Exporter Excel</button>
+                    <button id="export-invoice-history-pdf" class="print-export-btn">Exporter PDF</button>
+                 </div>
+                 <div class="table-container">
+                     <table id="invoice-history-table">
+                         <thead>
+                             <tr>
+                                 <th class="date-col sortable-header">Date Facture</th>
+                                 <th class="invoice-number-col">N° Facture</th>
+                                 <th class="invoice-client-col">Client</th>
+                                 <th class="amount-col">Montant Total</th>
+                                 <th class="user-col">Généré par</th>
+                                 <th class="actions-header no-print no-export">Actions</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             <!-- Invoice rows generated by JS -->
+                         </tbody>
+                     </table>
+                 </div>
+             </section>
+             <!-- END: NEW Section Invoice History -->
+
 
              <!-- Section Administration (Existing - Unchanged Structure) -->
              <section id="admin-section" class="form-container hidden">
@@ -1409,7 +1464,7 @@
     <script src="script.js"></script>
 
     <footer>
-        <p>© <span id="footer-year"></span> Gestionnaire - La Charité Modeste. Tous droits réservés.</p>
+        <p>© <span id="footer-year"></span> Gestionnaire - ETS La Charité Modeste. Tous droits réservés.</p>
         <p>Conçu et Développé par GKLM - Téléphone : +229 019 175 5979</p>
     </footer>
 </body>

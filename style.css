@@ -281,7 +281,7 @@ h1 {
 }
 /* Specific Colors for Key Actions (overrides base style) */
 #show-supply-section, #show-sales-section, #show-report-section, #show-admin-section,
-#show-piece-en-ligne-section, #show-wifi-zone-section {
+#show-piece-en-ligne-section, #show-wifi-zone-section, #show-invoice-history-section { /* ADDED */
     color: white; /* Ensure text is white on colored buttons */
 }
 #show-supply-section { background-color: var(--color-success); border-color: var(--color-success);}
@@ -302,6 +302,10 @@ h1 {
 
 #show-wifi-zone-section { background-color: var(--color-secondary-dark); border-color: var(--color-secondary-dark); }
 #show-wifi-zone-section:hover { background-color: var(--color-secondary); border-color: var(--color-secondary); }
+
+#show-invoice-history-section { background-color: var(--color-info-dark); border-color: var(--color-info-dark); } /* NEW */
+#show-invoice-history-section:hover { background-color: var(--color-info); border-color: var(--color-info); } /* NEW */
+
 
 /* --- Sections & Forms --- */
 main { /* Ensure main takes up available space if needed */
@@ -529,7 +533,16 @@ button[type="submit"]:hover:not(:disabled) {
      background-color: var(--color-info-dark); /* Darker teal */
 }
 
-
+/* Specific styling for Invoice Save Draft/Update button */
+#save-update-invoice-button { /* NEW */
+    background-color: var(--color-primary);
+    color: white;
+    font-weight: bold;
+    margin-left: 10px;
+}
+#save-update-invoice-button:hover:not(:disabled) { /* NEW */
+    background-color: var(--color-primary-light);
+}
 
 /* --- Details Containers (Tables) --- */
 .printable-content {
@@ -647,7 +660,8 @@ th.residence-col, th.workdays-col, th.agent-col, th.post-col, th.filiere-col,
 th.employee-name-col, th.equipment-name-col, /* Added for new table */
 th.user-col, /* Added user column alignment */
 th.category-col, /* NEW: Category column */
-th.piece-designation-col, th.wifi-designation-col /* NEW: Added for new tables */
+th.piece-designation-col, th.wifi-designation-col, /* NEW: Added for new tables */
+th.invoice-number-col, th.invoice-client-col /* NEW: Invoice History columns */
 {
     text-align: left;
 }
@@ -703,7 +717,8 @@ td.type-col, td.status-col, td.description-col, td.address-col,
 td.residence-col, td.workdays-col, td.agent-col, td.post-col, td.filiere-col,
 td.employee-name-col, td.equipment-name-col, /* Added for new table */
 td.category-col, /* NEW: Category column */
-td.piece-designation-col, td.wifi-designation-col /* NEW: Added for new tables */
+td.piece-designation-col, td.wifi-designation-col, /* NEW: Added for new tables */
+td.invoice-number-col, td.invoice-client-col /* NEW: Invoice History columns */
 {
     text-align: left;
 }
@@ -997,16 +1012,16 @@ footer p {
     .header-container:not(.printing-invoice-header), /* Hide header unless printing invoice */
     #logout-button, /* Hide logout */
     .user-info, /* Hide user info in header */
-    .main-buttons, section > form, section > h2,
+    .main-buttons, section > form:not(#invoice-generator-form), section > h2, /* MODIFIED: allow invoice generator form for editing printed invoice */
     section > button.secondary-btn, /* Hide only secondary buttons */
     section > button.report-type-btn, /* Hide report type buttons */
     #generate-report, /* Hide generate report button */
     .button-group, #report-filters, h4, h5, hr.section-divider,
     .table-search-container, /* Hide table search inputs */
     .search-container, /* Hide global search container */
-    #invoice-generator-section, /* Hide invoice generator FORM */
+    /* #invoice-generator-section,  No longer hidden by default for print */
     #add-invoice-item-button, .remove-invoice-item-btn,
-    #export-invoice-pdf-button, /* Hide PDF export button */
+    #export-invoice-pdf-button, #save-update-invoice-button, /* NEW: Hide invoice action buttons */
     th.actions-header, td.actions-cell, th.no-print, td.no-print, /* Also hide explicitly marked no-print */
     footer, /* Hide the footer when printing tables/invoices */
     /* Keep Admin section hidden by default unless explicitly printed */
@@ -1014,7 +1029,7 @@ footer p {
     /* Hide Sort Arrows */
     th.sortable-header::after,
     /* Hide original H3 titles within printable content */
-    .printable-content > h3
+    .printable-content > h3:not(#invoice-history-section h3) /* NEW: Allow invoice history h3 to show if printing that section directly */
     {
         display: none !important;
     }
@@ -1095,7 +1110,8 @@ footer p {
     .show-in-print th.employee-name-col, .show-in-print th.equipment-name-col, /* Added */
     .show-in-print th.category-col, /* NEW */
     .show-in-print th.piece-designation-col, /* NEW */
-    .show-in-print th.wifi-designation-col /* NEW */
+    .show-in-print th.wifi-designation-col, /* NEW */
+    .show-in-print th.invoice-number-col, .show-in-print th.invoice-client-col /* NEW */
     { text-align: left !important; }
 
     .show-in-print tbody tr { page-break-inside: avoid !important; }
@@ -1109,7 +1125,8 @@ footer p {
     .show-in-print td.date-col,
     .show-in-print td.category-col, /* NEW */
     .show-in-print td.piece-designation-col, /* NEW */
-    .show-in-print td.wifi-designation-col /* NEW */
+    .show-in-print td.wifi-designation-col, /* NEW */
+    .show-in-print td.invoice-number-col, .show-in-print td.invoice-client-col /* NEW */
     { text-align: left !important; } /* Ensure date and category are left aligned */
     .show-in-print td.quantity-col, .show-in-print td.supply-col, .show-in-print td.sold-col, .show-in-print td.remaining-col, .show-in-print td.age-col, .show-in-print td.interest-col, .show-in-print td.time-col { text-align: center !important; }
 
@@ -1137,13 +1154,12 @@ footer p {
     /* Styles for elements *inside* the invoice */
     body.printing-invoice .show-in-print .invoice-header {
         display: flex !important; justify-content: space-between !important; align-items: flex-start !important;
-        margin-bottom: 15px !important; padding-bottom: 8px !important; border-bottom: 1px solid #999 !important;
+        margin-bottom: 15px !important; padding-bottom: 8px !important; border-bottom: 2px solid #333 !important;
         page-break-after: avoid !important;
     }
     body.printing-invoice .show-in-print .invoice-logo { max-height: 55px !important; max-width: 140px !important; vertical-align: top !important; border-radius: 0 !important; border: none !important; box-shadow: none !important;}
     body.printing-invoice .show-in-print .invoice-details { font-size: 8.5pt !important; line-height: 1.3 !important; margin-top: 4px !important; }
     body.printing-invoice .show-in-print .invoice-details strong { display: block !important; margin-bottom: 2px !important; font-size: 10.5pt !important; }
-    body.printing-invoice .show-in-print .invoice-title { text-align: right !important; }
     body.printing-invoice .show-in-inprint .invoice-title h2 { margin: 0 !important; font-size: 15pt !important; font-weight: bold !important; color: #000 !important; }
     body.printing-invoice .show-in-print .invoice-title .invoice-details { margin-top: 4px !important; text-align: right !important; font-size: 8.5pt !important; line-height: 1.3 !important; }
     body.printing-invoice .show-in-print .invoice-client-details { margin-bottom: 12px !important; font-size: 9pt !important; line-height: 1.3 !important; text-align: left !important; margin-top: 12px !important; }
@@ -1156,11 +1172,11 @@ footer p {
     body.printing-invoice .show-in-print .invoice-items th.amount-col, body.printing-invoice .show-in-print .invoice-items td.amount-col { text-align: right !important; }
     body.printing-invoice .show-in-print .invoice-items th.designation-col, body.printing-invoice .show-in-print .invoice-items td.designation-col { text-align: left !important; }
     body.printing-invoice .show-in-print .invoice-items tbody tr { page-break-inside: avoid !important; }
-    body.printing-invoice .show-in-print .invoice-summary { text-align: right !important; margin-top: 20px !important; padding-top: 8px !important; border-top: 1px solid #999 !important; font-size: 10pt !important; page-break-before: auto !important; }
+    body.printing-invoice .show-in-print .invoice-summary { text-align: right !important; margin-top: 20px !important; padding-top: 10px !important; border-top: 1px solid #ccc !important; font-size: 10pt !important; page-break-before: auto !important; }
      body.printing-invoice .show-in-print .invoice-summary strong { display: inline-block !important; min-width: 110px !important; text-align: right !important; margin-left: 8px !important; font-weight: bold !important; }
       body.printing-invoice .show-in-print .invoice-summary hr { border: none !important; border-top: 1px solid #999 !important; margin: 4px 0 !important; height: 1px !important; }
       body.printing-invoice .show-in-print .invoice-summary br { display: block; content: ""; margin-top: 5px; }
-    body.printing-invoice .show-in-print .invoice-footer { margin-top: 30px !important; padding-top: 8px !important; border-top: 1px solid #ccc !important; font-size: 7.5pt !important; text-align: center !important; color: #444 !important; page-break-before: auto !important; }
+    body.printing-invoice .show-in-print .invoice-footer { margin-top: 30px !important; padding-top: 8px !important; border-top: 1px solid #eee !important; font-size: 8pt !important; text-align: center !important; color: #555 !important; page-break-before: auto !important; }
     body.printing-invoice .show-in-print .invoice-signature {
         margin-top: 40px !important;
         padding-top: 10px !important;
@@ -1177,7 +1193,8 @@ footer p {
     #others-details-container.show-in-print::after,
     #equipment-details-container.show-in-print::after,
     #piece-en-ligne-details-container.show-in-print::after,
-    #wifi-zone-details-container.show-in-print::after
+    #wifi-zone-details-container.show-in-print::after,
+    #invoice-history-section.show-in-print::after /* NEW */
     {
         /* Use \A for line breaks, white-space: pre handles spacing. Adjust spaces as needed. */
         content: "\A\ASignature                                                         signature\A\A\A\ANom et prénom de l'employé                                     Modeste KODA MICHEL";
